@@ -1,6 +1,10 @@
 // FB Alpha Battlezone / Bradley Tank Trainer / Red Baron driver module
 // Based on MAME driver by Brad Oliver and Nicola Salmoria
 
+// to do:
+// 	hook up analog inputs (bradley)
+//	bug fix
+
 #include "tiles_generic.h"
 #include "m6502_intf.h"
 #include "burn_gun.h"
@@ -110,15 +114,15 @@ static struct BurnInputInfo BradleyInputList[] = {
 	{"P1 Button 9",		BIT_DIGITAL,	DrvJoy4 + 2,	"p1 fire 9"	},
 	{"P1 Button 10",	BIT_DIGITAL,	DrvJoy4 + 4,	"p1 fire 10"},
 
-	A("P1 Stick X",     BIT_ANALOG_REL, &DrvAnalogPort0,"p1 x-axis" ),
-	A("P1 Stick Y",     BIT_ANALOG_REL, &DrvAnalogPort1,"p1 y-axis" ),
-	A("P1 Stick Z",     BIT_ANALOG_REL, &DrvAnalogPort2,"p1 z-axis" ),
+	A("P1 Stick X",         BIT_ANALOG_REL, &DrvAnalogPort0,"p1 x-axis" ),
+	A("P1 Stick Y",         BIT_ANALOG_REL, &DrvAnalogPort1,"p1 y-axis" ),
+	A("P1 Stick Z",         BIT_ANALOG_REL, &DrvAnalogPort2,"p1 z-axis" ),
 
 	{"Reset",			BIT_DIGITAL,	&DrvReset,		"reset"		},
 	{"Service",			BIT_DIGITAL,	DrvJoy1 + 5,	"service"	},
 	{"Dip A",			BIT_DIPSWITCH,	DrvDips + 0,	"dip"		},
 	{"Dip B",			BIT_DIPSWITCH,	DrvDips + 1,	"dip"		},
-	{"Dip C",			BIT_DIPSWITCH,	DrvDips + 2,	"dip"		},
+	{"Dip C",			BIT_DIPSWITCH,	DrvDips + 1,	"dip"		},
 	{"Dip D",			BIT_DIPSWITCH,	DrvDips + 3,	"dip"		},
 };
 #undef A
@@ -128,9 +132,8 @@ STDINPUTINFO(Bradley)
 static struct BurnDIPInfo BzoneDIPList[]=
 {
 	{0x0a, 0xff, 0xff, 0x15, NULL					},
-	{0x0b, 0xff, 0xff, 0x02, NULL					},
+	{0x0b, 0xff, 0xff, 0x03, NULL					},
 	{0x0c, 0xff, 0xff, 0x10, NULL					},
-	{0x0d, 0xff, 0xff, 0x00, NULL					},
 
 	{0   , 0xfe, 0   ,    4, "Lives"				},
 	{0x0a, 0x01, 0x03, 0x00, "2"					},
@@ -195,7 +198,6 @@ static struct BurnDIPInfo RedbaronDIPList[]=
 	{0x0b, 0xff, 0xff, 0xfd, NULL					},
 	{0x0c, 0xff, 0xff, 0xe7, NULL					},
 	{0x0d, 0xff, 0xff, 0x10, NULL					},
-	{0x0e, 0xff, 0xff, 0x00, NULL					},
 
 	{0   , 0xfe, 0   ,    1, "Coinage"				},
 	{0x0b, 0x01, 0xff, 0xfd, "Normal"				},
@@ -240,9 +242,8 @@ STDDIPINFO(Redbaron)
 static struct BurnDIPInfo BradleyDIPList[]=
 {
 	{0x12, 0xff, 0xff, 0x15, NULL					},
-	{0x13, 0xff, 0xff, 0x02, NULL					},
+	{0x13, 0xff, 0xff, 0x03, NULL					},
 	{0x14, 0xff, 0xff, 0x10, NULL					},
-	{0x15, 0xff, 0xff, 0x00, NULL					},
 
 	{0   , 0xfe, 0   ,    4, "Lives"				},
 	{0x12, 0x01, 0x03, 0x00, "2"					},
@@ -642,7 +643,7 @@ static void DrvM6502NewFrame()
 
 static INT32 BzoneInit()
 {
-	BurnSetRefreshRate(60.00);
+	BurnSetRefreshRate(41.05);
 
 	AllMem = NULL;
 	MemIndex();
@@ -699,7 +700,7 @@ static INT32 BzoneInit()
 
 static INT32 BradleyInit()
 {
-	BurnSetRefreshRate(60.00);
+	BurnSetRefreshRate(41.05);
 
 	AllMem = NULL;
 	MemIndex();
@@ -881,11 +882,6 @@ static INT32 DrvFrame()
 	{
 		memset (DrvInputs, 0, 5);
 		if (redbaron) DrvInputs[2] = 0x40; // active low
-		if (bradley) {
-			DrvInputs[2] = 0xff; // active low
-			DrvInputs[3] = 0x04 + 0x08 + 0x10; // ""
-		}
-
 		for (INT32 i = 0; i < 8; i++) {
 			DrvInputs[0] ^= (DrvJoy1[i] & 1) << i;
 			DrvInputs[1] ^= (DrvJoy2[i] & 1) << i;
@@ -908,9 +904,9 @@ static INT32 DrvFrame()
 			update_analog();
 		}
 	}
-	INT32 nCyclesTotal[1] = { 1512000 / ((redbaron) ? 61 : 41) };
+	INT32 nCyclesTotal = 1512000 / ((redbaron) ? 61 : 41);
 	INT32 nInterleave = 256;
-	INT32 nCyclesDone[1] = { nExtraCycles };
+	INT32 nCyclesDone = nExtraCycles;
 	INT32 nSoundBufferPos = 0;
 
 	M6502Open(0);
@@ -918,7 +914,7 @@ static INT32 DrvFrame()
 
 	for (INT32 i = 0; i < nInterleave; i++)
 	{
-		CPU_RUN(0, M6502);
+		nCyclesDone += M6502Run((nCyclesTotal * (i + 1) / nInterleave) - nCyclesDone);
 		if ((i % 64) == 63 && (DrvDips[2] & 0x10)) {
 			M6502SetIRQLine(0x20, CPU_IRQSTATUS_AUTO);
 		}

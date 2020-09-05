@@ -28,6 +28,8 @@ struct ZetExt {
 static INT32 nZetCyclesDone[MAX_Z80];
 static INT32 nZetCyclesDelayed[MAX_Z80];
 static INT32 nZetCyclesTotal;
+static INT32 nZ80ICount[MAX_Z80];
+static UINT32 Z80EA[MAX_Z80];
 
 static INT32 nOpenedCPU = -1;
 static INT32 nCPUCount = 0;
@@ -222,6 +224,7 @@ INT32 ZetInit(INT32 nCPU)
 		
 		nZetCyclesDone[nCPU] = 0;
 		nZetCyclesDelayed[nCPU] = 0;
+		nZ80ICount[nCPU] = 0;
 		
 		for (INT32 j = 0; j < (0x0100 * 4); j++) {
 			ZetCPUContext[nCPU]->pZetMemMap[j] = NULL;
@@ -289,6 +292,8 @@ void ZetClose()
 
 	Z80GetContext(&ZetCPUContext[nOpenedCPU]->reg);
 	nZetCyclesDone[nOpenedCPU] = nZetCyclesTotal;
+	nZ80ICount[nOpenedCPU] = z80_ICount;
+	Z80EA[nOpenedCPU] = EA;
 
 	nOpenedCPU = -1;
 }
@@ -304,6 +309,8 @@ void ZetOpen(INT32 nCPU)
 
 	Z80SetContext(&ZetCPUContext[nCPU]->reg);
 	nZetCyclesTotal = nZetCyclesDone[nCPU];
+	z80_ICount = nZ80ICount[nCPU];
+	EA = Z80EA[nCPU];
 
 	nOpenedCPU = nCPU;
 }
@@ -718,6 +725,8 @@ INT32 ZetScan(INT32 nAction)
 		szText[5] = '1' + i;
 
 		ScanVar(&ZetCPUContext[i]->reg, STRUCT_SIZE_HELPER(Z80_Regs, hold_irq), szText);
+		SCAN_VAR(Z80EA[i]);
+		SCAN_VAR(nZ80ICount[i]);
 		SCAN_VAR(nZetCyclesDone[i]);
 		SCAN_VAR(nZetCyclesDelayed[i]);
 		SCAN_VAR(ZetCPUContext[i]->BusReq);

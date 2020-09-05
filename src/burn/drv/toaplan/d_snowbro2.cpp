@@ -19,6 +19,8 @@ static UINT8 *Ram01, *RamPal;
 static INT32 nColCount = 0x0800;
 
 static UINT8 DrvReset = 0;
+static UINT8 bDrawScreen;
+static bool bVBlank;
 
 static struct BurnInputInfo snowbro2InputList[] = {
 	{"P1 Coin",		BIT_DIGITAL,	DrvButton + 3,	"p1 coin"},
@@ -175,7 +177,7 @@ static struct BurnDIPInfo snowbro2DIPList[] = {
 
 STDDIPINFO(snowbro2)
 
-static UINT8 __fastcall snowbro2ReadByte(UINT32 sekAddress)
+UINT8 __fastcall snowbro2ReadByte(UINT32 sekAddress)
 {
 	switch (sekAddress) {
 
@@ -211,7 +213,7 @@ static UINT8 __fastcall snowbro2ReadByte(UINT32 sekAddress)
 	return 0;
 }
 
-static UINT16 __fastcall snowbro2ReadWord(UINT32 sekAddress)
+UINT16 __fastcall snowbro2ReadWord(UINT32 sekAddress)
 {
 	switch (sekAddress) {
 
@@ -250,7 +252,7 @@ static UINT16 __fastcall snowbro2ReadWord(UINT32 sekAddress)
 	return 0;
 }
 
-static void __fastcall snowbro2WriteByte(UINT32 sekAddress, UINT8 byteValue)
+void __fastcall snowbro2WriteByte(UINT32 sekAddress, UINT8 byteValue)
 {
 	switch (sekAddress) {
 		case 0x600001:
@@ -270,7 +272,7 @@ static void __fastcall snowbro2WriteByte(UINT32 sekAddress, UINT8 byteValue)
 	}
 }
 
-static void __fastcall snowbro2WriteWord(UINT32 sekAddress, UINT16 wordValue)
+void __fastcall snowbro2WriteWord(UINT32 sekAddress, UINT16 wordValue)
 {
 	switch (sekAddress) {
 		case 0x300000:								// Set GP9001 VRAM address-pointer
@@ -344,11 +346,18 @@ static INT32 DrvDraw()
 {
 	ToaClearScreen(0);
 
-	ToaGetBitmap();
-	ToaRenderGP9001();						// Render GP9001 graphics
+	if (bDrawScreen) {
+		ToaGetBitmap();
+		ToaRenderGP9001();					// Render GP9001 graphics
+	}
 
 	ToaPalUpdate();							// Update the palette
 
+	return 0;
+}
+
+inline static INT32 CheckSleep(INT32)
+{
 	return 0;
 }
 
@@ -388,7 +397,7 @@ static INT32 DrvFrame()
 	SekSetCyclesScanline(nCyclesTotal[0] / 262);
 	nToaCyclesDisplayStart = nCyclesTotal[0] - ((nCyclesTotal[0] * (TOA_VBLANK_LINES + 240)) / 262);
 	nToaCyclesVBlankStart = nCyclesTotal[0] - ((nCyclesTotal[0] * TOA_VBLANK_LINES) / 262);
-	bool bVBlank = false;
+	bVBlank = false;
 
 	INT32 nSoundBufferPos = 0;
 
@@ -416,7 +425,11 @@ static INT32 DrvFrame()
 		}
 
 		nCyclesSegment = nNext - nCyclesDone[nCurrentCPU];
-		nCyclesDone[nCurrentCPU] += SekRun(nCyclesSegment);
+		if (bVBlank || (!CheckSleep(nCurrentCPU))) {					// See if this CPU is busywaiting
+			nCyclesDone[nCurrentCPU] += SekRun(nCyclesSegment);
+		} else {
+			nCyclesDone[nCurrentCPU] += SekIdle(nCyclesSegment);
+		}
 
 		{
 			// Render sound segment
@@ -569,6 +582,8 @@ static INT32 DrvInit()
 	BurnYM2151SetAllRoutes(1.00, BURN_SND_ROUTE_BOTH);
 	MSM6295Init(0, 27000000 / 10 / 132, 1);
 	MSM6295SetRoute(0, 1.00, BURN_SND_ROUTE_BOTH);
+
+	bDrawScreen = true;
 
 	DrvDoReset(); // Reset machine
 	return 0;

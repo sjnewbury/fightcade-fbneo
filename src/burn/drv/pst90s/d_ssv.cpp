@@ -2078,9 +2078,9 @@ static inline void palette_update(INT32 offset)
 
 	UINT16 *pal = (UINT16*)(DrvPalRAM + offset);
 
-	INT32 r = BURN_ENDIAN_SWAP_INT16(pal[1]) & 0xff;
-	INT32 g = BURN_ENDIAN_SWAP_INT16(pal[0]) >> 8;
-	INT32 b = BURN_ENDIAN_SWAP_INT16(pal[0]) & 0xff;
+	INT32 r = pal[1] & 0xff;
+	INT32 g = pal[0] >> 8;
+	INT32 b = pal[0] & 0xff;
 
 	DrvPalette[offset/4] = BurnHighCol(r,g,b,0);
 }
@@ -2118,7 +2118,7 @@ static void dsp_write(INT32 offset, UINT8 data)
 
 	offset = (offset & 0xffe)/2;
 
-	UINT16 temp = BURN_ENDIAN_SWAP_INT16(ram[offset/2]);
+	UINT16 temp = ram[offset/2];
 
 	if (offset & 1) {
 		temp &= 0xff;
@@ -2128,7 +2128,7 @@ static void dsp_write(INT32 offset, UINT8 data)
 		temp |= data;
 	}
 
-	ram[offset/2] = BURN_ENDIAN_SWAP_INT16(temp);
+	ram[offset/2] = temp;
 }
 
 static UINT16 dsp_read(INT32 offset)
@@ -2137,7 +2137,7 @@ static UINT16 dsp_read(INT32 offset)
 
 	offset = (offset & 0xffe)/2;
 
-	UINT16 temp = BURN_ENDIAN_SWAP_INT16(ram[offset/2]);
+	UINT16 temp = ram[offset/2];
 
 	if (offset & 1) {
 		temp >>= 8;
@@ -2215,7 +2215,7 @@ static void common_main_write_word(UINT32 address, UINT16 data)
 {
 	if ((address & 0xffe0000) == 0x140000) {
 		UINT16 *p = (UINT16*)(DrvPalRAM + (address & 0x1ffff));
-		*p = BURN_ENDIAN_SWAP_INT16(data);
+		*p = data;
 		palette_update(address);
 		return;
 	}
@@ -2223,7 +2223,7 @@ static void common_main_write_word(UINT32 address, UINT16 data)
 	if ((address & 0xffff80) == 0x1c0000) {
 		draw_next_line = 1;
 		UINT16 *p = (UINT16*)(DrvScrollRAM + (address & 0x7f));
-		*p = BURN_ENDIAN_SWAP_INT16(data);
+		*p = data;
 		return;
 	}
 
@@ -2234,7 +2234,7 @@ static void common_main_write_word(UINT32 address, UINT16 data)
 
 	if (address >= 0x230000 && address <= 0x230071) {
 		UINT16 *p = (UINT16*)(DrvVectors + (address & 0x7f));
-		*p = BURN_ENDIAN_SWAP_INT16(data);
+		*p = data;
 		return;
 	}
 
@@ -2475,7 +2475,7 @@ static void gdfs_write_word(UINT32 address, UINT16 data)
 	}
 
 	if ((address & 0xffffc0) == 0x440000) {
-		*((UINT16*)(DrvTMAPScroll + (address & 0x3f))) = BURN_ENDIAN_SWAP_INT16(data);
+		*((UINT16*)(DrvTMAPScroll + (address & 0x3f))) = data;
 		return;
 	}
 
@@ -2869,7 +2869,7 @@ static void eaglshot_write_word(UINT32 address, UINT16 data)
 		case 0x1c0076:
 		case 0x1c0077:
 			eaglshot_gfxram_bank(data);
-			*((UINT16*)(DrvScrollRAM + 0x76)) = BURN_ENDIAN_SWAP_INT16(data);
+			*((UINT16*)(DrvScrollRAM + 0x76)) = data;
 		return;
 
 		case 0x21000e:
@@ -2970,8 +2970,6 @@ static INT32 DrvDoReset(INT32 full_reset)
 
 	draw_next_line = -1;
 
-	HiscoreReset();
-
 	return 0;
 }
 
@@ -3045,14 +3043,14 @@ static void st010Expand(INT32 rom_offset)
 	// copy DSP program
 	for (INT32 i = 0; i < 0x10000; i+= 4)
 	{
-		*dspprg = BURN_ENDIAN_SWAP_INT32(dspsrc[0+i]<<24 | dspsrc[1+i]<<16 | dspsrc[2+i]<<8);
+		*dspprg = dspsrc[0+i]<<24 | dspsrc[1+i]<<16 | dspsrc[2+i]<<8;
 		dspprg++;
 	}
 
 	// copy DSP data
 	for (INT32 i = 0; i < 0x1000; i+= 2)
 	{
-		*dspdata++ = BURN_ENDIAN_SWAP_INT16(dspsrc[0x10000+i]<<8 | dspsrc[0x10001+i]);
+		*dspdata++ = dspsrc[0x10000+i]<<8 | dspsrc[0x10001+i];
 	}
 
 	BurnFree(dspsrc);
@@ -3069,7 +3067,7 @@ static void DrvComputeTileCode(INT32 version)
 	else
 	{
 		for (INT32 i = 0; i < 16; i++) {
-			tile_code[i] = ((i & 8) << 13) | ((i & 4) << 15) | ((i & 2) << 17) | ((i & 1) << 19);
+			tile_code[i] = ((i & 8) << 13) | ((i & 4) << 15) | ((i & 2) << 17) | ((i & 1) << 19); 
 		}
 	}
 }
@@ -3266,9 +3264,9 @@ static void DrvPaletteInit()
 
 	for (INT32 i = 0; i < 0x20000/2; i+=2)
 	{
-		INT32 r = BURN_ENDIAN_SWAP_INT16(pal[i+1]) & 0xff;
-		INT32 g = BURN_ENDIAN_SWAP_INT16(pal[i+0]) >> 8;
-		INT32 b = BURN_ENDIAN_SWAP_INT16(pal[i+0]) & 0xff;
+		INT32 r = pal[i+1] & 0xff;
+		INT32 g = pal[i+0] >> 8;
+		INT32 b = pal[i+0] & 0xff;
 
 		DrvPalette[i/2] = BurnHighCol(r,g,b,0);
 	}
@@ -3435,19 +3433,19 @@ static inline void get_tile(INT32 x, INT32 y, INT32 size, INT32 page, int& code,
 							  ((x & ((size - 1) & ~0xf)) << 2) +
 							  ((y & ((0x200 - 1) & ~0xf)) >> 3)];
 
-	code = BURN_ENDIAN_SWAP_INT16(s3[0]);  // code high bits
-	attr = BURN_ENDIAN_SWAP_INT16(s3[1]);  // code low  bits + color
+	code = s3[0];  // code high bits
+	attr = s3[1];  // code low  bits + color
 
 	/* Code's high bits are scrambled */
 	code += tile_code[(attr & 0x3c00) >> 10];
 	flipy = (attr & 0x4000);
 	flipx = (attr & 0x8000);
 
-	if ((BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x74 / 2]) & 0x1000) && ((BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x74 / 2]) & 0x2000) == 0))
+	if ((ssv_scroll[0x74 / 2] & 0x1000) && ((ssv_scroll[0x74 / 2] & 0x2000) == 0))
 	{
 		if (flipx == 0) flipx = 1; else flipx = 0;
 	}
-	if ((BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x74 / 2]) & 0x4000) && ((BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x74 / 2]) & 0x2000) == 0))
+	if ((ssv_scroll[0x74 / 2] & 0x4000) && ((ssv_scroll[0x74 / 2] & 0x2000) == 0))
 	{
 		if (flipy == 0) flipy = 1; else flipy = 0;
 	}
@@ -3484,10 +3482,10 @@ void draw_row_64pixhigh(INT32 in_sy, INT32 scrollreg)
 		set_rect(&clip, outclip.min_x, outclip.max_x, line, line);
 
 		/* Get the scroll data */
-		INT32 tilemap_scrollx = BURN_ENDIAN_SWAP_INT16(ssv_scroll[scrollreg * 4 + 0]);    // x scroll
-		INT32 tilemap_scrolly = BURN_ENDIAN_SWAP_INT16(ssv_scroll[scrollreg * 4 + 1]);    // y scroll
-		INT32 unknown = BURN_ENDIAN_SWAP_INT16(ssv_scroll[scrollreg * 4 + 2]);    // ???
-		INT32 mode = BURN_ENDIAN_SWAP_INT16(ssv_scroll[scrollreg * 4 + 3]);    // layer disabled, shadow, depth etc.
+		INT32 tilemap_scrollx = ssv_scroll[scrollreg * 4 + 0];    // x scroll
+		INT32 tilemap_scrolly = ssv_scroll[scrollreg * 4 + 1];    // y scroll
+		INT32 unknown = ssv_scroll[scrollreg * 4 + 2];    // ???
+		INT32 mode = ssv_scroll[scrollreg * 4 + 3];    // layer disabled, shadow, depth etc.
 
 		/* Background layer disabled */
 		if ((mode & 0xe000) == 0)
@@ -3501,7 +3499,7 @@ void draw_row_64pixhigh(INT32 in_sy, INT32 scrollreg)
 		tilemap_scrolly += in_sy;
 
 		/* Tweak the scroll values */
-		tilemap_scrolly += ((BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x70 / 2]) & 0x1ff) - (BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x70 / 2]) & 0x200) + BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x6a / 2]) + 2);
+		tilemap_scrolly += ((ssv_scroll[0x70 / 2] & 0x1ff) - (ssv_scroll[0x70 / 2] & 0x200) + ssv_scroll[0x6a / 2] + 2);
 
 		// Kludge for eaglshot
 		if ((unknown & 0x05ff) == 0x0440) tilemap_scrollx += -0x10;
@@ -3513,7 +3511,7 @@ void draw_row_64pixhigh(INT32 in_sy, INT32 scrollreg)
 		{
 			UINT32 scrolltable_base = ((mode & 0x00ff) * 0x400 ) /2;
 			//logerror("line %d realy %04x: scrolltable base is %08x\n", line,realy&0x1ff, scrolltable_base*2);
-			tilemap_scrollx += BURN_ENDIAN_SWAP_INT16(spriteram16[(scrolltable_base+(realy&0x1ff)) & 0x1ffff]);
+			tilemap_scrollx += spriteram16[(scrolltable_base+(realy&0x1ff)) & 0x1ffff];
 		}
 
 		/* Draw the rows */
@@ -3553,23 +3551,23 @@ static void draw_sprites()
 		INT32 sy, y, yoffs, flipy, ynum, ystart, yend, yinc, sprites_offsy, tilemaps_offsy;
 		INT32 mode,global_depth,global_xnum,global_ynum;
 
-		mode   = BURN_ENDIAN_SWAP_INT16(s1[ 0 ]);
-		sprite = BURN_ENDIAN_SWAP_INT16(s1[ 1 ]);
-		xoffs  = BURN_ENDIAN_SWAP_INT16(s1[ 2 ]);
-		yoffs  = BURN_ENDIAN_SWAP_INT16(s1[ 3 ]);
+		mode   = s1[ 0 ];
+		sprite = s1[ 1 ];
+		xoffs  = s1[ 2 ];
+		yoffs  = s1[ 3 ];
 
 		/* Last sprite */
 		if (sprite & 0x8000) break;
 
 		/* Single-sprite address */
 		s2 = &spriteram16[ (sprite & 0x7fff) * 4 ];
-		tilemaps_offsy = ((BURN_ENDIAN_SWAP_INT16(s2[3]) & 0x1ff) - (BURN_ENDIAN_SWAP_INT16(s2[3]) & 0x200));
+		tilemaps_offsy = ((s2[3] & 0x1ff) - (s2[3] & 0x200));
 
 		/* Every single sprite is offset by x & yoffs, and additionally
 		by one of the 8 x & y offsets in the 1c0040-1c005f area   */
 
-		xoffs   +=      BURN_ENDIAN_SWAP_INT16(ssv_scroll[((mode & 0x00e0) >> 4) + 0x40/2]);
-		yoffs   +=      BURN_ENDIAN_SWAP_INT16(ssv_scroll[((mode & 0x00e0) >> 4) + 0x42/2]);
+		xoffs   +=      ssv_scroll[((mode & 0x00e0) >> 4) + 0x40/2];
+		yoffs   +=      ssv_scroll[((mode & 0x00e0) >> 4) + 0x42/2];
 
 		/* Number of single-sprites (1-32) */
 		num             =   (mode & 0x001f) + 1;
@@ -3583,14 +3581,14 @@ static void draw_sprites()
 
 			if (s2 >= end2) break;
 
-			sx      =       BURN_ENDIAN_SWAP_INT16(s2[ 2 ]);
-			sy      =       BURN_ENDIAN_SWAP_INT16(s2[ 3 ]);
+			sx      =       s2[ 2 ];
+			sy      =       s2[ 3 ];
 
 			local_depth     =   sx & 0xf000;
 			local_xnum      =   sx & 0x0c00;
 			local_ynum      =   sy & 0x0c00;
 
-			if (BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x76/2]) & 0x4000)
+			if (ssv_scroll[0x76/2] & 0x4000)
 			{
 				xnum    =   local_xnum;
 				ynum    =   local_ynum;
@@ -3603,24 +3601,24 @@ static void draw_sprites()
 				depth   =   global_depth;
 			}
 
-			if ( BURN_ENDIAN_SWAP_INT16(s2[0]) <= 7 && BURN_ENDIAN_SWAP_INT16(s2[1]) == 0 && xnum == 0 && ynum == 0x0c00)
+			if ( s2[0] <= 7 && s2[1] == 0 && xnum == 0 && ynum == 0x0c00)
 			{
-				INT32 scroll  =   BURN_ENDIAN_SWAP_INT16(s2[ 0 ]);    // scroll index
+				INT32 scroll  =   s2[ 0 ];    // scroll index
 
-				if (BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x76/2]) & 0x1000)
+				if (ssv_scroll[0x76/2] & 0x1000)
 					sy -= 0x20;                     // eaglshot
 				else
 				{
-					if (BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x7a/2]) & 0x0800)
+					if (ssv_scroll[0x7a/2] & 0x0800)
 					{
-						if (BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x7a/2]) & 0x1000)    // drifto94, dynagear, keithlcy, mslider, stmblade, gdfs, ultrax, twineag2
+						if (ssv_scroll[0x7a/2] & 0x1000)    // drifto94, dynagear, keithlcy, mslider, stmblade, gdfs, ultrax, twineag2
 							sy -= tilemaps_offsy;
 						else                        // srmp4
 							sy += tilemaps_offsy;
 					}
 				}
 
-				if ((mode & 0x001f) != 0 && BURN_ENDIAN_SWAP_INT16(s2[0]) != 0)
+				if ((mode & 0x001f) != 0 && s2[0] != 0)
 					if (nBurnLayer & 2) draw_row_64pixhigh(sy, scroll);
 			}
 			else
@@ -3628,19 +3626,19 @@ static void draw_sprites()
 				INT32 shadow, gfx;
 				if (s2 >= end2) break;
 
-				code    =   BURN_ENDIAN_SWAP_INT16(s2[0]);  // code high bits
-				attr    =   BURN_ENDIAN_SWAP_INT16(s2[1]);  // code low  bits + color
+				code    =   s2[0];  // code high bits
+				attr    =   s2[1];  // code low  bits + color
 
 				/* Code's high bits are scrambled */
 				code    +=  tile_code[(attr & 0x3c00)>>10];
 				flipy   =   (attr & 0x4000);
 				flipx   =   (attr & 0x8000);
 
-				if ((BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x74/2]) & 0x1000) && ((BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x74/2]) & 0x2000) == 0))
+				if ((ssv_scroll[0x74/2] & 0x1000) && ((ssv_scroll[0x74/2] & 0x2000) == 0))
 				{
 					if (flipx == 0) flipx = 1; else flipx = 0;
 				}
-				if ((BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x74/2]) & 0x4000) && ((BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x74/2]) & 0x2000) == 0))
+				if ((ssv_scroll[0x74/2] & 0x4000) && ((ssv_scroll[0x74/2] & 0x2000) == 0))
 				{
 					if (flipy == 0) flipy = 1; else flipy = 0;
 				}
@@ -3680,31 +3678,31 @@ static void draw_sprites()
 				sx  =   (sx & 0x1ff) - (sx & 0x200);
 				sy  =   (sy & 0x1ff) - (sy & 0x200);
 
-				sprites_offsx =  ((BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x74/2]) & 0x7f) - (BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x74/2]) & 0x80));
+				sprites_offsx =  ((ssv_scroll[0x74/2] & 0x7f) - (ssv_scroll[0x74/2] & 0x80));
 
-				sprites_offsy = -((BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x70/2]) & 0x1ff) - (BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x70/2]) & 0x200) + BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x6a/2]) + 1);
+				sprites_offsy = -((ssv_scroll[0x70/2] & 0x1ff) - (ssv_scroll[0x70/2] & 0x200) + ssv_scroll[0x6a/2] + 1);
 
-				if (BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x74/2]) & 0x4000) // flipscreen y
+				if (ssv_scroll[0x74/2] & 0x4000) // flipscreen y
 				{
 					sy = -sy;
-					if (BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x74/2]) & 0x8000)
+					if (ssv_scroll[0x74/2] & 0x8000)
 						sy += 0x00;         //
 					else
 						sy -= 0x10;         // vasara (hack)
 				}
 
-				if (BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x74/2]) & 0x1000) // flipscreen x
+				if (ssv_scroll[0x74/2] & 0x1000) // flipscreen x
 				{
 					sx = -sx + 0x100;
 				}
 
-				if (BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x7a/2]) == 0x7140)
+				if (ssv_scroll[0x7a/2] == 0x7140)
 				{
 					// srmp7
 					sx  =   sprites_offsx + sx;
 					sy  =   sprites_offsy - sy;
 				}
-				else if (BURN_ENDIAN_SWAP_INT16(ssv_scroll[0x7a/2]) & 0x0800)
+				else if (ssv_scroll[0x7a/2] & 0x0800)
 				{
 					// dynagear, drifto94, eaglshot, keithlcy, mslider, srmp4, stmblade, twineag2, ultrax
 					sx  =   sprites_offsx + sx - (xnum * 8)    ;
@@ -3739,8 +3737,8 @@ static void gdfs_draw_layer()
 	UINT16 *ram = (UINT16*)DrvTMAPRAM;
 	UINT16 *sram = (UINT16*)DrvTMAPScroll;
 
-	INT32 scrollx = BURN_ENDIAN_SWAP_INT16(sram[0x0c/2]) & 0xfff;
-	INT32 scrolly = BURN_ENDIAN_SWAP_INT16(sram[0x10/2]) & 0xfff;
+	INT32 scrollx = sram[0x0c/2] & 0xfff;
+	INT32 scrolly = sram[0x10/2] & 0xfff;
 
 	INT32 yy = scrolly & 0xf;
 	INT32 xx = scrollx & 0xf;
@@ -3753,7 +3751,7 @@ static void gdfs_draw_layer()
 		{
 			INT32 offs = (((scrollx + x) & 0xff0) / 0x10) + sy;
 
-			INT32 attr  = BURN_ENDIAN_SWAP_INT16(ram[offs]);
+			INT32 attr  = ram[offs];
 			INT32 code  = attr & 0x3fff;
 			INT32 color = 0;
 			INT32 flipx = attr & 0x8000;
@@ -3809,7 +3807,7 @@ static INT32 DrvDrawScanline(INT32 drawto)
 		UINT16 *scroll = (UINT16*)DrvScrollRAM;
 
 		// Shadow
-		if (BURN_ENDIAN_SWAP_INT16(scroll[0x76/2]) & 0x0080)	// 4 bit shadows (mslider, stmblade)
+		if (scroll[0x76/2] & 0x0080)	// 4 bit shadows (mslider, stmblade)
 		{
 			shadow_pen_shift = 11;
 		}
@@ -3822,10 +3820,10 @@ static INT32 DrvDrawScanline(INT32 drawto)
 
 #if 0
 		// used by twineag2 and ultrax
-		Gclip_min_x = ((nScreenWidth / 2) + BURN_ENDIAN_SWAP_INT16(scroll[0x62/2])) * 2 - BURN_ENDIAN_SWAP_INT16(scroll[0x64/2]) * 2 + 2;
-		Gclip_max_x = ((nScreenWidth / 2) + BURN_ENDIAN_SWAP_INT16(scroll[0x62/2])) * 2 - BURN_ENDIAN_SWAP_INT16(scroll[0x62/2]) * 2 + 1;
-		Gclip_min_y = (nScreenHeight + BURN_ENDIAN_SWAP_INT16(scroll[0x6a/2])) - BURN_ENDIAN_SWAP_INT16(scroll[0x6c/2]) + 1;
-		Gclip_max_y = (nScreenHeight + BURN_ENDIAN_SWAP_INT16(scroll[0x6a/2])) - BURN_ENDIAN_SWAP_INT16(scroll[0x6a/2]);
+		Gclip_min_x = ((nScreenWidth / 2) + scroll[0x62/2]) * 2 - scroll[0x64/2] * 2 + 2;
+		Gclip_max_x = ((nScreenWidth / 2) + scroll[0x62/2]) * 2 - scroll[0x62/2] * 2 + 1;
+		Gclip_min_y = (nScreenHeight + scroll[0x6a/2]) - scroll[0x6c/2] + 1;
+		Gclip_max_y = (nScreenHeight + scroll[0x6a/2]) - scroll[0x6a/2]        ;
 
 		if (Gclip_min_x < 0) Gclip_min_x = 0;
 		if (Gclip_min_y < 0) Gclip_min_y = 0;
@@ -4632,7 +4630,7 @@ struct BurnDriver BurnDrvCairblad = {
 	"cairblad", NULL, NULL, NULL, "1999",
 	"Change Air Blade (Japan)\0", NULL, "Sammy", "SSV",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARDWARE_SETA_SSV, GBF_VERSHOOT, 0,
+	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL, 2, HARDWARE_SETA_SSV, GBF_VERSHOOT, 0,
 	NULL, cairbladRomInfo, cairbladRomName, NULL, NULL, NULL, NULL, DrvInputInfo, CairbladDIPInfo,
 	CairbladInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x8000,
 	240, 338, 3, 4

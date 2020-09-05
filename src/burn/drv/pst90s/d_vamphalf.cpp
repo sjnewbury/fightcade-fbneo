@@ -826,7 +826,7 @@ static inline void do_speedhack(UINT32 address)
 	if (address == speedhack_address) {
 		if (E132XSGetPC(0) == speedhack_pc) {
 			if (E132XSInterruptActive()) {
-				E132XSRunEndBurnAllCycles();
+				E132XSRunEnd();
 			} else {
 				E132XSBurnCycles(50);
 			}
@@ -839,7 +839,7 @@ static UINT32 common_read_long(UINT32 address)
 	if (address < 0x400000) {
 		speedhack_callback(address);
 		UINT32 ret = *((UINT32*)(DrvMainRAM + address));
-		return BURN_ENDIAN_SWAP_INT32((ret << 16) | (ret >> 16));
+		return (ret << 16) | (ret >> 16);
 	}
 
 	switch (address)	// aoh
@@ -862,7 +862,7 @@ static UINT16 common_read_word(UINT32 address)
 {
 	if (address < 0x400000) {
 		speedhack_callback(address);
-		return BURN_ENDIAN_SWAP_INT16(*((UINT16*)(DrvMainRAM + address)));
+		return *((UINT16*)(DrvMainRAM + address));
 	}
 
 	switch (address & ~3)	// aoh
@@ -991,7 +991,7 @@ static INT32 DrvLoadRoms(bool bLoad)
 
 		if ((ri.nType & BRF_PRG) && (ri.nType & 0x0f) == 1) {
 			if (bLoad) {
-				memmove (DrvMainROM, DrvMainROM + ri.nLen, 0x400000 - ri.nLen);
+				memcpy (DrvMainROM, DrvMainROM + ri.nLen, 0x400000 - ri.nLen);
 				if (BurnLoadRom(DrvMainROM + 0x400000 - ri.nLen, i, 1)) return 1;
 			}
 			continue;
@@ -1071,8 +1071,8 @@ static void sound_type_0_init()
 static void sound_type_1_init() // aoh
 {
 	BurnYM2151Init(3579545);
-	BurnYM2151SetRoute(BURN_SND_YM2151_YM2151_ROUTE_1, 1.00, BURN_SND_ROUTE_LEFT);
-	BurnYM2151SetRoute(BURN_SND_YM2151_YM2151_ROUTE_2, 1.00, BURN_SND_ROUTE_RIGHT);
+	BurnYM2151SetRoute(BURN_SND_YM2151_YM2151_ROUTE_1, 0.45, BURN_SND_ROUTE_LEFT);
+	BurnYM2151SetRoute(BURN_SND_YM2151_YM2151_ROUTE_2, 0.45, BURN_SND_ROUTE_RIGHT);
 
 	MSM6295Init(0, 1000000 / MSM6295_PIN7_HIGH, 1);
 	MSM6295Init(1, 4000000 / MSM6295_PIN7_HIGH, 1);
@@ -1188,14 +1188,14 @@ static void draw_sprites()
 		{
 			INT32 offs = (block + cnt) / 2;
 
-			if (BURN_ENDIAN_SWAP_INT16(ram[offs]) & 0x0100) continue;
+			if (ram[offs] & 0x0100) continue;
 
-			INT32 code  = BURN_ENDIAN_SWAP_INT16(ram[offs+1]) | ((BURN_ENDIAN_SWAP_INT16(ram[offs+2]) & 0x100) << 8);
-			INT32 color = BURN_ENDIAN_SWAP_INT16(ram[offs+2]) >> palette_bit;
-			INT32 sx    = BURN_ENDIAN_SWAP_INT16(ram[offs+3]) & 0x01ff;
-			INT32 sy 	= 256 - (BURN_ENDIAN_SWAP_INT16(ram[offs]) & 0x00ff);
-			INT32 flipx = BURN_ENDIAN_SWAP_INT16(ram[offs]) & 0x8000;
-			INT32 flipy = BURN_ENDIAN_SWAP_INT16(ram[offs]) & 0x4000;
+			INT32 code  = ram[offs+1] | ((ram[offs+2] & 0x100) << 8);
+			INT32 color = ram[offs+2] >> palette_bit;
+			INT32 sx    = ram[offs+3] & 0x01ff;
+			INT32 sy 	= 256 - (ram[offs] & 0x00ff);
+			INT32 flipx = ram[offs] & 0x8000;
+			INT32 flipy = ram[offs] & 0x4000;
 
 			if (flipscreen)
 			{
@@ -1224,11 +1224,11 @@ static void aoh_draw_sprites()
 		{
 			INT32 offs = (block + cnt) / 2;
 
-			INT32 code  = BURN_ENDIAN_SWAP_INT16(ram[offs+1]) | ((BURN_ENDIAN_SWAP_INT16(ram[offs]) & 0x300) << 8);
-			INT32 color = BURN_ENDIAN_SWAP_INT16(ram[offs+2]) >> palette_bit;
-			INT32 sx    = BURN_ENDIAN_SWAP_INT16(ram[offs+3]) & 0x01ff;
-			INT32 sy 	= 256 - (BURN_ENDIAN_SWAP_INT16(ram[offs]) & 0x00ff);
-			INT32 flipx = BURN_ENDIAN_SWAP_INT16(ram[offs]) & 0x0400;
+			INT32 code  = ram[offs+1] | ((ram[offs] & 0x300) << 8);
+			INT32 color = ram[offs+2] >> palette_bit;
+			INT32 sx    = ram[offs+3] & 0x01ff;
+			INT32 sy 	= 256 - (ram[offs] & 0x00ff);
+			INT32 flipx = ram[offs] & 0x0400;
 			INT32 flipy = 0;
 
 			if (flipscreen)
@@ -1509,7 +1509,6 @@ struct BurnDriver BurnDrvCoolminii = {
 
 
 // Jumping Break (set 1)
-/* Released February 1999 */
 
 static struct BurnRomInfo jmpbreakRomDesc[] = {
 	{ "rom1.bin",				0x080000, 0x7e237f7d, 1 | BRF_PRG | BRF_ESS }, //  0 EX116T Code
@@ -1546,7 +1545,6 @@ struct BurnDriver BurnDrvJmpbreak = {
 
 
 // Jumping Break (set 2)
-// PCB has a New Impeuropex sticker, so sold in the Italian market. There also an hand-written IMP 28.04.99
 
 static struct BurnRomInfo jmpbreakaRomDesc[] = {
 	{ "2.rom1",					0x080000, 0x553af133, 1 | BRF_PRG | BRF_ESS }, //  0 EX116T Code
@@ -1557,9 +1555,7 @@ static struct BurnRomInfo jmpbreakaRomDesc[] = {
 	{ "roml01.bin",				0x200000, 0x6796a104, 2 | BRF_GRA },           //  4
 	{ "romu01.bin",				0x200000, 0x0cc907c8, 2 | BRF_GRA },           //  5
 
-	{ "1.vrom1",				0x040000, 0x1b6e3671, 3 | BRF_SND },           //  6 Samples
-	
-	{ "palce22v10h.gal1",		0x0002dd, 0x0ff86470, 0 | BRF_OPT },		   //  7 PLDs
+	{ "vrom1.bin",				0x040000, 0x1b6e3671, 3 | BRF_SND },           //  6 Samples
 };
 
 STD_ROM_PICK(jmpbreaka)
@@ -2001,7 +1997,7 @@ STD_ROM_FN(vamphalfk)
 
 static INT32 VamphalfkInit()
 {
-	speedhack_address = 0x4a648;
+	speedhack_address = 0x4a468;
 	speedhack_pc = 0x82ec;
 
 	return CommonInit(TYPE_E116T, vamphalf_io_write, vamphalf_io_read, sound_type_0_init, 0, 0);

@@ -50,9 +50,7 @@ static INT32 sf_active;
 static INT32 sound2_bank;
 
 static struct BurnInputInfo SfInputList[] = {
-	{"Coin 1"       , BIT_DIGITAL  , DrvJoy2 + 0,	"p1 coin"  },
-	{"Coin 2"       , BIT_DIGITAL  , DrvJoy2 + 1,	"p2 coin"  },
-
+	{"P1 Coin"       , BIT_DIGITAL  , DrvJoy2 + 0,	"p1 coin"  },
 	{"P1 Start"  ,    BIT_DIGITAL  , DrvJoy1 + 0,	"p1 start" },
 	{"P1 Up",	  BIT_DIGITAL,   DrvJoy3 + 3,   "p1 up",   },
 	{"P1 Down",	  BIT_DIGITAL,   DrvJoy3 + 2,   "p1 down", },
@@ -65,6 +63,7 @@ static struct BurnInputInfo SfInputList[] = {
 	{"P1 Button 5"  , BIT_DIGITAL  , DrvJoy4 + 9,	"p1 fire 5"},
 	{"P1 Button 6"  , BIT_DIGITAL  , DrvJoy4 + 10,	"p1 fire 6"},
 
+	{"P2 Coin"       , BIT_DIGITAL  , DrvJoy2 + 1,	"p2 coin"  },
 	{"P2 Start"  ,    BIT_DIGITAL  , DrvJoy1 + 1,	"p2 start" },
 	{"P2 Up",	  BIT_DIGITAL,   DrvJoy3 + 11,  "p2 up",   },
 	{"P2 Down",	  BIT_DIGITAL,   DrvJoy3 + 10,  "p2 down", },
@@ -89,9 +88,7 @@ static struct BurnInputInfo SfInputList[] = {
 STDINPUTINFO(Sf)
 
 static struct BurnInputInfo SfjInputList[] = {
-	{"Coin 1"       , BIT_DIGITAL  , DrvJoy2 + 0,	"p1 coin"  },
-	{"Coin 2"       , BIT_DIGITAL  , DrvJoy2 + 1,	"p2 coin"  },
-
+	{"P1 Coin"       , BIT_DIGITAL  , DrvJoy2 + 0,	"p1 coin"  },
 	{"P1 Start"  ,    BIT_DIGITAL  , DrvJoy1 + 0,	"p1 start" },
 	{"P1 Up",	  BIT_DIGITAL,   DrvJoy3 + 3,   "p1 up",   },
 	{"P1 Down",	  BIT_DIGITAL,   DrvJoy3 + 2,   "p1 down", },
@@ -104,6 +101,7 @@ static struct BurnInputInfo SfjInputList[] = {
 	{"P1 Button 5"  , BIT_DIGITAL  , DrvJoy3 + 13,	"p1 fire 5"},
 	{"P1 Button 6"  , BIT_DIGITAL  , DrvJoy3 + 14,	"p1 fire 6"},
 
+	{"P2 Coin"       , BIT_DIGITAL  , DrvJoy2 + 1,	"p2 coin"  },
 	{"P2 Start"  ,    BIT_DIGITAL  , DrvJoy1 + 1,	"p2 start" },
 	{"P2 Up",	  BIT_DIGITAL,   DrvJoy4 + 3,   "p1 up",   },
 	{"P2 Down",	  BIT_DIGITAL,   DrvJoy4 + 2,   "p2 down", },
@@ -128,9 +126,7 @@ static struct BurnInputInfo SfjInputList[] = {
 STDINPUTINFO(Sfj)
 
 static struct BurnInputInfo SfusInputList[] = {
-	{"Coin 1"       , BIT_DIGITAL  , DrvJoy2 + 0,	"p1 coin"  },
-	{"Coin 2"       , BIT_DIGITAL  , DrvJoy2 + 1,	"p2 coin"  },
-
+	{"P1 Coin"       , BIT_DIGITAL  , DrvJoy2 + 0,	"p1 coin"  },
 	{"P1 Start"  ,    BIT_DIGITAL  , DrvJoy1 + 0,	"p1 start" },
 	{"P1 Up",	  BIT_DIGITAL,   DrvJoy3 + 3,   "p1 up",   },
 	{"P1 Down",	  BIT_DIGITAL,   DrvJoy3 + 2,   "p1 down", },
@@ -143,6 +139,7 @@ static struct BurnInputInfo SfusInputList[] = {
 	{"P1 Button 5"  , BIT_DIGITAL  , DrvJoy3 + 7,	"p1 fire 5"},
 	{"P1 Button 6"  , BIT_DIGITAL  , DrvJoy2 + 2,	"p1 fire 6"},
 
+	{"P2 Coin"       , BIT_DIGITAL  , DrvJoy2 + 1,	"p2 coin"  },
 	{"P2 Start"  ,    BIT_DIGITAL  , DrvJoy1 + 1,	"p2 start" },
 	{"P2 Up",	  BIT_DIGITAL,   DrvJoy3 + 11,  "p1 up",   },
 	{"P2 Down",	  BIT_DIGITAL,   DrvJoy3 + 10,  "p2 down", },
@@ -1546,7 +1543,7 @@ static struct BurnRomInfo sfuaRomDesc[] = {
 	{ "mb7114h.12j", 	0x0100, 0x4c734b64, 0 | BRF_OPT },            // 42
 	{ "mmi-7603.13h",	0x0020, 0x06bcda53, 0 | BRF_OPT },            // 43
 	
-	{ "sf_s.id8751h-8.14f",  	0x01000, 0x6588891f, 0 | BRF_OPT },	  // i8751 MCU
+	{ "sf_s.id8751h-8.14f",  	0x00800, 0x00000000, 0 | BRF_NODUMP },		  // i8751 MCU
 };
 
 STD_ROM_PICK(sfua)
@@ -1624,7 +1621,7 @@ static struct BurnRomInfo sfjRomDesc[] = {
 	{ "mb7114h.12j", 	0x0100, 0x4c734b64, 0 | BRF_OPT },            // 42
 	{ "mmi-7603.13h",	0x0020, 0x06bcda53, 0 | BRF_OPT },            // 43
 	
-	{ "sf_s.id8751h-8.14f",  	0x01000, 0x6588891f, 0 | BRF_OPT },	  // i8751 MCU
+	{ "sf_s.id8751h-8.14f",  	0x00800, 0x00000000, 0 | BRF_NODUMP },		  // i8751 MCU
 };
 
 STD_ROM_PICK(sfj)
@@ -1847,7 +1844,7 @@ static struct BurnRomInfo sfwRomDesc[] = {
 	{ "sfb04.mb7114h.12j", 		0x0100, 0x4c734b64, 0 | BRF_OPT },    // 42
 	{ "sfb00.mb7051.13h",		0x0020, 0x06bcda53, 0 | BRF_OPT },    // 43
 	
-	{ "sf.14e",  				0x01000, 0x6588891f, 0 | BRF_OPT },	  // i8751 MCU
+	{ "sf.14e",  		0x00800, 0x00000000, 0 | BRF_NODUMP },		  // i8751 MCU
 };
 
 STD_ROM_PICK(sfw)

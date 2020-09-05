@@ -303,7 +303,7 @@ static UINT16 program_read_word_16be(UINT32 address)
 	UINT8 *ptr = mem[0][address >> 12];
 
 	if (ptr) {
-		return BURN_ENDIAN_SWAP_INT16(*((UINT16*)(ptr + (address & 0xffe))));
+		return *((UINT16*)(ptr + (address & 0xffe)));
 	}
 
 	if (read_word_handler) {
@@ -321,7 +321,7 @@ static UINT32 program_read_dword_32be(UINT32 address)
 
 	if (ptr) {
 		UINT32 ret = *((UINT32*)(ptr + (address & 0xffe))); // word aligned
-		return BURN_ENDIAN_SWAP_INT32((ret << 16) | (ret >> 16));
+		return (ret << 16) | (ret >> 16);
 	}
 
 	if (read_dword_handler) {
@@ -338,7 +338,7 @@ static UINT16 cpu_readop16(UINT32 address)
 	UINT8 *ptr = mem[0][address >> 12];
 
 	if (ptr) {
-		return BURN_ENDIAN_SWAP_INT16(*((UINT16*)(ptr + (address & 0xffe))));
+		return *((UINT16*)(ptr + (address & 0xffe)));
 	}
 
 	if (read_word_handler) {
@@ -371,7 +371,7 @@ static void program_write_word_16be(UINT32 address, UINT16 data)
 	UINT8 *ptr = mem[1][address >> 12];
 
 	if (ptr) {
-		*((UINT16*)(ptr + (address & 0xffe))) = BURN_ENDIAN_SWAP_INT16(data);
+		*((UINT16*)(ptr + (address & 0xffe))) = data;
 		return;
 	}
 
@@ -388,7 +388,7 @@ static void program_write_dword_32be(UINT32 address, UINT32 data)
 
 	if (ptr) {
 		data = (data << 16) | (data >> 16);
-		*((UINT32*)(ptr + (address & 0xffe))) = BURN_ENDIAN_SWAP_INT32(data); // word aligned!
+		*((UINT32*)(ptr + (address & 0xffe))) = data; // word aligned!
 		return;
 	}
 
@@ -505,7 +505,6 @@ static int		m_icount;
 static UINT64	itotal_cycles; // internal total cycles (timers etc)
 static UINT64	utotal_cycles; // user-total cycles (E132XSTotalCycles() / E132XSNewFrame() etc..)
 static INT32	n_cycles;
-static INT32    sleep_until_int;
 
 struct regs_decode
 {
@@ -4783,7 +4782,6 @@ void E132XSReset()
 	n_cycles = 0;
 
 	m_hold_irq = 0;
-	sleep_until_int = 0;
 }
 
 void E132XSOpen(INT32 nCpu)
@@ -4850,8 +4848,6 @@ void E132XSScan(INT32 nAction)
 
 void E132XSSetIRQLine(INT32 line, INT32 state)
 {
-	if (state) sleep_until_int = 0;
-
 	switch (state) {
 		case CPU_IRQSTATUS_HOLD:
 			execute_set_input(line, 2);
@@ -4868,26 +4864,8 @@ void E132XSSetIRQLine(INT32 line, INT32 state)
 	}
 }
 
-void E132XSBurnUntilInt()
-{
-	sleep_until_int = 1;
-}
-
-INT32 E132XSIdle(INT32 cycles)
-{
-	utotal_cycles += cycles;
-
-	return cycles;
-}
-
-static INT32 end_run = 0;
-
 INT32 E132XSRun(INT32 cycles)
 {
-	if (sleep_until_int) {
-		return E132XSIdle(cycles);
-	}
-
 	m_icount = cycles;
 	n_cycles = m_icount;
 
@@ -4897,8 +4875,6 @@ INT32 E132XSRun(INT32 cycles)
 	check_interrupts();
 
 	INT32 t_icount;
-
-	end_run = 0;
 
 	do
 	{
@@ -5197,7 +5173,7 @@ INT32 E132XSRun(INT32 cycles)
 
 		itotal_cycles += t_icount - m_icount;
 
-	} while( m_icount > 0 && !end_run );
+	} while( m_icount > 0 );
 
 	cycles = n_cycles - m_icount;
 	utotal_cycles += cycles;
@@ -5208,11 +5184,6 @@ INT32 E132XSRun(INT32 cycles)
 }
 
 void E132XSRunEnd()
-{
-	end_run = 1;
-}
-
-void E132XSRunEndBurnAllCycles()
 {
 	m_icount = 0;
 }

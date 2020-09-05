@@ -466,10 +466,6 @@ static UINT8 __fastcall MegadriveReadByte(UINT32 sekAddress)
 			return retVal;
 		}
 
-		case 0xa11101: { // lsb of busreq status is literally random
-			return BurnRandom() & 0xff;
-		}
-
 		case 0xa12000: return 0; // NOP (cd-stuff, called repeatedly by rnrracin)
 
 		default: {
@@ -3365,8 +3361,8 @@ INT32 MegadriveInit()
 		RamMisc->SRamActive = 0;
 	}
 
-	if (strstr(BurnDrvGetTextA(DRV_NAME), "forgottn") || strstr(BurnDrvGetTextA(DRV_NAME), "ustrike")) {
-		bprintf(0, _T("Forced 3-button mode for Forgotten Worlds, Urban Strike!\n"));
+	if (strstr(BurnDrvGetTextA(DRV_NAME), "forgottn")) {
+		bprintf(0, _T("Forced 3-button mode for Forgotten Worlds!\n"));
 		bForce3Button = 1;
 	}
 
@@ -4575,16 +4571,6 @@ INT32 OPTIMIZE_ATTR MegadriveFrame()
 
 	SekOpen(0);
 	ZetOpen(0);
-
-	if (BurnDrvGetHardwareCode() & SEGA_MD_ARCADE_SUNMIXING)
-	{
-		SekWriteWordROM(0x200050, -0x5b); // -5b
-		SekWriteWordROM(0x200042, JoyPad->pad[0] ^ 0xff);
-		SekWriteWordROM(0x200044, JoyPad->pad[1] ^ 0xff);
-		SekWriteWordROM(0x200046, JoyPad->pad[2] ^ 0xff);
-		SekWriteWordROM(0x200048, JoyPad->pad[3] ^ 0xff);
-		SekWriteWordROM(0x20007e, JoyPad->pad[4] ^ 0xff);
-	}
 
 	PicoFrameStart();
 

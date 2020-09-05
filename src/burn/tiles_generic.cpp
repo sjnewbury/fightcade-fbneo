@@ -228,8 +228,7 @@ void BurnTransferExit()
 	if (!Debug_BurnTransferInitted) bprintf(PRINT_ERROR, _T("BurnTransferExit called without init\n"));
 #endif
 
-	if (Debug_BurnTransferInitted)
-	{ // pTransDraw spill detector v.0001.01 - handy for driver development!
+	{ // pTransDraw spill detector v.0001 - handy for driver development!
 
 		INT32 uhoh_spill = 0;
 

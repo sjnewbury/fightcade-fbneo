@@ -6885,8 +6885,6 @@ static INT32 DrvDoReset(INT32 ram)
 	if (game_rotates)
 		RotateReset();
 
-	HiscoreReset();
-
 	watchdog = 0;
 
 	return 0;
@@ -8489,7 +8487,7 @@ struct BurnDriver BurnDrvDaioh = {
 	"daioh", NULL, NULL, NULL, "1993",
 	"Daioh\0", NULL, "Athena", "Seta",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARDWARE_SETA1, GBF_VERSHOOT, 0,
+	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL, 2, HARDWARE_SETA1, GBF_VERSHOOT, 0,
 	NULL, daiohRomInfo, daiohRomName, NULL, NULL, NULL, NULL, DaiohInputInfo, DaiohDIPInfo,
 	daiohInit, DrvExit, DrvFrame, seta2layerDraw, DrvScan, &DrvRecalc, 0x600,
 	240, 384, 3, 4
@@ -8519,7 +8517,7 @@ struct BurnDriver BurnDrvDaioha = {
 	"daioha", "daioh", NULL, NULL, "1993",
 	"Daioh (earlier)\0", NULL, "Athena", "Seta",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARDWARE_SETA1, GBF_VERSHOOT, 0,
+	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL, 2, HARDWARE_SETA1, GBF_VERSHOOT, 0,
 	NULL, daiohaRomInfo, daiohaRomName, NULL, NULL, NULL, NULL, DaiohInputInfo, DaiohDIPInfo,
 	daiohInit, DrvExit, DrvFrame, seta2layerDraw, DrvScan, &DrvRecalc, 0x600,
 	240, 384, 3, 4
@@ -8593,7 +8591,7 @@ struct BurnDriver BurnDrvDaiohp = {
 	"daiohp", "daioh", NULL, NULL, "1993",
 	"Daioh (prototype)\0", NULL, "Athena", "Seta",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_PROTOTYPE | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARDWARE_SETA1, GBF_VERSHOOT, 0,
+	BDF_GAME_WORKING | BDF_CLONE | BDF_PROTOTYPE | BDF_ORIENTATION_VERTICAL, 2, HARDWARE_SETA1, GBF_VERSHOOT, 0,
 	NULL, daiohpRomInfo, daiohpRomName, NULL, NULL, NULL, NULL, DaiohInputInfo, DaiohDIPInfo,
 	daiohpInit, DrvExit, DrvFrame, seta2layerDraw, DrvScan, &DrvRecalc, 0x600,
 	240, 384, 3, 4
@@ -8651,7 +8649,7 @@ struct BurnDriver BurnDrvDaiohc = {
 	"daiohc", "daioh", NULL, NULL, "1993",
 	"Daioh (93111A PCB conversion)\0", NULL, "Athena", "Seta",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARDWARE_SETA1, GBF_VERSHOOT, 0,
+	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL, 2, HARDWARE_SETA1, GBF_VERSHOOT, 0,
 	NULL, daiohcRomInfo, daiohcRomName, NULL, NULL, NULL, NULL, DaiohInputInfo, DaiohDIPInfo,
 	daiohcInit, DrvExit, DrvFrame, seta2layerDraw, DrvScan, &DrvRecalc, 0x600,
 	240, 384, 3, 4

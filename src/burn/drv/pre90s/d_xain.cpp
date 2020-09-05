@@ -225,7 +225,11 @@ static void xain_main_write(UINT16 address, UINT8 data)
 
 		case 0x3a0c:
 		{
-			M6809SetIRQLine(1, 0x00, CPU_IRQSTATUS_ACK);
+			M6809Close();
+			M6809Open(1);
+			M6809SetIRQLine(0x00, CPU_IRQSTATUS_ACK); 
+			M6809Close();
+			M6809Open(0);
 		}
 		return;
 
@@ -323,7 +327,11 @@ static void xain_sub_write(UINT16 address, UINT8 data)
 	{
 		case 0x2000:
 		{
-			M6809SetIRQLine(0, 0x00, CPU_IRQSTATUS_ACK); // maincpu irq
+			M6809Close();
+			M6809Open(0);
+			M6809SetIRQLine(0x00, CPU_IRQSTATUS_ACK); // maincpu irq
+			M6809Close();
+			M6809Open(1);
 		}
 		return;
 
@@ -942,14 +950,14 @@ static INT32 DrvFrame()
 		M6809Open(0);
 		if ((i%8) == 7)
 			xain_scanline(i/8);
-		CPU_RUN(0, M6809);
+		nCyclesDone[0] += M6809Run(nCyclesTotal[0] / nInterleave);
 		M6809Close();
 
 		M6809Open(1);
-		CPU_RUN(1, M6809);
+		nCyclesDone[1] += M6809Run(nCyclesTotal[1] / nInterleave);
 		M6809Close();
 
-		CPU_RUN(3, m6805);
+		m6805Run(nCyclesTotal[3] / nInterleave);
 
 		M6809Open(2);
 		BurnTimerUpdate((i + 1) * (nCyclesTotal[2] / nInterleave));

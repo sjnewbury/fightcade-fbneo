@@ -11,7 +11,7 @@
 
 #define EMU_M68K								// Use Musashi 68000 emulator
 
-#define SEK_MAX	(5)								// Maximum number of CPUs supported
+#define SEK_MAX	(4)								// Maximum number of CPUs supported
 
 #if defined EMU_M68K
  #include "m68k/m68k.h"
@@ -163,8 +163,6 @@ void SekSetHALT(INT32 nStatus);
 void SekSetHALT(INT32 nCPU, INT32 nStatus);
 INT32 SekGetHALT();
 INT32 SekGetHALT(INT32 nCPU);
-
-INT32 SekIdle(INT32 nCPU, INT32 nCycles);
 
 inline static INT32 SekIdle(INT32 nCycles)
 {

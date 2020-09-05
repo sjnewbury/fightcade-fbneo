@@ -257,7 +257,7 @@ static inline dword __pop(cpu_state *cpu) {
 }
 
 #define _push(v)    __push(cpu, v)
-#define _pop(v)     __pop(cpu)
+#define _pop()     __pop(cpu)
 
 } // tms
 

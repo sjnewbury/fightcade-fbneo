@@ -55,8 +55,6 @@ static UINT8 DrvInput[9];
 static UINT8 DrvReset = 0;
 
 static INT32 m92_irq_vectorbase;
-static INT32 m92_main_bank;
-
 static INT32 graphics_mask[2] = { 0, 0 };
 
 static INT32 nInterleave = 256; // 256 scanlines
@@ -64,7 +62,6 @@ static INT32 nCyclesDone[2] = { 0, 0 };
 static INT32 nCyclesTotal[2] = { 0, 0 };
 
 static INT32 m92_kludge = 0;
-static INT32 m92_banks = 0;
 static INT32 nPrevScreenPos = 0;
 static INT32 nScreenOffsets[2] = { 0, 0 }; // x,y (ppan)
 
@@ -92,169 +89,169 @@ static struct _m92_layer *m92_layers[3];
 enum { VECTOR_INIT, YM2151_ASSERT, YM2151_CLEAR, V30_ASSERT, V30_CLEAR };
 
 static struct BurnInputInfo p2CommonInputList[] = {
-	{"P1 Coin",			BIT_DIGITAL,	DrvButton + 2,	"p1 coin"	},
+	{"P1 Coin",		BIT_DIGITAL,	DrvButton + 2,	"p1 coin"	},
 	{"P1 Start",		BIT_DIGITAL,	DrvButton + 0,	"p1 start"	},
-	{"P1 Up",			BIT_DIGITAL,	DrvJoy1 + 3,	"p1 up"		},
-	{"P1 Down",			BIT_DIGITAL,	DrvJoy1 + 2,	"p1 down"	},
-	{"P1 Left",			BIT_DIGITAL,	DrvJoy1 + 1,	"p1 left"	},
+	{"P1 Up",		BIT_DIGITAL,	DrvJoy1 + 3,	"p1 up"		},
+	{"P1 Down",		BIT_DIGITAL,	DrvJoy1 + 2,	"p1 down"	},
+	{"P1 Left",		BIT_DIGITAL,	DrvJoy1 + 1,	"p1 left"	},
 	{"P1 Right",		BIT_DIGITAL,	DrvJoy1 + 0,	"p1 right"	},
 	{"P1 Button 1",		BIT_DIGITAL,	DrvJoy1 + 7,	"p1 fire 1"	},
 	{"P1 Button 2",		BIT_DIGITAL,	DrvJoy1 + 6,	"p1 fire 2"	},
 
-	{"P2 Coin",			BIT_DIGITAL,	DrvButton + 3,	"p2 coin"	},
+	{"P2 Coin",		BIT_DIGITAL,	DrvButton + 3,	"p2 coin"	},
 	{"P2 Start",		BIT_DIGITAL,	DrvButton + 1,	"p2 start"	},
-	{"P2 Up",			BIT_DIGITAL,	DrvJoy2 + 3,	"p2 up"		},
-	{"P2 Down",			BIT_DIGITAL,	DrvJoy2 + 2,	"p2 down"	},
-	{"P2 Left",			BIT_DIGITAL,	DrvJoy2 + 1,	"p2 left"	},
+	{"P2 Up",		BIT_DIGITAL,	DrvJoy2 + 3,	"p2 up"		},
+	{"P2 Down",		BIT_DIGITAL,	DrvJoy2 + 2,	"p2 down"	},
+	{"P2 Left",		BIT_DIGITAL,	DrvJoy2 + 1,	"p2 left"	},
 	{"P2 Right",		BIT_DIGITAL,	DrvJoy2 + 0,	"p2 right"	},
 	{"P2 Button 1",		BIT_DIGITAL,	DrvJoy2 + 7,	"p2 fire 1"	},
 	{"P2 Button 2",		BIT_DIGITAL,	DrvJoy2 + 6,	"p2 fire 2"	},
 
-	{"Reset",			BIT_DIGITAL,	&DrvReset,		"reset"		},
-	{"Service",			BIT_DIGITAL,	DrvButton + 4,	"service"	},
-	{"Dip A",			BIT_DIPSWITCH,	DrvInput + 5,	"dip"		},
-	{"Dip B",			BIT_DIPSWITCH,	DrvInput + 6,	"dip"		},
-	{"Dip C",			BIT_DIPSWITCH,	DrvInput + 7,	"dip"		},
+	{"Reset",		BIT_DIGITAL,	&DrvReset,	"reset"		},
+	{"Service",		BIT_DIGITAL,	DrvButton + 4,	"service"	},
+	{"Dip A",		BIT_DIPSWITCH,	DrvInput + 5,	"dip"		},
+	{"Dip B",		BIT_DIPSWITCH,	DrvInput + 6,	"dip"		},
+	{"Dip C",		BIT_DIPSWITCH,	DrvInput + 7,	"dip"		},
 };
 
 STDINPUTINFO(p2Common)
 
 static struct BurnInputInfo p3CommonInputList[] = {
-	{"P1 Coin",			BIT_DIGITAL,	DrvButton + 2,	"p1 coin"	},
+	{"P1 Coin",		BIT_DIGITAL,	DrvButton + 2,	"p1 coin"	},
 	{"P1 Start",		BIT_DIGITAL,	DrvButton + 0,	"p1 start"	},
-	{"P1 Up",			BIT_DIGITAL,	DrvJoy1 + 3,	"p1 up"		},
-	{"P1 Down",			BIT_DIGITAL,	DrvJoy1 + 2,	"p1 down"	},
-	{"P1 Left",			BIT_DIGITAL,	DrvJoy1 + 1,	"p1 left"	},
+	{"P1 Up",		BIT_DIGITAL,	DrvJoy1 + 3,	"p1 up"		},
+	{"P1 Down",		BIT_DIGITAL,	DrvJoy1 + 2,	"p1 down"	},
+	{"P1 Left",		BIT_DIGITAL,	DrvJoy1 + 1,	"p1 left"	},
 	{"P1 Right",		BIT_DIGITAL,	DrvJoy1 + 0,	"p1 right"	},
 	{"P1 Button 1",		BIT_DIGITAL,	DrvJoy1 + 7,	"p1 fire 1"	},
 	{"P1 Button 2",		BIT_DIGITAL,	DrvJoy1 + 6,	"p1 fire 2"	},
 
-	{"P2 Coin",			BIT_DIGITAL,	DrvButton + 3,	"p2 coin"	},
+	{"P2 Coin",		BIT_DIGITAL,	DrvButton + 3,	"p2 coin"	},
 	{"P2 Start",		BIT_DIGITAL,	DrvButton + 1,	"p2 start"	},
-	{"P2 Up",			BIT_DIGITAL,	DrvJoy2 + 3,	"p2 up"		},
-	{"P2 Down",			BIT_DIGITAL,	DrvJoy2 + 2,	"p2 down"	},
-	{"P2 Left",			BIT_DIGITAL,	DrvJoy2 + 1,	"p2 left"	},
+	{"P2 Up",		BIT_DIGITAL,	DrvJoy2 + 3,	"p2 up"		},
+	{"P2 Down",		BIT_DIGITAL,	DrvJoy2 + 2,	"p2 down"	},
+	{"P2 Left",		BIT_DIGITAL,	DrvJoy2 + 1,	"p2 left"	},
 	{"P2 Right",		BIT_DIGITAL,	DrvJoy2 + 0,	"p2 right"	},
 	{"P2 Button 1",		BIT_DIGITAL,	DrvJoy2 + 7,	"p2 fire 1"	},
 	{"P2 Button 2",		BIT_DIGITAL,	DrvJoy2 + 6,	"p2 fire 2"	},
 
-	{"P3 Coin",			BIT_DIGITAL,	DrvJoy3 + 5,	"p3 coin"	},
+	{"P3 Coin",		BIT_DIGITAL,	DrvJoy3 + 5,	"p3 coin"	},
 	{"P3 Start",		BIT_DIGITAL,	DrvJoy3 + 4,	"p3 start"	},
-	{"P3 Up",			BIT_DIGITAL,	DrvJoy3 + 3,	"p3 up"		},
-	{"P3 Down",			BIT_DIGITAL,	DrvJoy3 + 2,	"p3 down"	},
-	{"P3 Left",			BIT_DIGITAL,	DrvJoy3 + 1,	"p3 left"	},
+	{"P3 Up",		BIT_DIGITAL,	DrvJoy3 + 3,	"p3 up"		},
+	{"P3 Down",		BIT_DIGITAL,	DrvJoy3 + 2,	"p3 down"	},
+	{"P3 Left",		BIT_DIGITAL,	DrvJoy3 + 1,	"p3 left"	},
 	{"P3 Right",		BIT_DIGITAL,	DrvJoy3 + 0,	"p3 right"	},
 	{"P3 Button 1",		BIT_DIGITAL,	DrvJoy3 + 7,	"p3 fire 1"	},
 	{"P3 Button 2",		BIT_DIGITAL,	DrvJoy3 + 6,	"p3 fire 2"	},
 
-	{"Reset",			BIT_DIGITAL,	&DrvReset,		"reset"		},
-	{"Service",			BIT_DIGITAL,	DrvButton + 4,	"service"	},
-	{"Dip A",			BIT_DIPSWITCH,	DrvInput + 5,	"dip"		},
-	{"Dip B",			BIT_DIPSWITCH,	DrvInput + 6,	"dip"		},
-	{"Dip C",			BIT_DIPSWITCH,	DrvInput + 7,	"dip"		},
+	{"Reset",		BIT_DIGITAL,	&DrvReset,	"reset"		},
+	{"Service",		BIT_DIGITAL,	DrvButton + 4,	"service"	},
+	{"Dip A",		BIT_DIPSWITCH,	DrvInput + 5,	"dip"		},
+	{"Dip B",		BIT_DIPSWITCH,	DrvInput + 6,	"dip"		},
+	{"Dip C",		BIT_DIPSWITCH,	DrvInput + 7,	"dip"		},
 };
 
 STDINPUTINFO(p3Common)
 
 static struct BurnInputInfo p4CommonInputList[] = {
-	{"P1 Coin",			BIT_DIGITAL,	DrvButton + 2,	"p1 coin"	},
+	{"P1 Coin",		BIT_DIGITAL,	DrvButton + 2,	"p1 coin"	},
 	{"P1 Start",		BIT_DIGITAL,	DrvButton + 0,	"p1 start"	},
-	{"P1 Up",			BIT_DIGITAL,	DrvJoy1 + 3,	"p1 up"		},
-	{"P1 Down",			BIT_DIGITAL,	DrvJoy1 + 2,	"p1 down"	},
-	{"P1 Left",			BIT_DIGITAL,	DrvJoy1 + 1,	"p1 left"	},
+	{"P1 Up",		BIT_DIGITAL,	DrvJoy1 + 3,	"p1 up"		},
+	{"P1 Down",		BIT_DIGITAL,	DrvJoy1 + 2,	"p1 down"	},
+	{"P1 Left",		BIT_DIGITAL,	DrvJoy1 + 1,	"p1 left"	},
 	{"P1 Right",		BIT_DIGITAL,	DrvJoy1 + 0,	"p1 right"	},
 	{"P1 Button 1",		BIT_DIGITAL,	DrvJoy1 + 7,	"p1 fire 1"	},
 	{"P1 Button 2",		BIT_DIGITAL,	DrvJoy1 + 6,	"p1 fire 2"	},
 
-	{"P2 Coin",			BIT_DIGITAL,	DrvButton + 3,	"p2 coin"	},
+	{"P2 Coin",		BIT_DIGITAL,	DrvButton + 3,	"p2 coin"	},
 	{"P2 Start",		BIT_DIGITAL,	DrvButton + 1,	"p2 start"	},
-	{"P2 Up",			BIT_DIGITAL,	DrvJoy2 + 3,	"p2 up"		},
-	{"P2 Down",			BIT_DIGITAL,	DrvJoy2 + 2,	"p2 down"	},
-	{"P2 Left",			BIT_DIGITAL,	DrvJoy2 + 1,	"p2 left"	},
+	{"P2 Up",		BIT_DIGITAL,	DrvJoy2 + 3,	"p2 up"		},
+	{"P2 Down",		BIT_DIGITAL,	DrvJoy2 + 2,	"p2 down"	},
+	{"P2 Left",		BIT_DIGITAL,	DrvJoy2 + 1,	"p2 left"	},
 	{"P2 Right",		BIT_DIGITAL,	DrvJoy2 + 0,	"p2 right"	},
 	{"P2 Button 1",		BIT_DIGITAL,	DrvJoy2 + 7,	"p2 fire 1"	},
 	{"P2 Button 2",		BIT_DIGITAL,	DrvJoy2 + 6,	"p2 fire 2"	},
 
-	{"P3 Coin",			BIT_DIGITAL,	DrvJoy3 + 5,	"p3 coin"	},
+	{"P3 Coin",		BIT_DIGITAL,	DrvJoy3 + 5,	"p3 coin"	},
 	{"P3 Start",		BIT_DIGITAL,	DrvJoy3 + 4,	"p3 start"	},
-	{"P3 Up",			BIT_DIGITAL,	DrvJoy3 + 3,	"p3 up"		},
-	{"P3 Down",			BIT_DIGITAL,	DrvJoy3 + 2,	"p3 down"	},
-	{"P3 Left",			BIT_DIGITAL,	DrvJoy3 + 1,	"p3 left"	},
+	{"P3 Up",		BIT_DIGITAL,	DrvJoy3 + 3,	"p3 up"		},
+	{"P3 Down",		BIT_DIGITAL,	DrvJoy3 + 2,	"p3 down"	},
+	{"P3 Left",		BIT_DIGITAL,	DrvJoy3 + 1,	"p3 left"	},
 	{"P3 Right",		BIT_DIGITAL,	DrvJoy3 + 0,	"p3 right"	},
 	{"P3 Button 1",		BIT_DIGITAL,	DrvJoy3 + 7,	"p3 fire 1"	},
 	{"P3 Button 2",		BIT_DIGITAL,	DrvJoy3 + 6,	"p3 fire 2"	},
 
-	{"P4 Coin",			BIT_DIGITAL,	DrvJoy4 + 5,	"p4 coin"	},
+	{"P4 Coin",		BIT_DIGITAL,	DrvJoy4 + 5,	"p4 coin"	},
 	{"P4 Start",		BIT_DIGITAL,	DrvJoy4 + 4,	"p4 start"	},
-	{"P4 Up",			BIT_DIGITAL,	DrvJoy4 + 3,	"p4 up"		},
-	{"P4 Down",			BIT_DIGITAL,	DrvJoy4 + 2,	"p4 down"	},
-	{"P4 Left",			BIT_DIGITAL,	DrvJoy4 + 1,	"p4 left"	},
+	{"P4 Up",		BIT_DIGITAL,	DrvJoy4 + 3,	"p4 up"		},
+	{"P4 Down",		BIT_DIGITAL,	DrvJoy4 + 2,	"p4 down"	},
+	{"P4 Left",		BIT_DIGITAL,	DrvJoy4 + 1,	"p4 left"	},
 	{"P4 Right",		BIT_DIGITAL,	DrvJoy4 + 0,	"p4 right"	},
 	{"P4 Button 1",		BIT_DIGITAL,	DrvJoy4 + 7,	"p4 fire 1"	},
 	{"P4 Button 2",		BIT_DIGITAL,	DrvJoy4 + 6,	"p4 fire 2"	},
 
-	{"Reset",			BIT_DIGITAL,	&DrvReset,		"reset"		},
-	{"Service",			BIT_DIGITAL,	DrvButton + 4,	"service"	},
-	{"Dip A",			BIT_DIPSWITCH,	DrvInput + 5,	"dip"		},
-	{"Dip B",			BIT_DIPSWITCH,	DrvInput + 6,	"dip"		},
-	{"Dip C",			BIT_DIPSWITCH,	DrvInput + 7,	"dip"		},
+	{"Reset",		BIT_DIGITAL,	&DrvReset,	"reset"		},
+	{"Service",		BIT_DIGITAL,	DrvButton + 4,	"service"	},
+	{"Dip A",		BIT_DIPSWITCH,	DrvInput + 5,	"dip"		},
+	{"Dip B",		BIT_DIPSWITCH,	DrvInput + 6,	"dip"		},
+	{"Dip C",		BIT_DIPSWITCH,	DrvInput + 7,	"dip"		},
 };
 
 STDINPUTINFO(p4Common)
 
 static struct BurnInputInfo nbbatmanInputList[] = {
-	{"P1 Coin",			BIT_DIGITAL,	DrvButton + 2,	"p1 coin"	},
+	{"P1 Coin",		BIT_DIGITAL,	DrvButton + 2,	"p1 coin"	},
 	{"P1 Start",		BIT_DIGITAL,	DrvButton + 0,	"p1 start"	},
-	{"P1 Up",			BIT_DIGITAL,	DrvJoy1 + 3,	"p1 up"		},
-	{"P1 Down",			BIT_DIGITAL,	DrvJoy1 + 2,	"p1 down"	},
-	{"P1 Left",			BIT_DIGITAL,	DrvJoy1 + 1,	"p1 left"	},
+	{"P1 Up",		BIT_DIGITAL,	DrvJoy1 + 3,	"p1 up"		},
+	{"P1 Down",		BIT_DIGITAL,	DrvJoy1 + 2,	"p1 down"	},
+	{"P1 Left",		BIT_DIGITAL,	DrvJoy1 + 1,	"p1 left"	},
 	{"P1 Right",		BIT_DIGITAL,	DrvJoy1 + 0,	"p1 right"	},
 	{"P1 Button 1",		BIT_DIGITAL,	DrvJoy1 + 7,	"p1 fire 1"	},
 	{"P1 Button 2",		BIT_DIGITAL,	DrvJoy1 + 6,	"p1 fire 2"	},
 
-	{"P2 Coin",			BIT_DIGITAL,	DrvButton + 3,	"p2 coin"	},
+	{"P2 Coin",		BIT_DIGITAL,	DrvButton + 3,	"p2 coin"	},
 	{"P2 Start",		BIT_DIGITAL,	DrvButton + 1,	"p2 start"	},
-	{"P2 Up",			BIT_DIGITAL,	DrvJoy2 + 3,	"p2 up"		},
-	{"P2 Down",			BIT_DIGITAL,	DrvJoy2 + 2,	"p2 down"	},
-	{"P2 Left",			BIT_DIGITAL,	DrvJoy2 + 1,	"p2 left"	},
+	{"P2 Up",		BIT_DIGITAL,	DrvJoy2 + 3,	"p2 up"		},
+	{"P2 Down",		BIT_DIGITAL,	DrvJoy2 + 2,	"p2 down"	},
+	{"P2 Left",		BIT_DIGITAL,	DrvJoy2 + 1,	"p2 left"	},
 	{"P2 Right",		BIT_DIGITAL,	DrvJoy2 + 0,	"p2 right"	},
 	{"P2 Button 1",		BIT_DIGITAL,	DrvJoy2 + 7,	"p2 fire 1"	},
 	{"P2 Button 2",		BIT_DIGITAL,	DrvJoy2 + 6,	"p2 fire 2"	},
 
-	{"P3 Coin",			BIT_DIGITAL,	DrvJoy3 + 5,	"p3 coin"	},
+	{"P3 Coin",		BIT_DIGITAL,	DrvJoy3 + 5,	"p3 coin"	},
 	{"P3 Start",		BIT_DIGITAL,	DrvJoy3 + 4,	"p3 start"	},
-	{"P3 Up",			BIT_DIGITAL,	DrvJoy3 + 3,	"p3 up"		},
-	{"P3 Down",			BIT_DIGITAL,	DrvJoy3 + 2,	"p3 down"	},
-	{"P3 Left",			BIT_DIGITAL,	DrvJoy3 + 1,	"p3 left"	},
+	{"P3 Up",		BIT_DIGITAL,	DrvJoy3 + 3,	"p3 up"		},
+	{"P3 Down",		BIT_DIGITAL,	DrvJoy3 + 2,	"p3 down"	},
+	{"P3 Left",		BIT_DIGITAL,	DrvJoy3 + 1,	"p3 left"	},
 	{"P3 Right",		BIT_DIGITAL,	DrvJoy3 + 0,	"p3 right"	},
 	{"P3 Button 1",		BIT_DIGITAL,	DrvJoy3 + 7,	"p3 fire 1"	},
 	{"P3 Button 2",		BIT_DIGITAL,	DrvJoy3 + 6,	"p3 fire 2"	},
 
-	{"P4 Coin",			BIT_DIGITAL,	DrvJoy4 + 5,	"p4 coin"	},
+	{"P4 Coin",		BIT_DIGITAL,	DrvJoy4 + 5,	"p4 coin"	},
 	{"P4 Start",		BIT_DIGITAL,	DrvJoy4 + 4,	"p4 start"	},
-	{"P4 Up",			BIT_DIGITAL,	DrvJoy4 + 3,	"p4 up"		},
-	{"P4 Down",			BIT_DIGITAL,	DrvJoy4 + 2,	"p4 down"	},
-	{"P4 Left",			BIT_DIGITAL,	DrvJoy4 + 1,	"p4 left"	},
+	{"P4 Up",		BIT_DIGITAL,	DrvJoy4 + 3,	"p4 up"		},
+	{"P4 Down",		BIT_DIGITAL,	DrvJoy4 + 2,	"p4 down"	},
+	{"P4 Left",		BIT_DIGITAL,	DrvJoy4 + 1,	"p4 left"	},
 	{"P4 Right",		BIT_DIGITAL,	DrvJoy4 + 0,	"p4 right"	},
 	{"P4 Button 1",		BIT_DIGITAL,	DrvJoy4 + 7,	"p4 fire 1"	},
 	{"P4 Button 2",		BIT_DIGITAL,	DrvJoy4 + 6,	"p4 fire 2"	},
 
-	{"Reset",			BIT_DIGITAL,	&DrvReset,		"reset"		},
-	{"Service",			BIT_DIGITAL,	DrvButton + 4,	"service"	},
-	{"Dip A",			BIT_DIPSWITCH,	DrvInput + 5,	"dip"		},
-	{"Dip B",			BIT_DIPSWITCH,	DrvInput + 6,	"dip"		},
-	{"Dip C",			BIT_DIPSWITCH,	DrvInput + 7,	"dip"		},
-	{"Dip D",			BIT_DIPSWITCH,	DrvInput + 8,	"dip"		},
+	{"Reset",		BIT_DIGITAL,	&DrvReset,	"reset"		},
+	{"Service",		BIT_DIGITAL,	DrvButton + 4,	"service"	},
+	{"Dip A",		BIT_DIPSWITCH,	DrvInput + 5,	"dip"		},
+	{"Dip B",		BIT_DIPSWITCH,	DrvInput + 6,	"dip"		},
+	{"Dip C",		BIT_DIPSWITCH,	DrvInput + 7,	"dip"		},
+	{"Dip D",		BIT_DIPSWITCH,	DrvInput + 8,	"dip"		},
 };
 
 STDINPUTINFO(nbbatman)
 
 static struct BurnInputInfo PsoldierInputList[] = {
-	{"P1 Coin",			BIT_DIGITAL,	DrvButton + 2,	"p1 coin"	},
+	{"P1 Coin",		BIT_DIGITAL,	DrvButton + 2,	"p1 coin"	},
 	{"P1 Start",		BIT_DIGITAL,	DrvButton + 0,	"p1 start"	},
-	{"P1 Up",			BIT_DIGITAL,	DrvJoy1 + 3,	"p1 up"		},
-	{"P1 Down",			BIT_DIGITAL,	DrvJoy1 + 2,	"p1 down"	},
-	{"P1 Left",			BIT_DIGITAL,	DrvJoy1 + 1,	"p1 left"	},
+	{"P1 Up",		BIT_DIGITAL,	DrvJoy1 + 3,	"p1 up"		},
+	{"P1 Down",		BIT_DIGITAL,	DrvJoy1 + 2,	"p1 down"	},
+	{"P1 Left",		BIT_DIGITAL,	DrvJoy1 + 1,	"p1 left"	},
 	{"P1 Right",		BIT_DIGITAL,	DrvJoy1 + 0,	"p1 right"	},
 	{"P1 Button 1",		BIT_DIGITAL,	DrvJoy1 + 7,	"p1 fire 1"	},
 	{"P1 Button 2",		BIT_DIGITAL,	DrvJoy1 + 6,	"p1 fire 2"	},
@@ -263,11 +260,11 @@ static struct BurnInputInfo PsoldierInputList[] = {
 	{"P1 Button 5",		BIT_DIGITAL,	DrvJoy4 + 2,	"p1 fire 5"	},
 	{"P1 Button 6",		BIT_DIGITAL,	DrvJoy4 + 3,	"p1 fire 6"	},
 
-	{"P2 Coin",			BIT_DIGITAL,	DrvButton + 3,	"p2 coin"	},
+	{"P2 Coin",		BIT_DIGITAL,	DrvButton + 3,	"p2 coin"	},
 	{"P2 Start",		BIT_DIGITAL,	DrvButton + 1,	"p2 start"	},
-	{"P2 Up",			BIT_DIGITAL,	DrvJoy2 + 3,	"p2 up"		},
-	{"P2 Down",			BIT_DIGITAL,	DrvJoy2 + 2,	"p2 down"	},
-	{"P2 Left",			BIT_DIGITAL,	DrvJoy2 + 1,	"p2 left"	},
+	{"P2 Up",		BIT_DIGITAL,	DrvJoy2 + 3,	"p2 up"		},
+	{"P2 Down",		BIT_DIGITAL,	DrvJoy2 + 2,	"p2 down"	},
+	{"P2 Left",		BIT_DIGITAL,	DrvJoy2 + 1,	"p2 left"	},
 	{"P2 Right",		BIT_DIGITAL,	DrvJoy2 + 0,	"p2 right"	},
 	{"P2 Button 1",		BIT_DIGITAL,	DrvJoy2 + 7,	"p2 fire 1"	},
 	{"P2 Button 2",		BIT_DIGITAL,	DrvJoy2 + 6,	"p2 fire 2"	},
@@ -276,11 +273,11 @@ static struct BurnInputInfo PsoldierInputList[] = {
 	{"P2 Button 5",		BIT_DIGITAL,	DrvJoy4 + 6,	"p2 fire 5"	},
 	{"P2 Button 6",		BIT_DIGITAL,	DrvJoy4 + 7,	"p2 fire 6"	},
 
-	{"Reset",			BIT_DIGITAL,	&DrvReset,		"reset"		},
-	{"Service",			BIT_DIGITAL,	DrvButton + 4,	"service"	},
-	{"Dip A",			BIT_DIPSWITCH,	DrvInput + 5,	"dip"		},
-	{"Dip B",			BIT_DIPSWITCH,	DrvInput + 6,	"dip"		},
-	{"Dip C",			BIT_DIPSWITCH,	DrvInput + 7,	"dip"		},
+	{"Reset",		BIT_DIGITAL,	&DrvReset,	"reset"		},
+	{"Service",		BIT_DIGITAL,	DrvButton + 4,	"service"	},
+	{"Dip A",		BIT_DIPSWITCH,	DrvInput + 5,	"dip"		},
+	{"Dip B",		BIT_DIPSWITCH,	DrvInput + 6,	"dip"		},
+	{"Dip C",		BIT_DIPSWITCH,	DrvInput + 7,	"dip"		},
 };
 
 STDINPUTINFO(Psoldier)
@@ -1289,7 +1286,7 @@ static void m92YM2151IRQHandler(INT32 nStatus)
 	VezRun(100);
 }
 
-static UINT8 __fastcall m92ReadByte(UINT32 address)
+UINT8 __fastcall m92ReadByte(UINT32 address)
 {
 	if ((address & 0xff800) == 0xf8800 )
 		return DrvPalRAM[ address - 0xf8800 + PalBank ];
@@ -1305,7 +1302,7 @@ static UINT8 __fastcall m92ReadByte(UINT32 address)
 	return 0;
 }
 
-static void __fastcall m92WriteByte(UINT32 address, UINT8 data)
+void __fastcall m92WriteByte(UINT32 address, UINT8 data)
 {
 	if ((address & 0xff800) == 0xf8800 ) {
 		DrvPalRAM[ address - 0xf8800 + PalBank ] = data;
@@ -1338,6 +1335,7 @@ static void __fastcall m92WriteByte(UINT32 address, UINT8 data)
 		case 0xf9008:
 			m92_sprite_buffer_busy = 0;
 			m92_sprite_buffer_timer = 1;
+			VezRunEnd();
 			return;
 
 		case 0xf9800:
@@ -1354,7 +1352,7 @@ static void __fastcall m92WriteByte(UINT32 address, UINT8 data)
 	}
 }
 
-static UINT8 __fastcall m92ReadPort(UINT32 port)
+UINT8 __fastcall m92ReadPort(UINT32 port)
 {
 	switch (port)
 	{
@@ -1367,7 +1365,7 @@ static UINT8 __fastcall m92ReadPort(UINT32 port)
 		case 0x06: return ~DrvInput[2];	// player 3
 		case 0x07: return ~DrvInput[3];	// player 4
 
-		case 0x08: VezSetIRQLineAndVector(0, (m92_irq_vectorbase + 12)/4, CPU_IRQSTATUS_NONE); return sound_status[0];
+		case 0x08: VezSetIRQLineAndVector(0, (m92_irq_vectorbase + 12)/4, CPU_IRQSTATUS_NONE); return sound_status[0]; 
 		case 0x09: VezSetIRQLineAndVector(0, (m92_irq_vectorbase + 12)/4, CPU_IRQSTATUS_NONE); return sound_status[1];
 
 		case 0x18: return (m92_kludge == 3) ? MSM6295Read(0) : 0; // ppan
@@ -1402,14 +1400,7 @@ static void set_pf_scroll(INT32 layer)
 	ptr->scrolly = (pf_control[layer][0] << 0) | (pf_control[layer][1] << 8);
 }
 
-static void m92MainBank(INT32 data)
-{
-	m92_main_bank = data;
-	VezMapArea(0xa0000, 0xbffff, 0, DrvV33ROM + 0x100000 + (data&0x7)*0x10000);
-	VezMapArea(0xa0000, 0xbffff, 2, DrvV33ROM + 0x100000 + (data&0x7)*0x10000);
-}
-
-static void __fastcall m92WritePort(UINT32 port, UINT8 data)
+void __fastcall m92WritePort(UINT32 port, UINT8 data)
 {
 	switch (port)
 	{
@@ -1446,8 +1437,9 @@ static void __fastcall m92WritePort(UINT32 port, UINT8 data)
 
 		case 0x20:
 	//	case 0x21:
-			if (m92_banks) { // majtitl2, nbbatman, dsoccr94j, gunforc2
-				m92MainBank(data);
+			if (m92_kludge != 1) { // lethalth
+				VezMapArea(0xa0000, 0xbffff, 0, DrvV33ROM + 0x100000 + (data&0x7)*0x10000);
+				VezMapArea(0xa0000, 0xbffff, 2, DrvV33ROM + 0x100000 + (data&0x7)*0x10000);
 			}
 			return;
 
@@ -1506,7 +1498,7 @@ static void __fastcall m92WritePort(UINT32 port, UINT8 data)
 	}
 }
 
-static UINT8 __fastcall m92SndReadByte(UINT32 address)
+UINT8 __fastcall m92SndReadByte(UINT32 address)
 {
 	if ((address & 0xfffc0) == 0xa8000) {
 		return iremga20_read( 0, (address & 0x0003f) / 2 );
@@ -1529,7 +1521,7 @@ static UINT8 __fastcall m92SndReadByte(UINT32 address)
 	return 0;
 }
 
-static void __fastcall m92SndWriteByte(UINT32 address, UINT8 data)
+void __fastcall m92SndWriteByte(UINT32 address, UINT8 data)
 {
 	if ((address & 0xfffc0) == 0xa8000) {
 		iremga20_write( 0, (address & 0x0003f) / 2, data );
@@ -1573,7 +1565,6 @@ static INT32 DrvDoReset()
 	memset (RamStart, 0, RamEnd - RamStart);
 
 	VezOpen(0);
-	if (m92_banks) m92MainBank(0);
 	VezReset();
 	VezClose();
 
@@ -1838,7 +1829,6 @@ static INT32 DrvExit()
 	BurnFree(Mem);
 	
 	nPrevScreenPos = 0;
-	m92_banks = 0;
 	m92_kludge = 0;
 	m92_raster_irq_position = 0;
 	nScreenOffsets[0] = nScreenOffsets[1] = 0;
@@ -2075,14 +2065,16 @@ static void compile_inputs()
 	DrvClearOpposites(&DrvInput[1]);
 }
 
-static void scanline_interrupts(INT32 scanline)
+static void scanline_interrupts(INT32 prev, INT32 segment, INT32 scanline)
 {
 	if (m92_sprite_buffer_timer) {
 		memcpy (DrvSprBuf, DrvSprRAM, 0x800);
+		if (~m92_kludge & 4) nCyclesDone[0] += VezRun(347); // nbbatman: fix for random lockups during gameplay
 		m92_sprite_buffer_busy = 0x80;
 		VezSetIRQLineAndVector(0, (m92_irq_vectorbase + 4)/4, CPU_IRQSTATUS_ACK);
 		nCyclesDone[0] += VezRun(10);
 		VezSetIRQLineAndVector(0, (m92_irq_vectorbase + 4)/4, CPU_IRQSTATUS_NONE);
+		if (~m92_kludge & 4) nCyclesDone[0] += VezRun(segment - (VezTotalCycles() - prev));
 
 		m92_sprite_buffer_timer = 0;
 	}
@@ -2098,9 +2090,9 @@ static void scanline_interrupts(INT32 scanline)
 		VezSetIRQLineAndVector(0, (m92_irq_vectorbase + 8)/4, CPU_IRQSTATUS_ACK);
 		nCyclesDone[0] += VezRun((m92_kludge & 4) ? 20 : 10); // nbbatman: gets rid of flashes in intro sequence
 		VezSetIRQLineAndVector(0, (m92_irq_vectorbase + 8)/4, CPU_IRQSTATUS_NONE);
-	}
 
-	if (scanline == 248) // vblank
+	}
+	else if (scanline == 248) // vblank
 	{
 		if (nPrevScreenPos != 240) {
 			DrawLayers(nPrevScreenPos, 240);
@@ -2124,8 +2116,6 @@ static INT32 DrvFrame()
 		DrvDoReset();
 	}
 
-	nPrevScreenPos = 0;
-
 	VezNewFrame();
 
 	compile_inputs();
@@ -2143,14 +2133,19 @@ static INT32 DrvFrame()
 	{
 		VezOpen(0);
 		INT32 segment = nCyclesTotal[0] / nInterleave;
+		INT32 prev = VezTotalCycles();
 
 		nCyclesDone[0] += VezRun(segment);
 		if ((i%multiplier)==(multiplier-1))
-			scanline_interrupts(i/multiplier); // update at hblank?
+			scanline_interrupts(prev, segment, i/multiplier); // update at hblank?
 		VezClose();
 
 		VezOpen(1);
-		CPU_RUN(1, Vez);
+		segment = nCyclesTotal[1] / nInterleave;
+		segment += segment * i;
+		while (VezTotalCycles() < segment) {
+			nCyclesDone[1] += VezRun(segment - VezTotalCycles());
+		}
 
 		if ((i%multiplier)==(multiplier-1)) {
 			if (pBurnSoundOut) {
@@ -2201,7 +2196,7 @@ static INT32 PpanFrame()
 	{
 		nCyclesDone[0] += VezRun(nCyclesTotal[0] / nInterleave);
 
-		scanline_interrupts(i);
+		scanline_interrupts(0,0,i);
 	}
 
 	if (pBurnSoundOut) {
@@ -2213,7 +2208,7 @@ static INT32 PpanFrame()
 	return 0;
 }
 
-static INT32 DrvScan(INT32 nAction, INT32 *pnMin)
+static INT32 DrvScan(INT32 nAction,INT32 *pnMin)
 {
 	if (pnMin)
 	{
@@ -2262,18 +2257,11 @@ static INT32 DrvScan(INT32 nAction, INT32 *pnMin)
 		SCAN_VAR(m92_sprite_buffer_busy);
 		SCAN_VAR(m92_sprite_buffer_timer);
 		SCAN_VAR(m92_irq_vectorbase);
-		SCAN_VAR(m92_main_bank);
 
 		if (nAction & ACB_WRITE) {
-			VezOpen(0);
-			if (m92_banks) m92MainBank(m92_main_bank);
-			VezClose();
-#if 0
-			// if fm dies on state load: put this back or find out why this bad kludge is needed in the first place and fix it.
 			VezOpen(1);
 			m92YM2151IRQHandler(0); // get fm sound going again on state load
 			VezClose();
-#endif
 		}
 
 		if (m92_kludge == 3) { // ppan
@@ -3047,13 +3035,13 @@ struct BurnDriver BurnDrvGunforceu = {
 // Undercover Cops (World)
 
 static struct BurnRomInfo uccopsRomDesc[] = {
-	{ "ucc_e-h0.ic28",	0x040000, 0x240aa5f7, 1 | BRF_PRG | BRF_ESS }, //  0 V33 Code
-	{ "ucc_e-l0.ic39",	0x040000, 0xdf9a4826, 1 | BRF_PRG | BRF_ESS }, //  1
-	{ "ucc_h1.ic27",	0x020000, 0x8d29bcd6, 1 | BRF_PRG | BRF_ESS }, //  2
-	{ "ucc_l1.ic38",	0x020000, 0xa8a402d8, 1 | BRF_PRG | BRF_ESS }, //  3
+	{ "uc_h0.ic28",		0x040000, 0x240aa5f7, 1 | BRF_PRG | BRF_ESS }, //  0 V33 Code
+	{ "uc_l0.ic39",		0x040000, 0xdf9a4826, 1 | BRF_PRG | BRF_ESS }, //  1
+	{ "uc_h1.ic27",		0x020000, 0x8d29bcd6, 1 | BRF_PRG | BRF_ESS }, //  2
+	{ "uc_l1.ic38",		0x020000, 0xa8a402d8, 1 | BRF_PRG | BRF_ESS }, //  3
 
-	{ "ucc_e-sh0.ic30",	0x010000, 0xdf90b198, 2 | BRF_PRG | BRF_ESS }, //  4 V30 Code
-	{ "ucc_e-sl0.ic31",	0x010000, 0x96c11aac, 2 | BRF_PRG | BRF_ESS }, //  5
+	{ "uc_sh0.rom",		0x010000, 0xdf90b198, 2 | BRF_PRG | BRF_ESS }, //  4 V30 Code
+	{ "uc_sl0.rom",		0x010000, 0x96c11aac, 2 | BRF_PRG | BRF_ESS }, //  5
 
 	{ "uc_w38m.rom",	0x080000, 0x130a40e5, 3 | BRF_GRA },           //  6 Background Tiles
 	{ "uc_w39m.rom",	0x080000, 0xe42ca144, 3 | BRF_GRA },           //  7
@@ -3095,13 +3083,13 @@ struct BurnDriver BurnDrvUccops = {
 // Undercover Cops (US)
 
 static struct BurnRomInfo uccopsuRomDesc[] = {
-	{ "ucc_e-h0.ic28",	0x040000, 0x240aa5f7, 1 | BRF_PRG | BRF_ESS }, //  0 V33 Code
-	{ "ucc_e-l0.ic39",	0x040000, 0xdf9a4826, 1 | BRF_PRG | BRF_ESS }, //  1
-	{ "ucc_h1-g.ic27",	0x020000, 0x6b8ca2de, 1 | BRF_PRG | BRF_ESS }, //  2
-	{ "ucc_l1-g.ic38",	0x020000, 0x2bdec7dd, 1 | BRF_PRG | BRF_ESS }, //  3
+	{ "uc_h0.ic28",		0x040000, 0x240aa5f7, 1 | BRF_PRG | BRF_ESS }, //  0 V33 Code
+	{ "uc_l0.ic39",		0x040000, 0xdf9a4826, 1 | BRF_PRG | BRF_ESS }, //  1
+	{ "uc_h1-g.ic27",	0x020000, 0x6b8ca2de, 1 | BRF_PRG | BRF_ESS }, //  2
+	{ "uc_l1-g.ic38",	0x020000, 0x2bdec7dd, 1 | BRF_PRG | BRF_ESS }, //  3
 
-	{ "ucc_e-sh0.ic30",	0x010000, 0xdf90b198, 2 | BRF_PRG | BRF_ESS }, //  4 V30 Code
-	{ "ucc_e-sl0.ic31",	0x010000, 0x96c11aac, 2 | BRF_PRG | BRF_ESS }, //  5
+	{ "uc_sh0.rom",		0x010000, 0xdf90b198, 2 | BRF_PRG | BRF_ESS }, //  4 V30 Code
+	{ "uc_sl0.rom",		0x010000, 0x96c11aac, 2 | BRF_PRG | BRF_ESS }, //  5
 
 	{ "uc_w38m.rom",	0x080000, 0x130a40e5, 3 | BRF_GRA },           //  6 Background Tiles
 	{ "uc_w39m.rom",	0x080000, 0xe42ca144, 3 | BRF_GRA },           //  7
@@ -3280,8 +3268,6 @@ static INT32 gunforc2Init()
 {
 	INT32 nRet;
 
-	m92_banks = 1;
-
 	nRet = DrvInit(gunforc2RomLoad, lethalth_decryption_table, 1, 0x200000, 0x400000);
 
 	if (nRet == 0) {
@@ -3372,7 +3358,6 @@ static INT32 nbbatmanInit()
 	INT32 nRet;
 	const UINT8 *decrtab = leagueman_decryption_table;
 
-	m92_banks = 1;
 	m92_kludge = 4; // tilemap offset(for the "roz"-like map at beginning of stage) + cycle hacks
 	m92_ok_to_blank = 1;
 
@@ -3600,8 +3585,6 @@ static INT32 dsoccr94jRomLoad()
 
 static INT32 dsoccr94jInit()
 {
-	m92_banks = 1;
-
 	return DrvInit(dsoccr94jRomLoad, dsoccr94_decryption_table, 1, 0x400000, 0x400000);
 }
 
@@ -3749,7 +3732,6 @@ STD_ROM_FN(majtitl2)
 
 static INT32 majtitl2RomLoad()
 {
-	m92_banks = 1;
 	return RomLoad(0x100000, 0x040000, 0x100000, 0, 15);
 }
 

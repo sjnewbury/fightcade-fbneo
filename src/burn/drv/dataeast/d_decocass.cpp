@@ -367,7 +367,6 @@ STDDIPINFOEXT(Ctisland, Decocass, Ctisland)
 
 static struct BurnDIPInfo Cocean1aDIPList[]=
 {
-	{0x11, 0xff, 0xff, 0x3f, NULL			},
 	{0x12, 0xff, 0xff, 0xff, NULL			},
 	{0x13, 0xff, 0xff, 0x00, NULL			},
 
@@ -385,16 +384,6 @@ static struct BurnDIPInfo Cocean1aDIPList[]=
 	{0x11, 0x01, 0x08, 0x08, "Off"			},
 	{0x11, 0x01, 0x08, 0x00, "None"			},
 
-	{0   , 0xfe, 0   ,    4, "Type of Tape"		},
-	{0x11, 0x01, 0x30, 0x00, "MT (Big)"		},
-	{0x11, 0x01, 0x30, 0x10, "invalid?"		},
-	{0x11, 0x01, 0x30, 0x20, "invalid?"		},
-	{0x11, 0x01, 0x30, 0x30, "MD (Small)"		},
-
-	{0   , 0xfe, 0   ,    2, "Cabinet"		},
-	{0x11, 0x01, 0x40, 0x00, "Upright"		},
-	{0x11, 0x01, 0x40, 0x40, "Cocktail"		},
-
 	{0   , 0xfe, 0   ,    4, "Key Switch Credit"	},
 	{0x12, 0x01, 0x03, 0x03, "1 Coin 10 Credits"	},
 	{0x12, 0x01, 0x03, 0x02, "1 Coin 20 Credits"	},
@@ -412,27 +401,12 @@ static struct BurnDIPInfo Cocean1aDIPList[]=
 	{0   , 0xfe, 0   ,    2, "Pay Out %"		},
 	{0x12, 0x01, 0x10, 0x10, "Payout 75%"		},
 	{0x12, 0x01, 0x10, 0x00, "Payout 85%"		},
-
-	{0   , 0xfe, 0   ,    6, "Country Code"		},
-	{0x12, 0x01, 0xe0, 0xe0, "A"			},
-	{0x12, 0x01, 0xe0, 0xc0, "B"			},
-	{0x12, 0x01, 0xe0, 0xa0, "C"			},
-	{0x12, 0x01, 0xe0, 0x80, "D"			},
-	{0x12, 0x01, 0xe0, 0x60, "E"			},
-	{0x12, 0x01, 0xe0, 0x40, "F"			},
-
-	{0   , 0xfe, 0   ,    4, "Bios Version"		},
-	{0x13, 0x01, 0x03, 0x00, "Japan A, Newer"	},
-	{0x13, 0x01, 0x03, 0x01, "Japan A, Older"	},
-	{0x13, 0x01, 0x03, 0x02, "USA B, Newer"		},
-	{0x13, 0x01, 0x03, 0x03, "USA B, Older"		},
 };
 
-STDDIPINFO(Cocean1a)
+STDDIPINFOEXT(Cocean1a,	Decocass,	Cocean1a)
 
 static struct BurnDIPInfo Cocean6bDIPList[]=
 {
-	{0x11, 0xff, 0xff, 0x3f, NULL			},
 	{0x12, 0xff, 0xff, 0xff, NULL			},
 	{0x13, 0xff, 0xff, 0x02, NULL			},
 
@@ -450,16 +424,6 @@ static struct BurnDIPInfo Cocean6bDIPList[]=
 	{0x11, 0x01, 0x08, 0x08, "Off"			},
 	{0x11, 0x01, 0x08, 0x00, "None"			},
 
-	{0   , 0xfe, 0   ,    4, "Type of Tape"		},
-	{0x11, 0x01, 0x30, 0x00, "MT (Big)"		},
-	{0x11, 0x01, 0x30, 0x10, "invalid?"		},
-	{0x11, 0x01, 0x30, 0x20, "invalid?"		},
-	{0x11, 0x01, 0x30, 0x30, "MD (Small)"		},
-
-	{0   , 0xfe, 0   ,    2, "Cabinet"		},
-	{0x11, 0x01, 0x40, 0x00, "Upright"		},
-	{0x11, 0x01, 0x40, 0x40, "Cocktail"		},
-
 	{0   , 0xfe, 0   ,    4, "Key Switch Credit"	},
 	{0x12, 0x01, 0x03, 0x03, "1 Coin 10 Credits"	},
 	{0x12, 0x01, 0x03, 0x02, "1 Coin 20 Credits"	},
@@ -477,23 +441,9 @@ static struct BurnDIPInfo Cocean6bDIPList[]=
 	{0   , 0xfe, 0   ,    2, "Pay Out %"		},
 	{0x12, 0x01, 0x10, 0x10, "Payout 75%"		},
 	{0x12, 0x01, 0x10, 0x00, "Payout 85%"		},
-
-	{0   , 0xfe, 0   ,    6, "Country Code"		},
-	{0x12, 0x01, 0xe0, 0xe0, "A"			},
-	{0x12, 0x01, 0xe0, 0xc0, "B"			},
-	{0x12, 0x01, 0xe0, 0xa0, "C"			},
-	{0x12, 0x01, 0xe0, 0x80, "D"			},
-	{0x12, 0x01, 0xe0, 0x60, "E"			},
-	{0x12, 0x01, 0xe0, 0x40, "F"			},
-
-	{0   , 0xfe, 0   ,    4, "Bios Version"		},
-	{0x13, 0x01, 0x03, 0x00, "Japan A, Newer"	},
-	{0x13, 0x01, 0x03, 0x01, "Japan A, Older"	},
-	{0x13, 0x01, 0x03, 0x02, "USA B, Newer"		},
-	{0x13, 0x01, 0x03, 0x03, "USA B, Older"		},
 };
 
-STDDIPINFO(Cocean6b)
+STDDIPINFOEXT(Cocean6b,	Decocass,	Cocean6b)
 
 static struct BurnDIPInfo ClocknchDIPList[]=
 {
@@ -2080,14 +2030,6 @@ static void set_gfx_bank(INT32 bank)
 	M6502MapMemory(ptr, 0x6000, 0xafff, MAP_ROM);
 }
 
-static void sync_sound()
-{
-	INT32 cyc = (M6502TotalCycles(0) * 510000 / 750000) - M6502TotalCycles(1);
-	if (cyc > 0) {
-		M6502Run(1, cyc);
-	}
-}
-
 static void decocass_main_write(UINT16 address, UINT8 data)
 {
 	//bprintf (0, _T("MW %4.4x, %2.2x\n"), address, data);
@@ -2168,11 +2110,15 @@ static void decocass_main_write(UINT16 address, UINT8 data)
 
 			if (data & 1)
 			{
-				M6502Reset(1);
+				M6502Close();
+				M6502Open(1);
+				M6502Reset();
+				M6502Close();
+				M6502Open(0);
 
 				audio_nmi_enabled = 0;
 
-				M6502SetIRQLine(1, 0x20, (audio_nmi_enabled && audio_nmi_state) ? CPU_IRQSTATUS_ACK : CPU_IRQSTATUS_NONE);
+				M6502SetIRQLine(0x20, (audio_nmi_enabled && audio_nmi_state) ? CPU_IRQSTATUS_ACK : CPU_IRQSTATUS_NONE);
 			}
 
 			if ((data & 8) ^ 8)
@@ -2225,11 +2171,14 @@ static void decocass_main_write(UINT16 address, UINT8 data)
 
 		case 0xe414:
 		{
-			sync_sound();
 			soundlatch = data;
 			sound_ack |= 0x80;
 			sound_ack &= ~0x40;
-			M6502SetIRQLine(1, 0, CPU_IRQSTATUS_HOLD);
+			M6502Close();
+			M6502Open(1);
+			M6502SetIRQLine(0, CPU_IRQSTATUS_ACK);
+			M6502Close();
+			M6502Open(0);
 		}
 		return;
 
@@ -2324,11 +2273,9 @@ static UINT8 decocass_main_read(UINT16 address)
 			return 0xc0; // sound command (0xc0 ok)
 
 		case 0xe700:
-			sync_sound();
 			return soundlatch2;
 
 		case 0xe701:
-			sync_sound();
 			return sound_ack;
 	}
 
@@ -2427,7 +2374,7 @@ static UINT8 decocass_sound_read(UINT16 address)
 	switch (address & 0xf000)
 	{
 		case 0xa000:
-
+			M6502SetIRQLine(0, CPU_IRQSTATUS_NONE);
 			sound_ack &= ~0x80;
 			return soundlatch;
 	}
@@ -2795,7 +2742,7 @@ static INT32 DecocassInit(UINT8 (*read)(UINT16),void (*write)(UINT16,UINT8))
 	AY8910Init(1, 1500000, 1);
 	AY8910SetAllRoutes(0, 0.20, BURN_SND_ROUTE_BOTH);
 	AY8910SetAllRoutes(1, 0.20, BURN_SND_ROUTE_BOTH);
-    AY8910SetBuffered(M6502TotalCycles, 510000);
+    AY8910SetBuffered(M6502TotalCycles, 500000);
 
 	GenericTilesInit();
 	GenericTilemapInit(2, fg_map_scan, fg_map_callback, 8, 8, 32, 32);
@@ -3211,8 +3158,13 @@ static INT32 DrvFrame()
 
 	watchdog++;
 	if (watchdog > 180) {
-		M6502Reset(0);
-		M6502Reset(1);
+		M6502Open(0);
+		M6502Reset();
+		M6502Close();
+
+		M6502Open(1);
+		M6502Reset();
+		M6502Close();
 
 		watchdog = 0;
 	}
@@ -3255,24 +3207,23 @@ static INT32 DrvFrame()
 		}
 
 		if (prev != (DrvInputs[2] & 0xc0) && (DrvInputs[2] & 0xc0) == 0xc0) {
-			M6502SetIRQLine(0, 0x20, CPU_IRQSTATUS_ACK);
+			M6502Open(0);
+			M6502SetIRQLine(0x20, CPU_IRQSTATUS_ACK);
+			M6502Close();
 		}
 	}
 
-	// need to run 10khz extra cycles on the sound-cpu (510000) to make up for
-	// division loss (1 cycle per line).  some games make bad sounds (cocean1a, wheel spinning noise)
-
 	INT32 nInterleave = 272;
-	INT32 nCyclesTotal[3] = { (INT32)((double)750000 / 57.444853), (INT32)((double)510000 / 57.444853), (INT32)((double)500000 / 57.444853) };
+	INT32 nCyclesTotal[3] = { (INT32)((double)750000 / 57.444853), (INT32)((double)500000 / 57.444853), (INT32)((double)500000 / 57.444853) }; //1.5mhz -> .75mhz?
 	INT32 nCyclesDone[3]  = { 0, 0, 0 };
-	INT32 nSegment = 0;
 
 	vblank = 1;
 
 	for (INT32 i = 0; i < nInterleave; i++)
 	{
 		M6502Open(0);
-		CPU_RUN(0, M6502);
+		INT32 nSegment = (i + 1) * nCyclesTotal[0] / nInterleave;
+		nCyclesDone[0] += M6502Run(nSegment - nCyclesDone[0]);
 		M6502Close();
 
 		if (i == 248) vblank = 1;
@@ -3288,14 +3239,17 @@ static INT32 DrvFrame()
 		M6502Open(1);
 		if (decocass_reset & 1)
 		{
-			CPU_IDLE(1, M6502);
+			nSegment = (i + 1) * nCyclesTotal[1] / nInterleave;
+			nCyclesDone[1] += nSegment - nCyclesDone[1];
 		}
 		else
-		{
-			CPU_RUN(1, M6502);
+		{	
+			nSegment = (i + 1) * nCyclesTotal[1] / nInterleave;
+			nCyclesDone[1] += M6502Run(nSegment - nCyclesDone[1]);
 
-			if ((i&7) == 0) {
-				audio_nmi_state = i & 8;
+			if ((i+1)%8 == 7)
+			{
+				audio_nmi_state = (i+1) & 8;
 				M6502SetIRQLine(0x20, (audio_nmi_enabled && audio_nmi_state) ? CPU_IRQSTATUS_ACK : CPU_IRQSTATUS_NONE);
 			}
 		}

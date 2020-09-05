@@ -976,9 +976,6 @@
 		FE1E0C7B244C2BD600C774C3 /* d_galpani3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE1E0C7A244C2BD500C774C3 /* d_galpani3.cpp */; };
 		FE1E0C7E245333E600C774C3 /* i4x00.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE1E0C7C245333E500C774C3 /* i4x00.cpp */; };
 		FE1E0C802453340600C774C3 /* d_hyprduel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE1E0C7F2453340600C774C3 /* d_hyprduel.cpp */; };
-		FE1E0C822454F7D600C774C3 /* d_tubep.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE1E0C812454F7D600C774C3 /* d_tubep.cpp */; };
-		FE1E0C842456832100C774C3 /* d_eolith.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE1E0C832456832100C774C3 /* d_eolith.cpp */; };
-		FE232A8324FA215200D3B388 /* d_mdarcbl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE232A8224FA215200D3B388 /* d_mdarcbl.cpp */; };
 		FE2BC6AB23615B3400B9D150 /* LogViewer.xib in Resources */ = {isa = PBXBuildFile; fileRef = FE2BC6A923615B3400B9D150 /* LogViewer.xib */; };
 		FE2BC6B523615C3400B9D150 /* FBLogViewerController.m in Sources */ = {isa = PBXBuildFile; fileRef = FE2BC6B423615C3300B9D150 /* FBLogViewerController.m */; };
 		FE2BC6B7236265C000B9D150 /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE2BC6B6236265BF00B9D150 /* Sparkle.framework */; };
@@ -989,7 +986,6 @@
 		FE2BC6D02362D5BD00B9D150 /* FBMainThread+Etc.mm in Sources */ = {isa = PBXBuildFile; fileRef = FE2BC6CF2362D5BD00B9D150 /* FBMainThread+Etc.mm */; };
 		FE2E61282401030D00B7A8D2 /* i5000.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE2E61272401030D00B7A8D2 /* i5000.cpp */; };
 		FE2E612A2401033B00B7A8D2 /* d_rabbit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE2E61292401033B00B7A8D2 /* d_rabbit.cpp */; };
-		FE2FEF0824CDEB2F0047F3A5 /* d_galastrm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE2FEF0724CDEB2F0047F3A5 /* d_galastrm.cpp */; };
 		FE34741A23675C4C006646E7 /* FBAudio.mm in Sources */ = {isa = PBXBuildFile; fileRef = FE34741823675C4C006646E7 /* FBAudio.mm */; };
 		FE34742623696151006646E7 /* SDLAudioEngine.m in Sources */ = {isa = PBXBuildFile; fileRef = FE34742423696150006646E7 /* SDLAudioEngine.m */; };
 		FE3BD61623A4979700570784 /* License.rtf in Resources */ = {isa = PBXBuildFile; fileRef = FE3BD61523A4979700570784 /* License.rtf */; };
@@ -1002,30 +998,16 @@
 		FE8329192439A3E000059993 /* e132xs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE8329172439A3E000059993 /* e132xs.cpp */; };
 		FE83291C2439A41300059993 /* qs1000.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE83291B2439A41200059993 /* qs1000.cpp */; };
 		FE8868352410D54D0022BEE6 /* d_nes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE8868342410D54D0022BEE6 /* d_nes.cpp */; };
-		FE92E3FA2458859600693C0C /* d_f-32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE92E3F72458859500693C0C /* d_f-32.cpp */; };
-		FE92E3FB2458859600693C0C /* d_eolith16.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE92E3F82458859500693C0C /* d_eolith16.cpp */; };
-		FE92E3FC2458859600693C0C /* d_goori.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE92E3F92458859600693C0C /* d_goori.cpp */; };
 		FEA1AB8823B5D49700D6082A /* d_spdodgeb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEA1AB8723B5D49700D6082A /* d_spdodgeb.cpp */; };
-		FEA35F6F246A6E04008938BC /* d_pasha2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEA35F6D246A6E03008938BC /* d_pasha2.cpp */; };
-		FEA35F70246A6E04008938BC /* d_shangha3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEA35F6E246A6E03008938BC /* d_shangha3.cpp */; };
 		FEA5E79223563F5400DA2D9D /* misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEA5E79023563F5400DA2D9D /* misc.cpp */; };
-		FEC0A0E0249677750015AABF /* d_wecleman.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEC0A0DF249677750015AABF /* d_wecleman.cpp */; };
-		FEC0A0E224A6F99A0015AABF /* d_magmax.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEC0A0E124A6F99A0015AABF /* d_magmax.cpp */; };
-		FEC0A0E424ACDFBF0015AABF /* d_cischeat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEC0A0E324ACDFBE0015AABF /* d_cischeat.cpp */; };
 		FEC5D3D6235C136F00ABA9FB /* FBVideo.mm in Sources */ = {isa = PBXBuildFile; fileRef = FEC5D3D5235C136F00ABA9FB /* FBVideo.mm */; };
 		FEC5D3D9235C160600ABA9FB /* FBScreenView.mm in Sources */ = {isa = PBXBuildFile; fileRef = FEC5D3D8235C160600ABA9FB /* FBScreenView.mm */; };
 		FED03ADE23FAF8E900E99A10 /* mdeeprom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FED03ADD23FAF8E900E99A10 /* mdeeprom.cpp */; };
 		FEDA8F89235D226F007A4D26 /* FBInput.mm in Sources */ = {isa = PBXBuildFile; fileRef = FEDA8F87235D226E007A4D26 /* FBInput.mm */; };
-		FEDA9E2224C203960060BF0B /* poly.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEDA9E2024C203950060BF0B /* poly.cpp */; };
-		FEE347C424CC0E3E00DD28E6 /* d_x2222.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEE347C324CC0E3D00DD28E6 /* d_x2222.cpp */; };
 		FEE7CC3E242285DC00B311BC /* d_sshangha.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEE7CC3D242285DC00B311BC /* d_sshangha.cpp */; };
 		FEE7CC40242285EE00B311BC /* d_mjkjidai.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEE7CC3F242285ED00B311BC /* d_mjkjidai.cpp */; };
 		FEE7CC43242285FC00B311BC /* d_kickgoal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEE7CC41242285FC00B311BC /* d_kickgoal.cpp */; };
 		FEE7CC44242285FC00B311BC /* d_inufuku.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEE7CC42242285FC00B311BC /* d_inufuku.cpp */; };
-		FEECE403247AC7BF007724A2 /* tlcs900.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEECE3FF247AC7BE007724A2 /* tlcs900.cpp */; };
-		FEECE407247AC84F007724A2 /* t6w28.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEECE405247AC84E007724A2 /* t6w28.cpp */; };
-		FEECE409247AC896007724A2 /* d_ngp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEECE408247AC896007724A2 /* d_ngp.cpp */; };
-		FEECE40C247AC8C5007724A2 /* k1ge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEECE40A247AC8C4007724A2 /* k1ge.cpp */; };
 		FEED9DCA2356EF5000B7AF83 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FEED9DC92356EF4F00B7AF83 /* OpenGL.framework */; };
 		FEED9DEF2356F5DB00B7AF83 /* neocdlist.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEED9DDF2356F5DA00B7AF83 /* neocdlist.cpp */; };
 		FEED9DFA23576B9F00B7AF83 /* support_paths.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEED9DF923576B9F00B7AF83 /* support_paths.cpp */; };
@@ -2520,9 +2502,6 @@
 		FE1E0C7C245333E500C774C3 /* i4x00.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = i4x00.cpp; sourceTree = "<group>"; };
 		FE1E0C7D245333E500C774C3 /* i4x00.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = i4x00.h; sourceTree = "<group>"; };
 		FE1E0C7F2453340600C774C3 /* d_hyprduel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_hyprduel.cpp; sourceTree = "<group>"; };
-		FE1E0C812454F7D600C774C3 /* d_tubep.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_tubep.cpp; sourceTree = "<group>"; };
-		FE1E0C832456832100C774C3 /* d_eolith.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_eolith.cpp; sourceTree = "<group>"; };
-		FE232A8224FA215200D3B388 /* d_mdarcbl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_mdarcbl.cpp; sourceTree = "<group>"; };
 		FE2BC6AA23615B3400B9D150 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LogViewer.xib; sourceTree = "<group>"; };
 		FE2BC6B323615C3300B9D150 /* FBLogViewerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FBLogViewerController.h; sourceTree = "<group>"; };
 		FE2BC6B423615C3300B9D150 /* FBLogViewerController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FBLogViewerController.m; sourceTree = "<group>"; };
@@ -2535,7 +2514,6 @@
 		FE2E61262401030D00B7A8D2 /* i5000.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = i5000.h; sourceTree = "<group>"; };
 		FE2E61272401030D00B7A8D2 /* i5000.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = i5000.cpp; sourceTree = "<group>"; };
 		FE2E61292401033B00B7A8D2 /* d_rabbit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_rabbit.cpp; sourceTree = "<group>"; };
-		FE2FEF0724CDEB2F0047F3A5 /* d_galastrm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_galastrm.cpp; sourceTree = "<group>"; };
 		FE34741823675C4C006646E7 /* FBAudio.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FBAudio.mm; sourceTree = "<group>"; };
 		FE34741923675C4C006646E7 /* FBAudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FBAudio.h; sourceTree = "<group>"; };
 		FE34742423696150006646E7 /* SDLAudioEngine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SDLAudioEngine.m; sourceTree = "<group>"; };
@@ -2554,22 +2532,14 @@
 		FE83291A2439A41200059993 /* qs1000.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = qs1000.h; sourceTree = "<group>"; };
 		FE83291B2439A41200059993 /* qs1000.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = qs1000.cpp; sourceTree = "<group>"; };
 		FE8868342410D54D0022BEE6 /* d_nes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_nes.cpp; sourceTree = "<group>"; };
-		FE92E3F72458859500693C0C /* d_f-32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "d_f-32.cpp"; sourceTree = "<group>"; };
-		FE92E3F82458859500693C0C /* d_eolith16.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_eolith16.cpp; sourceTree = "<group>"; };
-		FE92E3F92458859600693C0C /* d_goori.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_goori.cpp; sourceTree = "<group>"; };
 		FE9A990D235F82C900507894 /* main.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = main.h; sourceTree = "<group>"; };
 		FEA1AB8723B5D49700D6082A /* d_spdodgeb.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_spdodgeb.cpp; sourceTree = "<group>"; };
-		FEA35F6D246A6E03008938BC /* d_pasha2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_pasha2.cpp; sourceTree = "<group>"; };
-		FEA35F6E246A6E03008938BC /* d_shangha3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_shangha3.cpp; sourceTree = "<group>"; };
 		FEA5E79023563F5400DA2D9D /* misc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = misc.cpp; sourceTree = "<group>"; };
 		FEA5E79C23564A3200DA2D9D /* cave_tile_func.pl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = cave_tile_func.pl; sourceTree = "<group>"; };
 		FEA5E7AE23564A6400DA2D9D /* cave_sprite_func.pl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = cave_sprite_func.pl; sourceTree = "<group>"; };
 		FEA5E7BD2356721800DA2D9D /* neo_sprite_func.pl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = neo_sprite_func.pl; sourceTree = "<group>"; };
 		FEA5E7BE2356721800DA2D9D /* psikyo_tile_func.pl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = psikyo_tile_func.pl; sourceTree = "<group>"; };
 		FEA5E7BF2356721900DA2D9D /* toa_gp9001_func.pl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = toa_gp9001_func.pl; sourceTree = "<group>"; };
-		FEC0A0DF249677750015AABF /* d_wecleman.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_wecleman.cpp; sourceTree = "<group>"; };
-		FEC0A0E124A6F99A0015AABF /* d_magmax.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_magmax.cpp; sourceTree = "<group>"; };
-		FEC0A0E324ACDFBE0015AABF /* d_cischeat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_cischeat.cpp; sourceTree = "<group>"; };
 		FEC5D3D4235C136E00ABA9FB /* FBVideo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FBVideo.h; sourceTree = "<group>"; };
 		FEC5D3D5235C136F00ABA9FB /* FBVideo.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = FBVideo.mm; sourceTree = "<group>"; };
 		FEC5D3D7235C160600ABA9FB /* FBScreenView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FBScreenView.h; sourceTree = "<group>"; };
@@ -2580,22 +2550,10 @@
 		FEDA8F88235D226E007A4D26 /* FBInput.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FBInput.h; sourceTree = "<group>"; };
 		FEDA8F8C235EB561007A4D26 /* README-macOS.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = "README-macOS.md"; path = "../../README-macOS.md"; sourceTree = "<group>"; };
 		FEDA8F8E235EB752007A4D26 /* whatsnew.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = whatsnew.html; path = ../../whatsnew.html; sourceTree = "<group>"; };
-		FEDA9E2024C203950060BF0B /* poly.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = poly.cpp; sourceTree = "<group>"; };
-		FEDA9E2124C203950060BF0B /* poly.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = poly.h; sourceTree = "<group>"; };
-		FEE347C324CC0E3D00DD28E6 /* d_x2222.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_x2222.cpp; sourceTree = "<group>"; };
 		FEE7CC3D242285DC00B311BC /* d_sshangha.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_sshangha.cpp; sourceTree = "<group>"; };
 		FEE7CC3F242285ED00B311BC /* d_mjkjidai.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_mjkjidai.cpp; sourceTree = "<group>"; };
 		FEE7CC41242285FC00B311BC /* d_kickgoal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_kickgoal.cpp; sourceTree = "<group>"; };
 		FEE7CC42242285FC00B311BC /* d_inufuku.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_inufuku.cpp; sourceTree = "<group>"; };
-		FEECE3FF247AC7BE007724A2 /* tlcs900.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tlcs900.cpp; sourceTree = "<group>"; };
-		FEECE400247AC7BE007724A2 /* tlcs900.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tlcs900.h; sourceTree = "<group>"; };
-		FEECE401247AC7BE007724A2 /* 900tbl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = 900tbl.c; sourceTree = "<group>"; };
-		FEECE402247AC7BF007724A2 /* tlcs900_intf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tlcs900_intf.h; sourceTree = "<group>"; };
-		FEECE405247AC84E007724A2 /* t6w28.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = t6w28.cpp; sourceTree = "<group>"; };
-		FEECE406247AC84E007724A2 /* t6w28.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = t6w28.h; sourceTree = "<group>"; };
-		FEECE408247AC896007724A2 /* d_ngp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_ngp.cpp; sourceTree = "<group>"; };
-		FEECE40A247AC8C4007724A2 /* k1ge.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = k1ge.cpp; sourceTree = "<group>"; };
-		FEECE40B247AC8C4007724A2 /* k1ge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = k1ge.h; sourceTree = "<group>"; };
 		FEED9DC22356DDA900B7AF83 /* gamelist.pl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = gamelist.pl; sourceTree = "<group>"; };
 		FEED9DC92356EF4F00B7AF83 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		FEED9DDF2356F5DA00B7AF83 /* neocdlist.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = neocdlist.cpp; sourceTree = "<group>"; };
@@ -2726,7 +2684,6 @@
 				FE1B1D7923561A630065200C /* s2650 */,
 				FE1B1CB523561A620065200C /* sh2 */,
 				FE1B1D8323561A630065200C /* tlcs90 */,
-				FEECE3FE247AC7BE007724A2 /* tlcs900 */,
 				FE1B1D4323561A630065200C /* tms32010 */,
 				FE1B1CDF23561A620065200C /* tms34010 */,
 				FE1B1D3023561A630065200C /* upd7725 */,
@@ -2769,7 +2726,6 @@
 				FE1B1CDD23561A620065200C /* sh2_intf.h */,
 				FE1B1D5523561A630065200C /* tlcs90_intf.cpp */,
 				FE1B1CC323561A620065200C /* tlcs90_intf.h */,
-				FEECE402247AC7BF007724A2 /* tlcs900_intf.h */,
 				FE1B1CB223561A620065200C /* tms34010_intf.cpp */,
 				FE1B1CC923561A620065200C /* tms34010_intf.h */,
 				FE1B1D4223561A630065200C /* upd7810_intf.h */,
@@ -3516,7 +3472,6 @@
 		FE1B1EC023561A670065200C /* megadrive */ = {
 			isa = PBXGroup;
 			children = (
-				FE232A8224FA215200D3B388 /* d_mdarcbl.cpp */,
 				FE1B1EC223561A670065200C /* d_megadrive.cpp */,
 				FED03ADD23FAF8E900E99A10 /* mdeeprom.cpp */,
 				FED03ADC23FAF8E900E99A10 /* mdeeprom.h */,
@@ -3643,7 +3598,6 @@
 				FE1B1F7823561A690065200C /* d_blackt96.cpp */,
 				FE1B1F6F23561A680065200C /* d_blmbycar.cpp */,
 				FE1B1F5723561A680065200C /* d_bloodbro.cpp */,
-				FEC0A0E324ACDFBE0015AABF /* d_cischeat.cpp */,
 				FE1B1F3523561A680065200C /* d_crospang.cpp */,
 				FE1B1F3723561A680065200C /* d_crshrace.cpp */,
 				FE1B1F2D23561A680065200C /* d_cultures.cpp */,
@@ -3656,10 +3610,7 @@
 				FE1B1F4B23561A680065200C /* d_drgnmst.cpp */,
 				FE1B1F4523561A680065200C /* d_drtomy.cpp */,
 				FE1B1F5623561A680065200C /* d_egghunt.cpp */,
-				FE1E0C832456832100C774C3 /* d_eolith.cpp */,
-				FE92E3F82458859500693C0C /* d_eolith16.cpp */,
 				FE1B1F1F23561A670065200C /* d_esd16.cpp */,
-				FE92E3F72458859500693C0C /* d_f-32.cpp */,
 				FE1B1F6823561A680065200C /* d_f1gp.cpp */,
 				FE1B1F2123561A670065200C /* d_funybubl.cpp */,
 				FE1B1F2323561A680065200C /* d_fuukifg2.cpp */,
@@ -3672,7 +3623,6 @@
 				FE1B1F3923561A680065200C /* d_galspnbl.cpp */,
 				FE1B1F7723561A680065200C /* d_glass.cpp */,
 				FE1B1F3C23561A680065200C /* d_go2000.cpp */,
-				FE92E3F92458859600693C0C /* d_goori.cpp */,
 				FE1B1F4C23561A680065200C /* d_gotcha.cpp */,
 				FE83290C2439A3A000059993 /* d_gstream.cpp */,
 				FE1B1F7123561A680065200C /* d_gumbo.cpp */,
@@ -3697,13 +3647,11 @@
 				FE1B1F3123561A680065200C /* d_mwarr.cpp */,
 				FE1B1F6523561A680065200C /* d_namcos2.cpp */,
 				FE1B1F7A23561A690065200C /* d_news.cpp */,
-				FEECE408247AC896007724A2 /* d_ngp.cpp */,
 				FE1B1F6423561A680065200C /* d_nmg5.cpp */,
 				FE1B1F5C23561A680065200C /* d_nmk16.cpp */,
 				FE1B1F2223561A670065200C /* d_ohmygod.cpp */,
 				FE1B1F5823561A680065200C /* d_oneshot.cpp */,
 				FE1B1F3D23561A680065200C /* d_onetwo.cpp */,
-				FEA35F6D246A6E03008938BC /* d_pasha2.cpp */,
 				FE1B1F2623561A680065200C /* d_pass.cpp */,
 				FE1B1F6D23561A680065200C /* d_patapata.cpp */,
 				FE1B1F3323561A680065200C /* d_pipedrm.cpp */,
@@ -3720,7 +3668,6 @@
 				FE1B1F7523561A680065200C /* d_seta.cpp */,
 				FE1B1F6123561A680065200C /* d_seta2.cpp */,
 				FE1B1F3223561A680065200C /* d_shadfrce.cpp */,
-				FEA35F6E246A6E03008938BC /* d_shangha3.cpp */,
 				FE1B1F4223561A680065200C /* d_silkroad.cpp */,
 				FE1B1F4923561A680065200C /* d_silvmil.cpp */,
 				FE1B1F2E23561A680065200C /* d_speedspn.cpp */,
@@ -3742,7 +3689,6 @@
 				FE1B1F8023561A690065200C /* d_welltris.cpp */,
 				FE1B1F7D23561A690065200C /* d_wrally.cpp */,
 				FE1B1F4A23561A680065200C /* d_wwfwfest.cpp */,
-				FEE347C324CC0E3D00DD28E6 /* d_x2222.cpp */,
 				FE1B1F4823561A680065200C /* d_xorworld.cpp */,
 				FE1B1F3623561A680065200C /* d_yunsun16.cpp */,
 				FE1B1F7F23561A690065200C /* d_yunsung8.cpp */,
@@ -3868,96 +3814,95 @@
 		FE1B1FD923561A6A0065200C /* konami */ = {
 			isa = PBXGroup;
 			children = (
-				FE1B1FE723561A6A0065200C /* d_88games.cpp */,
-				FE1B202123561A6A0065200C /* d_ajax.cpp */,
-				FE1B203123561A6B0065200C /* d_aliens.cpp */,
-				FE1B202423561A6B0065200C /* d_asterix.cpp */,
-				FE1B202723561A6B0065200C /* d_battlnts.cpp */,
-				FE1B1FF323561A6A0065200C /* d_bishi.cpp */,
-				FE1B1FE923561A6A0065200C /* d_bladestl.cpp */,
-				FE1B202023561A6A0065200C /* d_blockhl.cpp */,
-				FE1B202523561A6B0065200C /* d_bottom9.cpp */,
-				FE1B201F23561A6A0065200C /* d_chqflag.cpp */,
-				FE1B1FE123561A6A0065200C /* d_circusc.cpp */,
+				FE1B1FDA23561A6A0065200C /* k051960.cpp */,
 				FE1B1FDB23561A6A0065200C /* d_combatsc.cpp */,
-				FE1B200823561A6A0065200C /* d_contra.cpp */,
-				FE1B1FFB23561A6A0065200C /* d_crimfght.cpp */,
-				FE1B202223561A6A0065200C /* d_dbz.cpp */,
-				FE1B200423561A6A0065200C /* d_ddribble.cpp */,
-				FE1B202B23561A6B0065200C /* d_divebomb.cpp */,
-				FE1B1FEE23561A6A0065200C /* d_fastlane.cpp */,
-				FE1B1FFE23561A6A0065200C /* d_finalzr.cpp */,
-				FE1B203023561A6B0065200C /* d_flkatck.cpp */,
-				FE1B201C23561A6A0065200C /* d_gberet.cpp */,
-				FE1B1FF423561A6A0065200C /* d_gbusters.cpp */,
-				FE1B1FE223561A6A0065200C /* d_gijoe.cpp */,
-				FE1B201A23561A6A0065200C /* d_gradius3.cpp */,
-				FE1B1FE423561A6A0065200C /* d_gyruss.cpp */,
-				FE1B203223561A6B0065200C /* d_hcastle.cpp */,
-				FE1B201723561A6A0065200C /* d_hexion.cpp */,
-				FE1B1FF123561A6A0065200C /* d_hyperspt.cpp */,
-				FE1B1FE323561A6A0065200C /* d_ironhors.cpp */,
-				FE1B201223561A6A0065200C /* d_jackal.cpp */,
-				FE1B201023561A6A0065200C /* d_jailbrek.cpp */,
-				FE1B200623561A6A0065200C /* d_junofrst.cpp */,
-				FE1B200923561A6A0065200C /* d_kontest.cpp */,
-				FE1B202D23561A6B0065200C /* d_labyrunr.cpp */,
-				FE1B202823561A6B0065200C /* d_lethal.cpp */,
-				FE1B1FFC23561A6A0065200C /* d_mainevt.cpp */,
-				FE1B202323561A6B0065200C /* d_megazone.cpp */,
-				FE1B1FFF23561A6A0065200C /* d_mikie.cpp */,
-				FE1B202C23561A6B0065200C /* d_mogura.cpp */,
-				FE1B200223561A6A0065200C /* d_moo.cpp */,
-				FE1B200A23561A6A0065200C /* d_mystwarr.cpp */,
-				FE1B201D23561A6A0065200C /* d_nemesis.cpp */,
-				FE1B200E23561A6A0065200C /* d_pandoras.cpp */,
-				FE1B200B23561A6A0065200C /* d_parodius.cpp */,
+				FE1B1FDC23561A6A0065200C /* d_tmnt.cpp */,
+				FE1B1FDD23561A6A0065200C /* timeplt_snd.cpp */,
 				FE1B1FDE23561A6A0065200C /* d_pingpong.cpp */,
-				FE1B1FEF23561A6A0065200C /* d_pooyan.cpp */,
-				FE1B201123561A6A0065200C /* d_rockrage.cpp */,
-				FE1B200323561A6A0065200C /* d_rocnrope.cpp */,
-				FE1B201E23561A6A0065200C /* d_rollerg.cpp */,
-				FE1B200F23561A6A0065200C /* d_sbasketb.cpp */,
+				FE1B1FDF23561A6A0065200C /* k054000.cpp */,
+				FE1B1FE023561A6A0065200C /* d_tp84.cpp */,
+				FE1B1FE123561A6A0065200C /* d_circusc.cpp */,
+				FE1B1FE223561A6A0065200C /* d_gijoe.cpp */,
+				FE1B1FE323561A6A0065200C /* d_ironhors.cpp */,
+				FE1B1FE423561A6A0065200C /* d_gyruss.cpp */,
 				FE1B1FE523561A6A0065200C /* d_scotrsht.cpp */,
+				FE1B1FE623561A6A0065200C /* k007342_k007420.cpp */,
+				FE1B1FE723561A6A0065200C /* d_88games.cpp */,
+				FE1B1FE823561A6A0065200C /* d_yiear.cpp */,
+				FE1B1FE923561A6A0065200C /* d_bladestl.cpp */,
+				FE1B1FEA23561A6A0065200C /* k056832.cpp */,
 				FE1B1FEB23561A6A0065200C /* d_shaolins.cpp */,
-				FE1B201323561A6A0065200C /* d_simpsons.cpp */,
+				FE1B1FEC23561A6A0065200C /* k051733.cpp */,
+				FE1B1FED23561A6A0065200C /* k055555.cpp */,
+				FE1B1FEE23561A6A0065200C /* d_fastlane.cpp */,
+				FE1B1FEF23561A6A0065200C /* d_pooyan.cpp */,
+				FE1B1FF023561A6A0065200C /* k053247.cpp */,
+				FE1B1FF123561A6A0065200C /* d_hyperspt.cpp */,
+				FE1B1FF223561A6A0065200C /* k054338.cpp */,
+				FE1B1FF323561A6A0065200C /* d_bishi.cpp */,
+				FE1B1FF423561A6A0065200C /* d_gbusters.cpp */,
 				FE1B1FF523561A6A0065200C /* d_spy.cpp */,
 				FE1B1FF623561A6A0065200C /* d_surpratk.cpp */,
-				FE1B201923561A6A0065200C /* d_thunderx.cpp */,
-				FE1B200C23561A6A0065200C /* d_timeplt.cpp */,
-				FE1B1FDC23561A6A0065200C /* d_tmnt.cpp */,
-				FE1B1FE023561A6A0065200C /* d_tp84.cpp */,
-				FE1B200523561A6A0065200C /* d_trackfld.cpp */,
-				FE1B201423561A6A0065200C /* d_tutankhm.cpp */,
-				FE1B200023561A6A0065200C /* d_twin16.cpp */,
-				FE1B202623561A6B0065200C /* d_ultraman.cpp */,
-				FE1B201623561A6A0065200C /* d_vendetta.cpp */,
-				FEC0A0DF249677750015AABF /* d_wecleman.cpp */,
-				FE1B1FFD23561A6A0065200C /* d_xexex.cpp */,
-				FE1B201823561A6A0065200C /* d_xmen.cpp */,
-				FE1B1FE823561A6A0065200C /* d_yiear.cpp */,
-				FE1B202923561A6B0065200C /* k007121.cpp */,
-				FE1B202E23561A6B0065200C /* k007121.h */,
-				FE1B1FE623561A6A0065200C /* k007342_k007420.cpp */,
-				FE1B200D23561A6A0065200C /* k007342_k007420.h */,
-				FE1B200723561A6A0065200C /* k051316.cpp */,
-				FE1B1FEC23561A6A0065200C /* k051733.cpp */,
-				FE1B1FDA23561A6A0065200C /* k051960.cpp */,
-				FE1B202A23561A6B0065200C /* k052109.cpp */,
 				FE1B1FF723561A6A0065200C /* k053245.cpp */,
-				FE1B1FF023561A6A0065200C /* k053247.cpp */,
-				FE1B1FF923561A6A0065200C /* k053250.cpp */,
 				FE1B1FF823561A6A0065200C /* k053251.cpp */,
-				FE1B201523561A6A0065200C /* k053936.cpp */,
-				FE1B1FDF23561A6A0065200C /* k054000.cpp */,
-				FE1B1FF223561A6A0065200C /* k054338.cpp */,
-				FE1B1FED23561A6A0065200C /* k055555.cpp */,
-				FE1B1FEA23561A6A0065200C /* k056832.cpp */,
-				FE1B200123561A6A0065200C /* konamigx.cpp */,
+				FE1B1FF923561A6A0065200C /* k053250.cpp */,
 				FE1B1FFA23561A6A0065200C /* konamiic.cpp */,
+				FE1B1FFB23561A6A0065200C /* d_crimfght.cpp */,
+				FE1B1FFC23561A6A0065200C /* d_mainevt.cpp */,
+				FE1B1FFD23561A6A0065200C /* d_xexex.cpp */,
+				FE1B1FFE23561A6A0065200C /* d_finalzr.cpp */,
+				FE1B1FFF23561A6A0065200C /* d_mikie.cpp */,
+				FE1B200023561A6A0065200C /* d_twin16.cpp */,
+				FE1B200123561A6A0065200C /* konamigx.cpp */,
+				FE1B200223561A6A0065200C /* d_moo.cpp */,
+				FE1B200323561A6A0065200C /* d_rocnrope.cpp */,
+				FE1B200423561A6A0065200C /* d_ddribble.cpp */,
+				FE1B200523561A6A0065200C /* d_trackfld.cpp */,
+				FE1B200623561A6A0065200C /* d_junofrst.cpp */,
+				FE1B200723561A6A0065200C /* k051316.cpp */,
+				FE1B200823561A6A0065200C /* d_contra.cpp */,
+				FE1B200923561A6A0065200C /* d_kontest.cpp */,
+				FE1B200A23561A6A0065200C /* d_mystwarr.cpp */,
+				FE1B200B23561A6A0065200C /* d_parodius.cpp */,
+				FE1B200C23561A6A0065200C /* d_timeplt.cpp */,
+				FE1B200D23561A6A0065200C /* k007342_k007420.h */,
+				FE1B200E23561A6A0065200C /* d_pandoras.cpp */,
+				FE1B200F23561A6A0065200C /* d_sbasketb.cpp */,
+				FE1B201023561A6A0065200C /* d_jailbrek.cpp */,
+				FE1B201123561A6A0065200C /* d_rockrage.cpp */,
+				FE1B201223561A6A0065200C /* d_jackal.cpp */,
+				FE1B201323561A6A0065200C /* d_simpsons.cpp */,
+				FE1B201423561A6A0065200C /* d_tutankhm.cpp */,
+				FE1B201523561A6A0065200C /* k053936.cpp */,
+				FE1B201623561A6A0065200C /* d_vendetta.cpp */,
+				FE1B201723561A6A0065200C /* d_hexion.cpp */,
+				FE1B201823561A6A0065200C /* d_xmen.cpp */,
+				FE1B201923561A6A0065200C /* d_thunderx.cpp */,
+				FE1B201A23561A6A0065200C /* d_gradius3.cpp */,
 				FE1B201B23561A6A0065200C /* konamiic.h */,
-				FE1B1FDD23561A6A0065200C /* timeplt_snd.cpp */,
+				FE1B201C23561A6A0065200C /* d_gberet.cpp */,
+				FE1B201D23561A6A0065200C /* d_nemesis.cpp */,
+				FE1B201E23561A6A0065200C /* d_rollerg.cpp */,
+				FE1B201F23561A6A0065200C /* d_chqflag.cpp */,
+				FE1B202023561A6A0065200C /* d_blockhl.cpp */,
+				FE1B202123561A6A0065200C /* d_ajax.cpp */,
+				FE1B202223561A6A0065200C /* d_dbz.cpp */,
+				FE1B202323561A6B0065200C /* d_megazone.cpp */,
+				FE1B202423561A6B0065200C /* d_asterix.cpp */,
+				FE1B202523561A6B0065200C /* d_bottom9.cpp */,
+				FE1B202623561A6B0065200C /* d_ultraman.cpp */,
+				FE1B202723561A6B0065200C /* d_battlnts.cpp */,
+				FE1B202823561A6B0065200C /* d_lethal.cpp */,
+				FE1B202923561A6B0065200C /* k007121.cpp */,
+				FE1B202A23561A6B0065200C /* k052109.cpp */,
+				FE1B202B23561A6B0065200C /* d_divebomb.cpp */,
+				FE1B202C23561A6B0065200C /* d_mogura.cpp */,
+				FE1B202D23561A6B0065200C /* d_labyrunr.cpp */,
+				FE1B202E23561A6B0065200C /* k007121.h */,
 				FE1B202F23561A6B0065200C /* timeplt_snd.h */,
+				FE1B203023561A6B0065200C /* d_flkatck.cpp */,
+				FE1B203123561A6B0065200C /* d_aliens.cpp */,
+				FE1B203223561A6B0065200C /* d_hcastle.cpp */,
 			);
 			path = konami;
 			sourceTree = "<group>";
@@ -4141,73 +4086,72 @@
 		FE1B20A723561A6C0065200C /* taito */ = {
 			isa = PBXGroup;
 			children = (
-				FE1B20AB23561A6C0065200C /* cchip.cpp */,
 				FE1B20A823561A6C0065200C /* cchip.h */,
-				FE1B20E723561A6C0065200C /* d_arkanoid.cpp */,
-				FE1B20B023561A6C0065200C /* d_ashnojoe.cpp */,
-				FE1B20B423561A6C0065200C /* d_asuka.cpp */,
-				FE1B20DB23561A6C0065200C /* d_bublbobl.cpp */,
 				FE1B20A923561A6C0065200C /* d_buggychl.cpp */,
 				FE1B20AA23561A6C0065200C /* d_chaknpop.cpp */,
-				FE1B20D723561A6C0065200C /* d_crbaloon.cpp */,
-				FE1B20D523561A6C0065200C /* d_darius2.cpp */,
-				FE1B20D823561A6C0065200C /* d_darkmist.cpp */,
-				FE1B20E023561A6C0065200C /* d_exzisus.cpp */,
-				FE1B20AE23561A6C0065200C /* d_flstory.cpp */,
-				FE2FEF0724CDEB2F0047F3A5 /* d_galastrm.cpp */,
-				FE1B20CE23561A6C0065200C /* d_groundfx.cpp */,
-				FE1B20E923561A6C0065200C /* d_gunbuster.cpp */,
-				FE1B20C723561A6C0065200C /* d_jollyjgr.cpp */,
+				FE1B20AB23561A6C0065200C /* cchip.cpp */,
 				FE1B20AC23561A6C0065200C /* d_ksayakyu.cpp */,
-				FE1B20CC23561A6C0065200C /* d_lkage.cpp */,
-				FE1B20BD23561A6C0065200C /* d_mexico86.cpp */,
-				FE1B20B223561A6C0065200C /* d_minivdr.cpp */,
-				FE1B20B623561A6C0065200C /* d_msisaac.cpp */,
-				FE1B20B923561A6C0065200C /* d_othunder.cpp */,
-				FE1B20C323561A6C0065200C /* d_qix.cpp */,
-				FE1B20DC23561A6C0065200C /* d_retofinv.cpp */,
-				FE1B20C623561A6C0065200C /* d_rollrace.cpp */,
-				FE1B20C023561A6C0065200C /* d_slapshot.cpp */,
-				FE1B20E823561A6C0065200C /* d_ssrj.cpp */,
-				FE1B20D623561A6C0065200C /* d_superchs.cpp */,
-				FE1B20BE23561A6C0065200C /* d_supridr.cpp */,
-				FE1B20DE23561A6C0065200C /* d_taitob.cpp */,
-				FE1B20C523561A6C0065200C /* d_taitof2.cpp */,
-				FE1B20C123561A6C0065200C /* d_taitof3.cpp */,
+				FE1B20AD23561A6C0065200C /* tc0360pri.cpp */,
+				FE1B20AE23561A6C0065200C /* d_flstory.cpp */,
+				FE1B20AF23561A6C0065200C /* taito_m68705.cpp */,
+				FE1B20B023561A6C0065200C /* d_ashnojoe.cpp */,
 				FE1B20B123561A6C0065200C /* d_taitoh.cpp */,
+				FE1B20B223561A6C0065200C /* d_minivdr.cpp */,
 				FE1B20B323561A6C0065200C /* d_taitol.cpp */,
-				FE1B20BF23561A6C0065200C /* d_taitomisc.cpp */,
-				FE1B20DA23561A6C0065200C /* d_taitosj.cpp */,
-				FE1B20B823561A6C0065200C /* d_taitox.cpp */,
+				FE1B20B423561A6C0065200C /* d_asuka.cpp */,
 				FE1B20B523561A6C0065200C /* d_taitoz.cpp */,
-				FE1B20CD23561A6C0065200C /* d_tnzs.cpp */,
-				FE1B20E223561A6C0065200C /* d_undrfire.cpp */,
+				FE1B20B623561A6C0065200C /* d_msisaac.cpp */,
+				FE1B20B723561A6C0065200C /* taitof3_video.cpp */,
+				FE1B20B823561A6C0065200C /* d_taitox.cpp */,
+				FE1B20B923561A6C0065200C /* d_othunder.cpp */,
+				FE1B20BA23561A6C0065200C /* tc0140syt.cpp */,
+				FE1B20BB23561A6C0065200C /* tc0110pcr.cpp */,
+				FE1B20BC23561A6C0065200C /* taito.cpp */,
+				FE1B20BD23561A6C0065200C /* d_mexico86.cpp */,
+				FE1B20BE23561A6C0065200C /* d_supridr.cpp */,
+				FE1B20BF23561A6C0065200C /* d_taitomisc.cpp */,
+				FE1B20C023561A6C0065200C /* d_slapshot.cpp */,
+				FE1B20C123561A6C0065200C /* d_taitof3.cpp */,
+				FE1B20C223561A6C0065200C /* tnzs_prot.h */,
+				FE1B20C323561A6C0065200C /* d_qix.cpp */,
+				FE1B20C423561A6C0065200C /* tc0180vcu.cpp */,
+				FE1B20C523561A6C0065200C /* d_taitof2.cpp */,
+				FE1B20C623561A6C0065200C /* d_rollrace.cpp */,
+				FE1B20C723561A6C0065200C /* d_jollyjgr.cpp */,
+				FE1B20C823561A6C0065200C /* taito.h */,
+				FE1B20C923561A6C0065200C /* tc0510nio.cpp */,
 				FE1B20CA23561A6C0065200C /* d_wyvernf0.cpp */,
+				FE1B20CB23561A6C0065200C /* taitof3_snd.cpp */,
+				FE1B20CC23561A6C0065200C /* d_lkage.cpp */,
+				FE1B20CD23561A6C0065200C /* d_tnzs.cpp */,
+				FE1B20CE23561A6C0065200C /* d_groundfx.cpp */,
+				FE1B20CF23561A6C0065200C /* taito_m68705.h */,
+				FE1B20D023561A6C0065200C /* tc0280grd.cpp */,
+				FE1B20D123561A6C0065200C /* tc0150rod.cpp */,
+				FE1B20D223561A6C0065200C /* tc0220ioc.cpp */,
 				FE1B20D323561A6C0065200C /* pc080sn.cpp */,
 				FE1B20D423561A6C0065200C /* pc090oj.cpp */,
-				FE1B20DD23561A6C0065200C /* taito_ic.cpp */,
+				FE1B20D523561A6C0065200C /* d_darius2.cpp */,
+				FE1B20D623561A6C0065200C /* d_superchs.cpp */,
+				FE1B20D723561A6C0065200C /* d_crbaloon.cpp */,
+				FE1B20D823561A6C0065200C /* d_darkmist.cpp */,
 				FE1B20D923561A6C0065200C /* taito_ic.h */,
-				FE1B20AF23561A6C0065200C /* taito_m68705.cpp */,
-				FE1B20CF23561A6C0065200C /* taito_m68705.h */,
-				FE1B20BC23561A6C0065200C /* taito.cpp */,
-				FE1B20C823561A6C0065200C /* taito.h */,
-				FE1B20CB23561A6C0065200C /* taitof3_snd.cpp */,
-				FE1B20E323561A6C0065200C /* taitof3_snd.h */,
-				FE1B20B723561A6C0065200C /* taitof3_video.cpp */,
+				FE1B20DA23561A6C0065200C /* d_taitosj.cpp */,
+				FE1B20DB23561A6C0065200C /* d_bublbobl.cpp */,
+				FE1B20DC23561A6C0065200C /* d_retofinv.cpp */,
+				FE1B20DD23561A6C0065200C /* taito_ic.cpp */,
+				FE1B20DE23561A6C0065200C /* d_taitob.cpp */,
 				FE1B20DF23561A6C0065200C /* taitof3_video.h */,
-				FE1B20E523561A6C0065200C /* tc0100scn.cpp */,
-				FE1B20BB23561A6C0065200C /* tc0110pcr.cpp */,
-				FE1B20BA23561A6C0065200C /* tc0140syt.cpp */,
-				FE1B20D123561A6C0065200C /* tc0150rod.cpp */,
-				FE1B20C423561A6C0065200C /* tc0180vcu.cpp */,
-				FE1B20D223561A6C0065200C /* tc0220ioc.cpp */,
-				FE1B20D023561A6C0065200C /* tc0280grd.cpp */,
-				FE1B20AD23561A6C0065200C /* tc0360pri.cpp */,
+				FE1B20E023561A6C0065200C /* d_exzisus.cpp */,
 				FE1B20E123561A6C0065200C /* tc0480scp.cpp */,
-				FE1B20C923561A6C0065200C /* tc0510nio.cpp */,
+				FE1B20E223561A6C0065200C /* d_undrfire.cpp */,
+				FE1B20E323561A6C0065200C /* taitof3_snd.h */,
 				FE1B20E423561A6C0065200C /* tc0640fio.cpp */,
+				FE1B20E523561A6C0065200C /* tc0100scn.cpp */,
 				FE1B20E623561A6C0065200C /* tnzs_prot.cpp */,
-				FE1B20C223561A6C0065200C /* tnzs_prot.h */,
+				FE1B20E723561A6C0065200C /* d_arkanoid.cpp */,
+				FE1B20E823561A6C0065200C /* d_ssrj.cpp */,
+				FE1B20E923561A6C0065200C /* d_gunbuster.cpp */,
 			);
 			path = taito;
 			sourceTree = "<group>";
@@ -4336,7 +4280,6 @@
 				FE1B213123561A6D0065200C /* d_lastduel.cpp */,
 				FE1B212123561A6D0065200C /* d_lwings.cpp */,
 				FE1B216723561A6D0065200C /* d_madmotor.cpp */,
-				FEC0A0E124A6F99A0015AABF /* d_magmax.cpp */,
 				FE1B211823561A6D0065200C /* d_mainsnk.cpp */,
 				FE1B219B23561A6E0065200C /* d_mappy.cpp */,
 				FE1B21C823561A6F0065200C /* d_marineb.cpp */,
@@ -4437,7 +4380,6 @@
 				FE1B211923561A6D0065200C /* d_toypop.cpp */,
 				FE1B218323561A6E0065200C /* d_travrusa.cpp */,
 				FE1B215D23561A6D0065200C /* d_tsamurai.cpp */,
-				FE1E0C812454F7D600C774C3 /* d_tubep.cpp */,
 				FE1B217623561A6E0065200C /* d_usgames.cpp */,
 				FE1B218C23561A6E0065200C /* d_vastar.cpp */,
 				FE1B217323561A6E0065200C /* d_vball.cpp */,
@@ -4573,8 +4515,6 @@
 				FE1B224B23561A700065200C /* sp0250.h */,
 				FE1B225123561A700065200C /* sp0256.cpp */,
 				FE1B221623561A700065200C /* sp0256.h */,
-				FEECE405247AC84E007724A2 /* t6w28.cpp */,
-				FEECE406247AC84E007724A2 /* t6w28.h */,
 				FE1B225723561A700065200C /* tms36xx.cpp */,
 				FE1B220823561A700065200C /* tms36xx.h */,
 				FE1B21FE23561A700065200C /* tms5110_tables.h */,
@@ -4646,8 +4586,6 @@
 				FE1E0C7D245333E500C774C3 /* i4x00.h */,
 				FE1B22B423561A710065200C /* joyprocess.cpp */,
 				FE1B22D623561A720065200C /* joyprocess.h */,
-				FEECE40A247AC8C4007724A2 /* k1ge.cpp */,
-				FEECE40B247AC8C4007724A2 /* k1ge.h */,
 				FE1B22A923561A710065200C /* kaneko_tmap.cpp */,
 				FE1B228E23561A710065200C /* kaneko_tmap.h */,
 				FE1B22C923561A720065200C /* mathbox.cpp */,
@@ -4680,8 +4618,6 @@
 				FE1B22B623561A710065200C /* nmk112.h */,
 				FE1B229B23561A710065200C /* pandora.cpp */,
 				FE1B22B123561A710065200C /* pandora.h */,
-				FEDA9E2024C203950060BF0B /* poly.cpp */,
-				FEDA9E2124C203950060BF0B /* poly.h */,
 				FE83291B2439A41200059993 /* qs1000.cpp */,
 				FE83291A2439A41200059993 /* qs1000.h */,
 				FE1B228523561A710065200C /* resnet.cpp */,
@@ -4867,16 +4803,6 @@
 			path = scripts;
 			sourceTree = "<group>";
 		};
-		FEECE3FE247AC7BE007724A2 /* tlcs900 */ = {
-			isa = PBXGroup;
-			children = (
-				FEECE3FF247AC7BE007724A2 /* tlcs900.cpp */,
-				FEECE400247AC7BE007724A2 /* tlcs900.h */,
-				FEECE401247AC7BE007724A2 /* 900tbl.c */,
-			);
-			path = tlcs900;
-			sourceTree = "<group>";
-		};
 		FEED9DC82356EF4F00B7AF83 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -4954,7 +4880,7 @@
 		FE1B1085235615940065200C /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1150;
+				LastUpgradeCheck = 1140;
 				ORGANIZATIONNAME = "Akop Karapetyan";
 				TargetAttributes = {
 					FE1B108C235615940065200C = {
@@ -5149,7 +5075,6 @@
 				FE1B266823561A770065200C /* d_tnzs.cpp in Sources */,
 				FE1B25B723561A760065200C /* d_spy.cpp in Sources */,
 				FE1B272223561A780065200C /* d_mcr.cpp in Sources */,
-				FE2FEF0824CDEB2F0047F3A5 /* d_galastrm.cpp in Sources */,
 				FE1B25FA23561A760065200C /* d_coleco.cpp in Sources */,
 				FE1B27BB23561A790065200C /* resnet.cpp in Sources */,
 				FE1B25E823561A760065200C /* d_lethal.cpp in Sources */,
@@ -5157,7 +5082,6 @@
 				FE1B263923561A770065200C /* cps_draw.cpp in Sources */,
 				FE34742623696151006646E7 /* SDLAudioEngine.m in Sources */,
 				FE1B247F23561A750065200C /* ddt3x.cpp in Sources */,
-				FE92E3FB2458859600693C0C /* d_eolith16.cpp in Sources */,
 				FE1B277123561A790065200C /* sn76477.cpp in Sources */,
 				FE1B252723561A760065200C /* d_supduck.cpp in Sources */,
 				FE1B274323561A780065200C /* d_pturn.cpp in Sources */,
@@ -5258,7 +5182,6 @@
 				FE1B262E23561A770065200C /* cpst.cpp in Sources */,
 				FEED9DEF2356F5DB00B7AF83 /* neocdlist.cpp in Sources */,
 				FE1B242123561A750065200C /* png.c in Sources */,
-				FEA35F6F246A6E04008938BC /* d_pasha2.cpp in Sources */,
 				FE1B24F823561A760065200C /* d_fuukifg3.cpp in Sources */,
 				FE1B27D423561A790065200C /* 8255ppi.cpp in Sources */,
 				FE1B255123561A760065200C /* d_yunsung8.cpp in Sources */,
@@ -5358,7 +5281,6 @@
 				FE1B264A23561A770065200C /* tc0360pri.cpp in Sources */,
 				FE1B245C23561A750065200C /* trees.c in Sources */,
 				FE1B257A23561A760065200C /* deco146.cpp in Sources */,
-				FE1E0C842456832100C774C3 /* d_eolith.cpp in Sources */,
 				FE1B261823561A770065200C /* toa_gp9001.cpp in Sources */,
 				FE1B258523561A760065200C /* d_liberate.cpp in Sources */,
 				FE1B243023561A750065200C /* Ppmd7.c in Sources */,
@@ -5402,7 +5324,6 @@
 				FE1B25DA23561A760065200C /* d_thunderx.cpp in Sources */,
 				FE1B25C523561A760065200C /* d_rocnrope.cpp in Sources */,
 				FE1B26D323561A780065200C /* d_deadang.cpp in Sources */,
-				FE1E0C822454F7D600C774C3 /* d_tubep.cpp in Sources */,
 				FE1B23A723561A750065200C /* i8x41.cpp in Sources */,
 				FE1B259923561A760065200C /* d_decocass.cpp in Sources */,
 				FEED9E0C23576F2A00B7AF83 /* drv.cpp in Sources */,
@@ -5441,11 +5362,9 @@
 				FE1B26B823561A770065200C /* d_renegade.cpp in Sources */,
 				FE1B27DB23561A790065200C /* tms34061.cpp in Sources */,
 				FE1B279723561A790065200C /* wiping.cpp in Sources */,
-				FEECE409247AC896007724A2 /* d_ngp.cpp in Sources */,
 				FE1B26DA23561A780065200C /* d_wiz.cpp in Sources */,
 				FE1B261623561A770065200C /* d_fixeight.cpp in Sources */,
 				FE1B25B523561A760065200C /* d_bishi.cpp in Sources */,
-				FE92E3FA2458859600693C0C /* d_f-32.cpp in Sources */,
 				FE1B24E123561A760065200C /* d_eprom.cpp in Sources */,
 				FE1B25A723561A760065200C /* d_scotrsht.cpp in Sources */,
 				FE1B256523561A760065200C /* d_appoooh.cpp in Sources */,
@@ -5494,7 +5413,6 @@
 				FE1B278923561A790065200C /* nes_apu.cpp in Sources */,
 				FE1B255223561A760065200C /* d_welltris.cpp in Sources */,
 				FE1B253B23561A760065200C /* d_jchan.cpp in Sources */,
-				FEECE40C247AC8C5007724A2 /* k1ge.cpp in Sources */,
 				FE1B267B23561A770065200C /* tc0640fio.cpp in Sources */,
 				FE1B267E23561A770065200C /* d_arkanoid.cpp in Sources */,
 				FE1B24C423561A750065200C /* sms.cpp in Sources */,
@@ -5535,7 +5453,6 @@
 				FE1B245E23561A750065200C /* inffast.c in Sources */,
 				FE1B258923561A760065200C /* d_chanbara.cpp in Sources */,
 				FE1B278423561A790065200C /* namco_snd.cpp in Sources */,
-				FEC0A0E424ACDFBF0015AABF /* d_cischeat.cpp in Sources */,
 				FE1B255C23561A760065200C /* fd1094_intf.cpp in Sources */,
 				FE1B25DB23561A760065200C /* d_gradius3.cpp in Sources */,
 				FE1B265323561A770065200C /* d_msisaac.cpp in Sources */,
@@ -5717,7 +5634,6 @@
 				FE1B243223561A750065200C /* Bra86.c in Sources */,
 				FE1B27A923561A790065200C /* ymdeltat.c in Sources */,
 				FE1B25D023561A760065200C /* d_sbasketb.cpp in Sources */,
-				FEDA9E2224C203960060BF0B /* poly.cpp in Sources */,
 				FE1B273C23561A780065200C /* d_docastle.cpp in Sources */,
 				FE1B266523561A770065200C /* d_wyvernf0.cpp in Sources */,
 				FE1B26AF23561A770065200C /* d_clshroad.cpp in Sources */,
@@ -5743,7 +5659,6 @@
 				FE1B26DB23561A780065200C /* d_beaminv.cpp in Sources */,
 				FE1B259F23561A760065200C /* timeplt_snd.cpp in Sources */,
 				FE1B26F723561A780065200C /* d_hvyunit.cpp in Sources */,
-				FEC0A0E0249677750015AABF /* d_wecleman.cpp in Sources */,
 				FE0A7EAD239B8B4F001E6997 /* FBAboutController.m in Sources */,
 				FE1B276023561A780065200C /* d_bombjack.cpp in Sources */,
 				FE1B263F23561A770065200C /* cps_scr.cpp in Sources */,
@@ -5755,7 +5670,6 @@
 				FE1B269023561A770065200C /* d_alinvade.cpp in Sources */,
 				FE1B260C23561A760065200C /* d_shippumd.cpp in Sources */,
 				FE1B265023561A770065200C /* d_taitol.cpp in Sources */,
-				FE92E3FC2458859600693C0C /* d_goori.cpp in Sources */,
 				FEED9E0823576E1900B7AF83 /* stated.cpp in Sources */,
 				FE1B25E623561A760065200C /* d_ultraman.cpp in Sources */,
 				FE1B278623561A790065200C /* flower.cpp in Sources */,
@@ -5763,7 +5677,6 @@
 				FE1B24E623561A760065200C /* d_klax.cpp in Sources */,
 				FE1B26CC23561A780065200C /* d_bagman.cpp in Sources */,
 				FE1B240723561A750065200C /* s2650.cpp in Sources */,
-				FEECE407247AC84F007724A2 /* t6w28.cpp in Sources */,
 				FE1B245723561A750065200C /* zutil.c in Sources */,
 				FE1B25B123561A760065200C /* d_pooyan.cpp in Sources */,
 				FE1B27C323561A790065200C /* st0020.cpp in Sources */,
@@ -5964,8 +5877,6 @@
 				FE1B26E023561A780065200C /* d_dynduke.cpp in Sources */,
 				FE1B273023561A780065200C /* d_munchmo.cpp in Sources */,
 				FE1B265623561A770065200C /* d_othunder.cpp in Sources */,
-				FE232A8324FA215200D3B388 /* d_mdarcbl.cpp in Sources */,
-				FEECE403247AC7BF007724A2 /* tlcs900.cpp in Sources */,
 				FE1B258F23561A760065200C /* deco16ic.cpp in Sources */,
 				FE1B264B23561A770065200C /* d_flstory.cpp in Sources */,
 				FE1B261B23561A770065200C /* d_pipibibs.cpp in Sources */,
@@ -6011,7 +5922,6 @@
 				FE1B251723561A760065200C /* d_midas.cpp in Sources */,
 				FE1B269723561A770065200C /* d_williams.cpp in Sources */,
 				FE1B262C23561A770065200C /* cpsrd.cpp in Sources */,
-				FEE347C424CC0E3E00DD28E6 /* d_x2222.cpp in Sources */,
 				FE1B25CD23561A760065200C /* d_parodius.cpp in Sources */,
 				FE1B253523561A760065200C /* d_legionna.cpp in Sources */,
 				FE1B25F123561A760065200C /* ide.cpp in Sources */,
@@ -6055,7 +5965,6 @@
 				FE1B265F23561A770065200C /* d_qix.cpp in Sources */,
 				FE1B256E23561A760065200C /* d_zaxxon.cpp in Sources */,
 				FE1B278523561A790065200C /* samples.cpp in Sources */,
-				FEC0A0E224A6F99A0015AABF /* d_magmax.cpp in Sources */,
 				FE1B24FF23561A760065200C /* d_playmark.cpp in Sources */,
 				FEED9E132358412E00B7AF83 /* bzip.cpp in Sources */,
 				FE1B26E323561A780065200C /* d_stfight.cpp in Sources */,
@@ -6116,7 +6025,6 @@
 				FE1B24BB23561A750065200C /* irem_cpu.cpp in Sources */,
 				FE1B24CA23561A750065200C /* cave.cpp in Sources */,
 				FE1B264223561A770065200C /* cps_rw.cpp in Sources */,
-				FEA35F70246A6E04008938BC /* d_shangha3.cpp in Sources */,
 				FE1B25EC23561A760065200C /* d_mogura.cpp in Sources */,
 				FE1B268223561A770065200C /* pgm_run.cpp in Sources */,
 				FE1B25C123561A760065200C /* d_mikie.cpp in Sources */,

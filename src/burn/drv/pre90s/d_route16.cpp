@@ -44,53 +44,51 @@ static UINT8 DrvDips[1];
 static UINT8 DrvInputs[8];
 static UINT8 DrvReset;
 
-static INT32 spaceecho = 0;
-
 static struct BurnInputInfo Route16InputList[] = {
-	{"P1 Coin",			BIT_DIGITAL,	DrvJoy1 + 7,	"p1 coin"	},
+	{"P1 Coin",		BIT_DIGITAL,	DrvJoy1 + 7,	"p1 coin"	},
 	{"P1 Start",		BIT_DIGITAL,	DrvJoy2 + 7,	"p1 start"	},
-	{"P1 Up",			BIT_DIGITAL,	DrvJoy1 + 2,	"p1 up"		},
-	{"P1 Down",			BIT_DIGITAL,	DrvJoy1 + 3,	"p1 down"	},
-	{"P1 Left",			BIT_DIGITAL,	DrvJoy1 + 1,	"p1 left"	},
+	{"P1 Up",		BIT_DIGITAL,	DrvJoy1 + 2,	"p1 up"		},
+	{"P1 Down",		BIT_DIGITAL,	DrvJoy1 + 3,	"p1 down"	},
+	{"P1 Left",		BIT_DIGITAL,	DrvJoy1 + 1,	"p1 left"	},
 	{"P1 Right",		BIT_DIGITAL,	DrvJoy1 + 0,	"p1 right"	},
 	{"P1 Button 1",		BIT_DIGITAL,	DrvJoy1 + 4,	"p1 fire 1"	},
 
 	{"P2 Start",		BIT_DIGITAL,	DrvJoy2 + 6,	"p2 start"	},
-	{"P2 Up",			BIT_DIGITAL,	DrvJoy2 + 2,	"p2 up"		},
-	{"P2 Down",			BIT_DIGITAL,	DrvJoy2 + 3,	"p2 down"	},
-	{"P2 Left",			BIT_DIGITAL,	DrvJoy2 + 1,	"p2 left"	},
+	{"P2 Up",		BIT_DIGITAL,	DrvJoy2 + 2,	"p2 up"		},
+	{"P2 Down",		BIT_DIGITAL,	DrvJoy2 + 3,	"p2 down"	},
+	{"P2 Left",		BIT_DIGITAL,	DrvJoy2 + 1,	"p2 left"	},
 	{"P2 Right",		BIT_DIGITAL,	DrvJoy2 + 0,	"p2 right"	},
 	{"P2 Button 1",		BIT_DIGITAL,	DrvJoy2 + 4,	"p2 fire 1"	},
 
-	{"Reset",			BIT_DIGITAL,	&DrvReset,		"reset"		},
-	{"Service",			BIT_DIGITAL,	DrvJoy1 + 6,	"service"	},
-	{"Dip A",			BIT_DIPSWITCH,	DrvDips + 0,	"dip"		},
+	{"Reset",		BIT_DIGITAL,	&DrvReset,	"reset"		},
+	{"Service",		BIT_DIGITAL,	DrvJoy1 + 6,	"service"	},
+	{"Dip A",		BIT_DIPSWITCH,	DrvDips + 0,	"dip"		},
 };
 
 STDINPUTINFO(Route16)
 
 static struct BurnInputInfo StratvoxInputList[] = {
-	{"P1 Coin",			BIT_DIGITAL,	DrvJoy1 + 7,	"p1 coin"	},
+	{"P1 Coin",		BIT_DIGITAL,	DrvJoy1 + 7,	"p1 coin"	},
 	{"P1 Start",		BIT_DIGITAL,	DrvJoy2 + 7,	"p1 start"	},
-	{"P1 Left",			BIT_DIGITAL,	DrvJoy1 + 1,	"p1 left"	},
+	{"P1 Left",		BIT_DIGITAL,	DrvJoy1 + 1,	"p1 left"	},
 	{"P1 Right",		BIT_DIGITAL,	DrvJoy1 + 0,	"p1 right"	},
 	{"P1 Button 1",		BIT_DIGITAL,	DrvJoy1 + 4,	"p1 fire 1"	},
 
 	{"P2 Start",		BIT_DIGITAL,	DrvJoy2 + 6,	"p2 start"	},
-	{"P2 Left",			BIT_DIGITAL,	DrvJoy2 + 1,	"p2 left"	},
+	{"P2 Left",		BIT_DIGITAL,	DrvJoy2 + 1,	"p2 left"	},
 	{"P2 Right",		BIT_DIGITAL,	DrvJoy2 + 0,	"p2 right"	},
 	{"P2 Button 1",		BIT_DIGITAL,	DrvJoy2 + 4,	"p2 fire 1"	},
 
-	{"Reset",			BIT_DIGITAL,	&DrvReset,		"reset"		},
-	{"Service",			BIT_DIGITAL,	DrvJoy1 + 6,	"service"	},
-	{"Dip A",			BIT_DIPSWITCH,	DrvDips + 0,	"dip"		},
+	{"Reset",		BIT_DIGITAL,	&DrvReset,	"reset"		},
+	{"Service",		BIT_DIGITAL,	DrvJoy1 + 6,	"service"	},
+	{"Dip A",		BIT_DIPSWITCH,	DrvDips + 0,	"dip"		},
 };
 
 STDINPUTINFO(Stratvox)
 
 static struct BurnInputInfo TtmahjngInputList[] = {
 	{"P1 Coin",		BIT_DIGITAL,	DrvJoy8 + 7,	"p1 coin"	},
-	{"P1 Start",	BIT_DIGITAL,	DrvJoy1 + 5,	"p1 start"	},
+	{"P1 Start",		BIT_DIGITAL,	DrvJoy1 + 5,	"p1 start"	},
 	{"A",			BIT_DIGITAL,	DrvJoy1 + 0,	"mah a"		},
 	{"B",			BIT_DIGITAL,	DrvJoy2 + 0,	"mah b"		},
 	{"C",			BIT_DIGITAL,	DrvJoy3 + 0,	"mah c"		},
@@ -111,7 +109,7 @@ static struct BurnInputInfo TtmahjngInputList[] = {
 	{"Ron",			BIT_DIGITAL,	DrvJoy3 + 4,	"mah ron"	},
 	{"Reach",		BIT_DIGITAL,	DrvJoy2 + 4,	"mah reach"	},
 
-	{"P2 Start",	BIT_DIGITAL,	DrvJoy2 + 5,	"p2 start"	},
+	{"P2 Start",		BIT_DIGITAL,	DrvJoy2 + 5,	"p2 start"	},
 	{"A",			BIT_DIGITAL,	DrvJoy5 + 0,	"mah a"		},
 	{"B",			BIT_DIGITAL,	DrvJoy6 + 0,	"mah b"		},
 	{"C",			BIT_DIGITAL,	DrvJoy7 + 0,	"mah c"		},
@@ -132,7 +130,7 @@ static struct BurnInputInfo TtmahjngInputList[] = {
 	{"Ron",			BIT_DIGITAL,	DrvJoy7 + 4,	"mah ron"	},
 	{"Reach",		BIT_DIGITAL,	DrvJoy6 + 4,	"mah reach"	},
 
-	{"Reset",		BIT_DIGITAL,	&DrvReset,		"reset"		},
+	{"Reset",		BIT_DIGITAL,	&DrvReset,	"reset"		},
 	{"Dip A",		BIT_DIPSWITCH,	DrvDips + 0,	"dip"		},
 };
 
@@ -623,8 +621,6 @@ static INT32 DrvExit()
 
 	BurnFree(AllMem);
 
-	spaceecho = 0;
-
 	return 0;
 }
 
@@ -766,8 +762,6 @@ static INT32 DrvFrame()
 
 		ZetOpen(1);
 		CPU_RUN(1, Zet);
-		if (spaceecho && (i % 5) == 0) ZetSetIRQLine(0, CPU_IRQSTATUS_HOLD);
-
 		ZetClose();
 	}
 
@@ -1055,7 +1049,7 @@ struct BurnDriver BurnDrvroute16bl = {
 };
 
 
-// Route X (bootleg, set 1)
+// Route X (bootleg)
 
 static struct BurnRomInfo routexRomDesc[] = {
 	{ "routex01.a0",  	0x0800, 0x99b500e7, 1 | BRF_ESS | BRF_PRG }, //  0 Z80 #0 Code
@@ -1080,44 +1074,10 @@ STD_ROM_FN(routex)
 
 struct BurnDriver BurnDrvroutex = {
 	"routex", "route16", NULL, NULL, "1981",
-	"Route X (bootleg, set 1)\0", NULL, "bootleg", "Route 16",
+	"Route X (bootleg)\0", NULL, "bootleg", "Route 16",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_BOOTLEG | BDF_ORIENTATION_VERTICAL, 2, HARDWARE_MISC_PRE90S, GBF_MAZE, 0,
 	NULL, routexRomInfo, routexRomName, NULL, NULL, NULL, NULL, Route16InputInfo, Route16DIPInfo,
-	DrvInit, DrvExit, DrvFrame, Route16Draw, DrvScan, &DrvRecalc, 0x8,
-	256, 256, 3, 4
-};
-
-
-// Route X (bootleg, set 2)
-
-static struct BurnRomInfo routexaRomDesc[] = {
-	{ "r1.bin",  		0x0800, 0x78c819c8, 1 | BRF_ESS | BRF_PRG }, //  0 Z80 #0 Code
-	{ "r2.bin",       	0x0800, 0x3ec52fe5, 1 | BRF_ESS | BRF_PRG }, //  1
-	{ "r3.bin",       	0x0800, 0xa8e92871, 1 | BRF_ESS | BRF_PRG }, //  2
-	{ "r4.bin",       	0x0800, 0xa0fc9fc5, 1 | BRF_ESS | BRF_PRG }, //  3
-	{ "r5.bin",  		0x0800, 0x2fef7653, 1 | BRF_ESS | BRF_PRG }, //  4
-	{ "r6.bin", 	    0x0800, 0xa39ef648, 1 | BRF_ESS | BRF_PRG }, //  5
-	{ "r7.bin",  		0x0800, 0x2aeb3102, 1 | BRF_ESS | BRF_PRG }, //  6
-
-	{ "r8.bin",  		0x0800, 0xfef605f3, 2 | BRF_ESS | BRF_PRG }, //  7 Z80 #1 Code
-	{ "r9.bin",       	0x0800, 0xd0d6c189, 2 | BRF_ESS | BRF_PRG }, //  8
-	{ "r10.bin",      	0x0800, 0xdefc5797, 2 | BRF_ESS | BRF_PRG }, //  9
-	{ "r11.bin",       	0x0800, 0x88d94a66, 2 | BRF_ESS | BRF_PRG }, // 10
-
-	{ "im5623.f10",		0x0100, 0x08793ef7, 3 | BRF_GRA },	     // 11 Graphics
-	{ "im5623.f12",		0x0100, 0x08793ef7, 3 | BRF_GRA },	     // 12
-};
-
-STD_ROM_PICK(routexa)
-STD_ROM_FN(routexa)
-
-struct BurnDriver BurnDrvroutexa = {
-	"routexa", "route16", NULL, NULL, "1981",
-	"Route X (bootleg, set 2)\0", NULL, "bootleg", "Route 16",
-	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_BOOTLEG | BDF_ORIENTATION_VERTICAL, 2, HARDWARE_MISC_PRE90S, GBF_MAZE, 0,
-	NULL, routexaRomInfo, routexaRomName, NULL, NULL, NULL, NULL, Route16InputInfo, Route16DIPInfo,
 	DrvInit, DrvExit, DrvFrame, Route16Draw, DrvScan, &DrvRecalc, 0x8,
 	256, 256, 3, 4
 };
@@ -1268,20 +1228,13 @@ static struct BurnRomInfo spacechoRomDesc[] = {
 STD_ROM_PICK(spacecho)
 STD_ROM_FN(spacecho)
 
-static INT32 SpaceechoInit()
-{
-	spaceecho = 1;
-
-	return DrvInit();
-}
-
 struct BurnDriver BurnDrvspacecho = {
 	"spacecho", "speakres", NULL, NULL, "1980",
 	"Space Echo (set 1)\0", NULL, "bootleg (Gayton Games)", "Route 16",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL, 2, HARDWARE_MISC_PRE90S, GBF_SHOOT, 0,
 	NULL, spacechoRomInfo, spacechoRomName, NULL, NULL, NULL, NULL, StratvoxInputInfo, SpacechoDIPInfo,
-	SpaceechoInit, DrvExit, DrvFrame, TtmahjngDraw, DrvScan, &DrvRecalc, 0x8,
+	DrvInit, DrvExit, DrvFrame, TtmahjngDraw, DrvScan, &DrvRecalc, 0x8,
 	256, 256, 3, 4
 };
 
@@ -1313,7 +1266,7 @@ struct BurnDriver BurnDrvspacecho2 = {
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL, 2, HARDWARE_MISC_PRE90S, GBF_SHOOT, 0,
 	NULL, spacecho2RomInfo, spacecho2RomName, NULL, NULL, NULL, NULL, StratvoxInputInfo, SpacechoDIPInfo,
-	SpaceechoInit, DrvExit, DrvFrame, TtmahjngDraw, DrvScan, &DrvRecalc, 0x8,
+	DrvInit, DrvExit, DrvFrame, TtmahjngDraw, DrvScan, &DrvRecalc, 0x8,
 	256, 256, 3, 4
 };
 

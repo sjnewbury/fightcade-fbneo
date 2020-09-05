@@ -12,6 +12,8 @@ static UINT8 DrvJoy2[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 static UINT8 DrvInput[6] = {0, 0, 0, 0, 0, 0};
 
 static UINT8 DrvReset = 0;
+static UINT8 bDrawScreen;
+static bool bVBlank;
 
 static UINT8 *Mem = NULL, *MemEnd = NULL;
 static UINT8 *RamStart, *RamEnd;
@@ -27,30 +29,30 @@ static INT8 PaddleOld[2];
 static INT32 nColCount = 0x0800;
 
 static struct BurnInputInfo GhoxInputList[] = {
-	{"P1 Coin",			BIT_DIGITAL,	DrvButton + 3,	"p1 coin"	},
-	{"P1 Start",		BIT_DIGITAL,	DrvButton + 5,	"p1 start"	},
-	{"P1 Up",			BIT_DIGITAL,	DrvJoy1 + 0,	"p1 up"		},
-	{"P1 Down",			BIT_DIGITAL,	DrvJoy1 + 1,	"p1 down"	},
-	{"P1 Left",			BIT_DIGITAL,	DrvJoy1 + 2,	"p1 left"	},
-	{"P1 Right",		BIT_DIGITAL,	DrvJoy1 + 3,	"p1 right"	},
-	{"P1 Button 1",		BIT_DIGITAL,	DrvJoy1 + 4,	"p1 fire 1"	},
-	{"P1 Button 2",		BIT_DIGITAL,	DrvJoy1 + 5,	"p1 fire 2"	},
+	{"P1 Coin",		BIT_DIGITAL,	DrvButton + 3,	"p1 coin"},
+	{"P1 Start",		BIT_DIGITAL,	DrvButton + 5,	"p1 start"},
+	{"P1 Up",		BIT_DIGITAL,	DrvJoy1 + 0,	"p1 up"},
+	{"P1 Down",		BIT_DIGITAL,	DrvJoy1 + 1,	"p1 down"},
+	{"P1 Left",		BIT_DIGITAL,	DrvJoy1 + 2,	"p1 left"},
+	{"P1 Right",		BIT_DIGITAL,	DrvJoy1 + 3,	"p1 right"},
+	{"P1 Button 1",		BIT_DIGITAL,	DrvJoy1 + 4,	"p1 fire 1"},
+	{"P1 Button 2",		BIT_DIGITAL,	DrvJoy1 + 5,	"p1 fire 2"},
 
-	{"P2 Coin",			BIT_DIGITAL,	DrvButton + 4,	"p2 coin"	},
-	{"P2 Start",		BIT_DIGITAL,	DrvButton + 6,	"p2 start"	},
-	{"P2 Up",			BIT_DIGITAL,	DrvJoy2 + 0,	"p2 up"		},
-	{"P2 Down",			BIT_DIGITAL,	DrvJoy2 + 1,	"p2 down"	},
-	{"P2 Left",			BIT_DIGITAL,	DrvJoy2 + 2,	"p2 left"	},
-	{"P2 Right",		BIT_DIGITAL,	DrvJoy2 + 3,	"p2 right"	},
-	{"P2 Button 1",		BIT_DIGITAL,	DrvJoy2 + 4,	"p2 fire 1"	},
-	{"P2 Button 2",		BIT_DIGITAL,	DrvJoy2 + 5,	"p2 fire 2"	},
+	{"P2 Coin",		BIT_DIGITAL,	DrvButton + 4,	"p2 coin"},
+	{"P2 Start",		BIT_DIGITAL,	DrvButton + 6,	"p2 start"},
+	{"P2 Up",		BIT_DIGITAL,	DrvJoy2 + 0,	"p2 up"},
+	{"P2 Down",		BIT_DIGITAL,	DrvJoy2 + 1,	"p2 down"},
+	{"P2 Left",		BIT_DIGITAL,	DrvJoy2 + 2,	"p2 left"},
+	{"P2 Right",		BIT_DIGITAL,	DrvJoy2 + 3,	"p2 right"},
+	{"P2 Button 1",		BIT_DIGITAL,	DrvJoy2 + 4,	"p2 fire 1"},
+	{"P2 Button 2",		BIT_DIGITAL,	DrvJoy2 + 5,	"p2 fire 2"},
 
-	{"Reset",			BIT_DIGITAL,	&DrvReset,		"reset"		},
-	{"Service",			BIT_DIGITAL,	DrvButton + 0,	"service"	},
-	{"Tilt",			BIT_DIGITAL,	DrvButton + 1,	"tilt"		},
-	{"Dip A",			BIT_DIPSWITCH,	DrvInput + 3,	"dip"		},
-	{"Dip B",			BIT_DIPSWITCH,	DrvInput + 4,	"dip"		},
-	{"Dip C",			BIT_DIPSWITCH,	DrvInput + 5,	"dip"		},
+	{"Reset",		BIT_DIGITAL,	&DrvReset,	"reset"},
+	{"Service",		BIT_DIGITAL,	DrvButton + 0,	"service"},
+	{"Tilt",		BIT_DIGITAL,	DrvButton + 1,	"tilt"},
+	{"Dip A",		BIT_DIPSWITCH,	DrvInput + 3,	"dip"},
+	{"Dip B",		BIT_DIPSWITCH,	DrvInput + 4,	"dip"},
+	{"Dip C",		BIT_DIPSWITCH,	DrvInput + 5,	"dip"},
 };
 
 STDINPUTINFO(Ghox)
@@ -270,14 +272,12 @@ static INT32 DrvScan(INT32 nAction,INT32 *pnMin)
 		BurnAcb(&ba);
 
 		SekScan(nAction);				// scan 68000 states
-		Z180Scan(nAction);
 
-		BurnYM2151Scan(nAction, pnMin);
+		Z180Scan(nAction);
 
 		ToaScanGP9001(nAction, pnMin);
 
-		SCAN_VAR(Paddle);
-		SCAN_VAR(PaddleOld);
+		bDrawScreen = true; // get background back ?
 	}
 
 	return 0;
@@ -296,7 +296,7 @@ static INT32 LoadRoms()
 	return 0;
 }
 
-static UINT8 PaddleRead(UINT8 Num)
+UINT8 PaddleRead(UINT8 Num)
 {
 	INT8 Value;
 	
@@ -307,7 +307,7 @@ static UINT8 PaddleRead(UINT8 Num)
 	return Value;	
 }
 
-static UINT8 __fastcall ghoxReadByte(UINT32 sekAddress)
+UINT8 __fastcall ghoxReadByte(UINT32 sekAddress)
 {
 	switch (sekAddress) {
 		case 0x18100d:								// Dipswitch 3 - Territory
@@ -334,7 +334,7 @@ static UINT8 __fastcall ghoxReadByte(UINT32 sekAddress)
 	return 0;
 }
 
-static UINT16 __fastcall ghoxReadWord(UINT32 sekAddress)
+UINT16 __fastcall ghoxReadWord(UINT32 sekAddress)
 {
 	switch (sekAddress) {
 		case 0x140004:
@@ -361,7 +361,7 @@ static UINT16 __fastcall ghoxReadWord(UINT32 sekAddress)
 	return 0;
 }
 
-static void __fastcall ghoxWriteByte(UINT32 sekAddress, UINT8 byteValue)
+void __fastcall ghoxWriteByte(UINT32 sekAddress, UINT8 byteValue)
 {
 	switch (sekAddress) {
 		case 0x181001: {
@@ -385,7 +385,7 @@ static void __fastcall ghoxWriteByte(UINT32 sekAddress, UINT8 byteValue)
 //	bprintf(PRINT_NORMAL, _T("Write Byte %x, %x\n"), sekAddress, byteValue);
 }
 
-static void __fastcall ghoxWriteWord(UINT32 sekAddress, UINT16 wordValue)
+void __fastcall ghoxWriteWord(UINT32 sekAddress, UINT16 wordValue)
 {
 	switch (sekAddress) {
 		case 0x140000:								// Set GP9001 VRAM address-pointer
@@ -557,8 +557,9 @@ static INT32 DrvInit()
 	BurnYM2151Init(27000000 / 8);
 	BurnYM2151SetAllRoutes(0.50, BURN_SND_ROUTE_BOTH);
 
-	DrvDoReset();			// Reset machine
+	bDrawScreen = true;
 
+	DrvDoReset();			// Reset machine
 	return 0;
 }
 
@@ -582,8 +583,10 @@ static INT32 DrvDraw()
 {
 	ToaClearScreen(0);
 
-	ToaGetBitmap();
-	ToaRenderGP9001();						// Render GP9001 graphics
+	if (bDrawScreen) {
+		ToaGetBitmap();
+		ToaRenderGP9001();					// Render GP9001 graphics
+	}
 
 	ToaPalUpdate();							// Update the palette
 
@@ -628,7 +631,7 @@ static INT32 DrvFrame()
 	SekSetCyclesScanline(nCyclesTotal[0] / 262);
 	nToaCyclesDisplayStart = nCyclesTotal[0] - ((nCyclesTotal[0] * (TOA_VBLANK_LINES + 240)) / 262);
 	nToaCyclesVBlankStart = nCyclesTotal[0] - ((nCyclesTotal[0] * TOA_VBLANK_LINES) / 262);
-	bool bVBlank = false;
+	bVBlank = false;
 
 	for (INT32 i = 0; i < nInterleave; i++) {
 		INT32 nNext;

@@ -256,8 +256,6 @@ static INT32 DrvDoReset(INT32 clear_ram)
 	StarsEnabled = 0;
 	StarScrollX = StarScrollY = 0;
 
-	HiscoreReset();
-
 	return 0;
 }
 
@@ -651,7 +649,7 @@ struct BurnDriver BurnDrvTutankhm = {
 	"tutankhm", NULL, NULL, NULL, "1982",
 	"Tutankham\0", NULL, "Konami", "GX350",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_ORIENTATION_FLIPPED | BDF_HISCORE_SUPPORTED, 4, HARDWARE_PREFIX_KONAMI, GBF_MAZE, 0,
+	BDF_GAME_WORKING | BDF_ORIENTATION_VERTICAL | BDF_ORIENTATION_FLIPPED, 4, HARDWARE_PREFIX_KONAMI, GBF_MAZE, 0,
 	NULL, tutankhmRomInfo, tutankhmRomName, NULL, NULL, NULL, NULL, TutankhmInputInfo, TutankhmDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x10,
 	224, 256, 3, 4
@@ -688,7 +686,7 @@ struct BurnDriver BurnDrvTutankhms = {
 	"tutankhms", "tutankhm", NULL, NULL, "1982",
 	"Tutankham (Stern Electronics)\0", NULL, "Konami (Stern Electronics license)", "GX350",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_ORIENTATION_FLIPPED | BDF_HISCORE_SUPPORTED, 4, HARDWARE_PREFIX_KONAMI, GBF_MAZE, 0,
+	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_ORIENTATION_FLIPPED, 4, HARDWARE_PREFIX_KONAMI, GBF_MAZE, 0,
 	NULL, tutankhmsRomInfo, tutankhmsRomName, NULL, NULL, NULL, NULL, TutankhmInputInfo, TutankhmDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 0x10,
 	224, 256, 3, 4

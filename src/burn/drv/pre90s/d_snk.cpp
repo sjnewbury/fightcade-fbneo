@@ -4515,15 +4515,6 @@ static INT32 Tnk3Init()
 	return 0;
 }
 
-static INT32 Tnk3bInit()
-{
-	INT32 rc = Tnk3Init();
-
-    ikarijoy = 1;
-
-	return rc;
-}
-
 static INT32 AsoInit()
 {
 	AllMem = NULL;
@@ -6471,21 +6462,6 @@ static INT32 Tnk3Frame()
 		if (game_rotates) {
 			SuperJoy2Rotate();
 		}
-		
-		if (ikarijoy) {
-			DrvInputs[1] &= 0x0f;
-			DrvInputs[2] &= 0x0f;
-			if (DrvJoy2[0]) DrvInputs[1] |= 0x20;
-			if (DrvJoy2[1]) DrvInputs[1] |= 0x40;
-			if (DrvJoy2[2]) DrvInputs[1] |= 0x80;
-			if (DrvJoy2[3]) DrvInputs[1] |= 0x10;
-
-			if (DrvJoy3[0]) DrvInputs[2] |= 0x20;
-			if (DrvJoy3[1]) DrvInputs[2] |= 0x40;
-			if (DrvJoy3[2]) DrvInputs[2] |= 0x80;
-			if (DrvJoy3[3]) DrvInputs[2] |= 0x10;
-
-		}
 	}
 
 	INT32 nInterleave = 800;
@@ -7805,46 +7781,6 @@ struct BurnDriver BurnDrvTnk3j = {
 	224, 288, 3, 4
 };
 
-// T.A.N.K (Bootleg, 8-way Joystick)
-
-static struct BurnRomInfo tnk3bRomDesc[] = {
-	{ "p1a.4e",     0x04000, 0x26c45b82, 1 | BRF_ESS | BRF_PRG }, //  0 Z80 #0 Code
-	{ "p2.4f",		0x04000, 0x0ae0a483, 1 | BRF_ESS | BRF_PRG }, //  1
-	{ "p3.4h",		0x04000, 0xd16dd4db, 1 | BRF_ESS | BRF_PRG }, //  2
-
-	{ "p4.2e",		0x04000, 0x01b45a90, 2 | BRF_ESS | BRF_PRG }, //  3 Z80 #1 Code
-	{ "p5.2f",		0x04000, 0x60db6667, 2 | BRF_ESS | BRF_PRG }, //  4
-	{ "p6.2h",		0x04000, 0x4761fde7, 2 | BRF_ESS | BRF_PRG }, //  5
-
-	{ "p10.6f",		0x04000, 0x7bf0a517, 3 | BRF_ESS | BRF_PRG }, //  6 Z80 #2 Code
-	{ "p11.6d",		0x04000, 0x0569ce27, 3 | BRF_ESS | BRF_PRG }, //  7
-
-	{ "2.5f",		0x00400, 0x34c06bc6, 14 | BRF_GRA },	      //  8 Color Data
-	{ "1.5g",		0x00400, 0x6d0ac66a, 14 | BRF_GRA },	      //  9
-	{ "0.5h",		0x00400, 0x4662b4c8, 14 | BRF_GRA },	      // 10
-
-	{ "p14.1e",		0x02000, 0x6bd575ca, 4 | BRF_GRA },	          // 11 Text Characters
-
-	{ "p12.3d",		0x04000, 0xff495a16, 6 | BRF_GRA },	          // 12 Background Characters
-	{ "p13.3c",		0x04000, 0xf8344843, 6 | BRF_GRA },	          // 13
-
-	{ "p7.7h",		0x04000, 0x06b92c88, 9 | BRF_GRA },	          // 14 Sprites
-	{ "p8.7f",		0x04000, 0x63d0e2eb, 9 | BRF_GRA },	          // 15
-	{ "p9.7e",		0x04000, 0x872e3fac, 9 | BRF_GRA },	          // 16
-};
-
-STD_ROM_PICK(tnk3b)
-STD_ROM_FN(tnk3b)
-
-struct BurnDriver BurnDrvTnk3b = {
-	"tnk3b", "tnk3", NULL, NULL, "1985",
-	"T.A.N.K (Bootleg, 8-way Joystick)\0", NULL, "bootleg", "Miscellaneous",
-	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_ORIENTATION_VERTICAL | BDF_HISCORE_SUPPORTED, 2, HARDWARE_MISC_PRE90S, GBF_RUNGUN, 0,
-	NULL, tnk3bRomInfo, tnk3bRomName, NULL, NULL, NULL, NULL, Tnk3InputInfo, Tnk3DIPInfo,
-	Tnk3bInit, DrvExit, Tnk3Frame, Tnk3Draw, DrvScan, &DrvRecalc, 0x400,
-	224, 288, 3, 4
-};
 
 // Athena
 
@@ -8559,7 +8495,7 @@ static struct BurnRomInfo ikarijpbRomDesc[] = {
 	{ "2.2j",			0x00400, 0x0703a770, 14 | BRF_GRA },	      //  7
 	{ "3.1j",			0x00400, 0x0a11cdde, 14 | BRF_GRA },	      //  8
 
-	{ "p7.3b",			0x04000, 0x9e88f536, 4 | BRF_GRA },	      	  //  9 Text Characters
+	{ "p73b",			0x04000, 0x9e88f536, 4 | BRF_GRA },	      	  //  9 Text Characters
 	
 	{ "p17.4d",			0x08000, 0xe0dba976, 6 | BRF_GRA },	      	  // 10 Background Tiles
 	{ "p18.2d",			0x08000, 0x24947d5f, 6 | BRF_GRA },	      	  // 11
@@ -8766,30 +8702,27 @@ static struct BurnRomInfo dogosokbRomDesc[] = {
 	{ "c1.1k",			0x00400, 0x10a2ce2b, 14 | BRF_GRA },	      //  3 Color Data
 	{ "c2.2l",			0x00400, 0x99dc9792, 14 | BRF_GRA },	      //  4
 	{ "c3.1l",			0x00400, 0xe7213160, 14 | BRF_GRA },	      //  5
-	
-	{ "1.1d",			0x01000, 0x5ab67bfc, 0 | BRF_OPT },			  //  6 rjproms
-	{ "1.2d",			0x01000, 0x5ab67bfc, 0 | BRF_OPT },			  //  7
 
-	{ "p7.3b",			0x04000, 0x51a4ec83, 4 | BRF_GRA },	      	  //  8 Text Characters
+	{ "p7.3b",			0x04000, 0x51a4ec83, 4 | BRF_GRA },	      	  //  6 Text Characters
 
-	{ "p17.4c",			0x08000, 0x19d4518c, 6 | BRF_GRA },           //  9 Background Tiles
-	{ "p18.2c",			0x08000, 0xd818be43, 6 | BRF_GRA },           // 10
-	{ "p19.4b",			0x08000, 0xd64e0f89, 6 | BRF_GRA },           // 11
-	{ "p20.2b",			0x08000, 0xedba0f31, 6 | BRF_GRA },           // 12
+	{ "p17.4c",			0x08000, 0x19d4518c, 6 | BRF_GRA },           //  7 Background Tiles
+	{ "p18.2c",			0x08000, 0xd818be43, 6 | BRF_GRA },           //  8
+	{ "p19.4b",			0x08000, 0xd64e0f89, 6 | BRF_GRA },           //  9
+	{ "p20.2b",			0x08000, 0xedba0f31, 6 | BRF_GRA },           // 10
 
-	{ "p8.3d",			0x08000, 0xd43044f8, 9 | BRF_GRA },           // 13 16x16 Sprites
-	{ "p9.3f",			0x08000, 0x365ed2d8, 9 | BRF_GRA },           // 14
-	{ "p10.3h",			0x08000, 0x92579bf3, 9 | BRF_GRA },           // 15
+	{ "p8.3d",			0x08000, 0xd43044f8, 9 | BRF_GRA },           // 11 16x16 Sprites
+	{ "p9.3f",			0x08000, 0x365ed2d8, 9 | BRF_GRA },           // 12
+	{ "p10.3h",			0x08000, 0x92579bf3, 9 | BRF_GRA },           // 13
 
-	{ "p11.4m",			0x08000, 0x668b25a4, 10 | BRF_GRA },          // 16 32x32 Sprites
-	{ "p14.2m",			0x08000, 0xa7031d4a, 10 | BRF_GRA },          // 17
-	{ "p12.4p",			0x08000, 0xf44e95fa, 10 | BRF_GRA },          // 18
-	{ "p15.2p",			0x08000, 0x120d2450, 10 | BRF_GRA },          // 19
-	{ "p13.4r",			0x08000, 0x980ca3d8, 10 | BRF_GRA },          // 20
-	{ "p16.2r",			0x08000, 0x9f820e8a, 10 | BRF_GRA },          // 21
+	{ "p11.4m",			0x08000, 0x668b25a4, 10 | BRF_GRA },          // 14 32x32 Sprites
+	{ "p14.2m",			0x08000, 0xa7031d4a, 10 | BRF_GRA },          // 15
+	{ "p12.4p",			0x08000, 0xf44e95fa, 10 | BRF_GRA },          // 16
+	{ "p15.2p",			0x08000, 0x120d2450, 10 | BRF_GRA },          // 17
+	{ "p13.4r",			0x08000, 0x980ca3d8, 10 | BRF_GRA },          // 18
+	{ "p16.2r",			0x08000, 0x9f820e8a, 10 | BRF_GRA },          // 19
 
-	{ "p4.5e",			0x10000, 0x5b43fe9f, 15 | BRF_SND },          // 22 Samples
-	{ "p5.5g",			0x10000, 0xaae30cd6, 15 | BRF_SND },          // 23
+	{ "p4.5e",			0x10000, 0x5b43fe9f, 15 | BRF_SND },          // 20 Samples
+	{ "p5.5g",			0x10000, 0xaae30cd6, 15 | BRF_SND },          // 21
 };
 
 STD_ROM_PICK(dogosokb)
@@ -9153,11 +9086,11 @@ static struct BurnRomInfo tdfever2RomDesc[] = {
 	{ "tdii20.8k",		0x10000, 0x86cbb2e6, 6 | BRF_GRA },           // 12
 
 	{ "td13.2t",		0x10000, 0x88e2e819, 8 | BRF_GRA },           // 13 32x32 Sprites
-	{ "tdii14.2s",		0x10000, 0xc9bb9138, 8 | BRF_GRA },           // 14
+	{ "tdii4.2s",		0x10000, 0xc9bb9138, 8 | BRF_GRA },           // 14
 	{ "td11.2r",		0x10000, 0xa0d53fbd, 8 | BRF_GRA },           // 15
 	{ "tdii12.2p",		0x10000, 0xd43abc81, 8 | BRF_GRA },           // 16
 	{ "td9.2n",			0x10000, 0xa8979657, 8 | BRF_GRA },           // 17
-	{ "tdii10.2l",		0x10000, 0xc93b6cd3, 8 | BRF_GRA },           // 18
+	{ "tdiii10.2l",		0x10000, 0xc93b6cd3, 8 | BRF_GRA },           // 18
 	{ "td7.2k",			0x10000, 0x72a5590d, 8 | BRF_GRA },           // 19
 	{ "tdii8.2j",		0x10000, 0x4845e78b, 8 | BRF_GRA },           // 20
 

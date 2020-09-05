@@ -102,15 +102,27 @@ static void MSM5205_playmode(INT32 , INT32 select)
 	INT32 prescaler = prescaler_table[(select >> 3) & 1][select & 3];
 	INT32 bitwidth = (select & 4) ? 4 : 3;
 
-	voice->prescaler = prescaler;
-	voice->bitwidth = bitwidth;
-	voice->select = select;
+	if( voice->prescaler != prescaler )
+	{
+		voice->prescaler = prescaler;
 
-	// clock * prescaler
-	// 384000 / 48 -> 8000
+		if( prescaler )
+		{
+// clock * prescaler
+// 384000 / 48 -> 8000
 
-	// if cpu is 4000000 (4mhz)
-	// check MSM5205 every 4000000 / 8000 -> 500 cycles
+// if cpu is 4000000 (4mhz)
+// check MSM5205 every 4000000 / 8000 -> 500 cycles
+
+//			attotime period = attotime_mul(ATTOTIME_IN_HZ(voice->clock), prescaler);
+//			timer_adjust_periodic(voice->timer, period, 0, period);
+		}
+	}
+
+	if( voice->bitwidth != bitwidth )
+	{
+		voice->bitwidth = bitwidth;
+	}
 }
 
 static void MSM5205StreamUpdate(INT32 chip)
@@ -139,7 +151,7 @@ static void MSM5205StreamUpdate(INT32 chip)
 			INT32 i = 0;
 
 			INT32 volval = (INT32)((voice->signal * 16) * voice->volume);
-			INT16 val = BURN_SND_CLIP(volval);
+			INT16 val = volval;
 			while (len)
 			{
 				buffer[i] = val;

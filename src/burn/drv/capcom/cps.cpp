@@ -894,7 +894,7 @@ static INT32 CpsLoadSf2m8Tiles(UINT8* Tile, INT32 nNum)
 	return 0;
 }
 
-static INT32 CpsLoadSf2ceeablTiles(UINT8* Tile, INT32 nNum)
+static INT32 CpsLoadSf2ceeabTiles(UINT8* Tile, INT32 nNum)
 {
 	UINT8 *Rom = (UINT8*)BurnMalloc(0x200000 * sizeof(UINT8));
 	UINT8 *Temp = (UINT8*)BurnMalloc(0x200000 * sizeof(UINT8));
@@ -1323,7 +1323,7 @@ INT32 CpsLoadTilesSf2m8(INT32 nStart)
 	return 0;
 }
 
-INT32 CpsLoadTilesSf2ceeabl(INT32 nStart)
+INT32 CpsLoadTilesSf2ceeab(INT32 nStart)
 {
 	CpsLoadOneBootlegType2Small(CpsGfx + 0x000000, nStart + 0, 0, 0);
 	CpsLoadOneBootlegType2Small(CpsGfx + 0x200000, nStart + 1, 0, 0);
@@ -1334,7 +1334,7 @@ INT32 CpsLoadTilesSf2ceeabl(INT32 nStart)
 	CpsLoadOneBootlegType2Small(CpsGfx + 0x000000, nStart + 6, 0, 3);
 	CpsLoadOneBootlegType2Small(CpsGfx + 0x200000, nStart + 7, 0, 3);
 	// The last four roms are a complete pain, handled by this custom function
-	CpsLoadSf2ceeablTiles(CpsGfx + 0x400000, nStart + 8);
+	CpsLoadSf2ceeabTiles(CpsGfx + 0x400000, nStart + 8);
 	
 	return 0;
 }
@@ -1421,7 +1421,7 @@ INT32 CpsLoadTilesDinopic(INT32 nStart)
 	return 0;
 }
 
-INT32 CpsLoadTilesDinopic5(INT32 nStart)
+INT32 CpsLoadTilesDinopic4(INT32 nStart)
 {
 	CpsLoadOneBootlegSmallSingle(CpsGfx + 0x000000, nStart +  0, 0, 0);
 	CpsLoadOneBootlegSmallSingle(CpsGfx + 0x000004, nStart +  1, 0, 0);
@@ -2062,10 +2062,10 @@ INT32 CpsInit()
 		}
 	}
 
-	if (!nCPS68KClockspeed) {
-		if (!(Cps & 1)) {
-			nCPS68KClockspeed = 11800000;
-		} else {
+	if (!nCPS68KClockspeed) { // game doesn't have a driver-specific mhz/initted
+		if (!(Cps & 1)) { // cps2 here
+			nCPS68KClockspeed = 11200000; // decrease from 11.8MHz to account for wait states
+		} else { // cps1
 			nCPS68KClockspeed = 10000000;
 		}
 	}

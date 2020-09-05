@@ -168,6 +168,8 @@ static void GameInpInitMacros()
 	INT32 nPunchInputs[5][3];
 	INT32 nKickx3[5] = {0, 0, 0, 0, 0};
 	INT32 nKickInputs[5][3];
+	INT32 nAttackx3[5] = {0, 0, 0, 0, 0};
+	INT32 nAttackInputs[5][3];
 
 	INT32 nNeogeoButtons[5][4];
 	INT32 nPgmButtons[10][16];
@@ -204,6 +206,7 @@ static void GameInpInitMacros()
 				}
 			}
 
+			// 3x punch
 			if (_stricmp(" Weak Punch", bii.szName + 2) == 0) {
 				nPunchx3[nPlayer] |= 1;
 				nPunchInputs[nPlayer][0] = i;
@@ -216,6 +219,8 @@ static void GameInpInitMacros()
 				nPunchx3[nPlayer] |= 4;
 				nPunchInputs[nPlayer][2] = i;
 			}
+
+			// 3x kick
 			if (_stricmp(" Weak Kick", bii.szName + 2) == 0) {
 				nKickx3[nPlayer] |= 1;
 				nKickInputs[nPlayer][0] = i;
@@ -228,13 +233,19 @@ static void GameInpInitMacros()
 				nKickx3[nPlayer] |= 4;
 				nKickInputs[nPlayer][2] = i;
 			}
-			if (_stricmp(" Attack", bii.szName + 2) == 0) {
-				nPunchx3[nPlayer] |= 1;
-				nPunchInputs[nPlayer][0] = i;
+
+			// 3x attack
+			if (_stricmp(" Weak Attack", bii.szName + 2) == 0) {
+				nAttackx3[nPlayer] |= 1;
+				nAttackInputs[nPlayer][0] = i;
 			}
-			if (_stricmp(" Jump", bii.szName + 2) == 0) {
-				nPunchx3[nPlayer] |= 2;
-				nPunchInputs[nPlayer][1] = i;
+			if (_stricmp(" Medium Attack", bii.szName + 2) == 0) {
+				nAttackx3[nPlayer] |= 2;
+				nAttackInputs[nPlayer][1] = i;
+			}
+			if (_stricmp(" Strong Attack", bii.szName + 2) == 0) {
+				nAttackx3[nPlayer] |= 4;
+				nAttackInputs[nPlayer][2] = i;
 			}
 
 			if (HW_NEOGEO) {
@@ -329,6 +340,8 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 	}
+	
+	if (!kNetGame)
 	{ // Autofire!!!
 			for (INT32 nPlayer = 0; nPlayer < nMaxPlayers; nPlayer++) {
 				for (INT32 i = 0; i < nFireButtons; i++) {
@@ -391,85 +404,17 @@ static void GameInpInitMacros()
 			pgi++;
 		}
 
-		if (nPunchx3[nPlayer] == 3) {		// Create a Special (Attack + Jump) macro, dion / punisher / wof ...
+		if (nAttackx3[nPlayer] == 7) {		// Create a 3x attack macro
 			pgi->nInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 
-			sprintf(pgi->Macro.szName, "P%i Special Button", nPlayer + 1);
-			for (int j = 0; j < 2; j++) {
-				BurnDrvGetInputInfo(&bii, nPunchInputs[nPlayer][j]);
+			sprintf(pgi->Macro.szName, "P%i 3x Attack", nPlayer + 1);
+			for (INT32 j = 0; j < 3; j++) {
+				BurnDrvGetInputInfo(&bii, nAttackInputs[nPlayer][j]);
 				pgi->Macro.pVal[j] = bii.pVal;
 				pgi->Macro.nVal[j] = 1;
 			}
-
-			nMacroCount++;
-			pgi++;
-		}
-
-		if (nPunchx3[nPlayer] == 7 && nKickx3[nPlayer] == 7) {		// Create a Weak Punch + Weak Kick macro, Combination keys in the sfa3 series
-			pgi->nInput = GIT_MACRO_AUTO;
-			pgi->nType = BIT_DIGITAL;
-			pgi->Macro.nMode = 0;
-
-			sprintf(pgi->Macro.szName, "P%i Buttons Weak PK", nPlayer + 1);
-			BurnDrvGetInputInfo(&bii, nPunchInputs[nPlayer][0]);
-			pgi->Macro.pVal[0] = bii.pVal;
-			pgi->Macro.nVal[0] = 1;
-			BurnDrvGetInputInfo(&bii, nKickInputs[nPlayer][0]);
-			pgi->Macro.pVal[1] = bii.pVal;
-			pgi->Macro.nVal[1] = 1;
-
-			nMacroCount++;
-			pgi++;
-		}
-
-		if (nPunchx3[nPlayer] == 7 && nKickx3[nPlayer] == 7) {		// Create a Medium Punch + Medium Kick macro, Combination keys in the sfa3 series
-			pgi->nInput = GIT_MACRO_AUTO;
-			pgi->nType = BIT_DIGITAL;
-			pgi->Macro.nMode = 0;
-
-			sprintf(pgi->Macro.szName, "P%i Buttons Medium PK", nPlayer + 1);
-			BurnDrvGetInputInfo(&bii, nPunchInputs[nPlayer][1]);
-			pgi->Macro.pVal[0] = bii.pVal;
-			pgi->Macro.nVal[0] = 1;
-			BurnDrvGetInputInfo(&bii, nKickInputs[nPlayer][1]);
-			pgi->Macro.pVal[1] = bii.pVal;
-			pgi->Macro.nVal[1] = 1;
-
-			nMacroCount++;
-			pgi++;
-		}
-
-		if (nPunchx3[nPlayer] == 7 && nKickx3[nPlayer] == 7) {		// Create a Strong Punch + Strong Kick macro, Combination keys in the sfa3 series
-			pgi->nInput = GIT_MACRO_AUTO;
-			pgi->nType = BIT_DIGITAL;
-			pgi->Macro.nMode = 0;
-
-			sprintf(pgi->Macro.szName, "P%i Buttons Strong PK", nPlayer + 1);
-			BurnDrvGetInputInfo(&bii, nPunchInputs[nPlayer][2]);
-			pgi->Macro.pVal[0] = bii.pVal;
-			pgi->Macro.nVal[0] = 1;
-			BurnDrvGetInputInfo(&bii, nKickInputs[nPlayer][2]);
-			pgi->Macro.pVal[1] = bii.pVal;
-			pgi->Macro.nVal[1] = 1;
-
-			nMacroCount++;
-			pgi++;
-		}
-
-		if (nPunchx3[nPlayer] == 7 && nKickx3[nPlayer] == 7) {		// Create a Strong Punch + Weak Kick macro, Quick cancel technique in sf2ce series
-			pgi->nInput = GIT_MACRO_AUTO;
-			pgi->nType = BIT_DIGITAL;
-			pgi->Macro.nMode = 0;
-
-			sprintf(pgi->Macro.szName, "P%i Buttons SP+WK", nPlayer + 1);
-			BurnDrvGetInputInfo(&bii, nPunchInputs[nPlayer][2]);
-			pgi->Macro.pVal[0] = bii.pVal;
-			pgi->Macro.nVal[0] = 1;
-			BurnDrvGetInputInfo(&bii, nKickInputs[nPlayer][0]);
-			pgi->Macro.pVal[1] = bii.pVal;
-			pgi->Macro.nVal[1] = 1;
 
 			nMacroCount++;
 			pgi++;
@@ -805,6 +750,7 @@ static void GameInpInitMacros()
 	if ((nPunchx3[0] == 7) && (nKickx3[0] == 7)) {
 		bStreetFighterLayout = true;
 	}
+
 	if (nFireButtons >= 7 && (BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) == HARDWARE_CAPCOM_CPS2) {
 		// used to be 5 buttons in the above check - now we have volume buttons it is 7
 		bStreetFighterLayout = true;
@@ -1730,41 +1676,41 @@ INT32 GameInputAutoIni(INT32 nPlayer, TCHAR* lpszFile, bool bOverWrite)
 	return 0;
 }
 
-tIniStruct gamehw_cfg[] = {
-	{_T("CPS-1/CPS-2/CPS-3 hardware"),	_T("config/presets/cps.ini"),		{ HARDWARE_CAPCOM_CPS1, HARDWARE_CAPCOM_CPS1_QSOUND, HARDWARE_CAPCOM_CPS1_GENERIC, HARDWARE_CAPCOM_CPSCHANGER, HARDWARE_CAPCOM_CPS2, HARDWARE_CAPCOM_CPS3, 0 } },
-	{_T("Neo-Geo hardware"),			_T("config/presets/neogeo.ini"),	{ HARDWARE_SNK_NEOGEO, HARDWARE_SNK_NEOCD, 0 } },
-	{_T("Neo Geo Pocket hardware"),     _T("config/presets/ngp.ini"),       { HARDWARE_SNK_NGP, HARDWARE_SNK_NGPC, 0 } },
-	{_T("NES hardware"),				_T("config/presets/nes.ini"),		{ HARDWARE_NES, 0 } },
-	{_T("FDS hardware"),				_T("config/presets/fds.ini"),		{ HARDWARE_FDS, 0 } },
-	{_T("PGM hardware"),				_T("config/presets/pgm.ini"),		{ HARDWARE_IGS_PGM, 0 } },
-	{_T("MegaDrive hardware"),			_T("config/presets/megadrive.ini"),	{ HARDWARE_SEGA_MEGADRIVE, 0 } },
-	{_T("PCE/TG16/SGX hardware"),		_T("config/presets/pce.ini"),		{ HARDWARE_PCENGINE_PCENGINE, HARDWARE_PCENGINE_TG16, 0 } },
-	{_T("MSX1 hardware"),				_T("config/presets/msx.ini"),		{ HARDWARE_MSX, 0 } },
-	{_T("Coleco hardware"),				_T("config/presets/coleco.ini"),	{ HARDWARE_COLECO, 0 } },
-	{_T("SG1000 hardware"),				_T("config/presets/sg1000.ini"),	{ HARDWARE_SEGA_SG1000, 0 } },
-	{_T("Sega Master System hardware"),	_T("config/presets/sms.ini"),		{ HARDWARE_SEGA_MASTER_SYSTEM, 0 } },
-	{_T("Sega Game Gear hardware"),		_T("config/presets/gg.ini"),		{ HARDWARE_SEGA_GAME_GEAR, 0 } },
-	{_T("Sinclair Spectrum hardware"),	_T("config/presets/spectrum.ini"),	{ HARDWARE_SPECTRUM, 0 } },
-	{_T("\0"), _T("\0"), { 0 } } // END of list
-};
-
 INT32 ConfigGameLoadHardwareDefaults()
 {
+	TCHAR *szDefaultCpsFile = _T("config/presets/cps.ini");
+	TCHAR *szDefaultNeogeoFile = _T("config/presets/neogeo.ini");
+	TCHAR *szDefaultNESFile = _T("config/presets/nes.ini");
+	TCHAR *szDefaultFDSFile = _T("config/presets/fds.ini");
+	TCHAR *szDefaultPgmFile = _T("config/presets/pgm.ini");
 	TCHAR *szFileName = _T("");
 	INT32 nApplyHardwareDefaults = 0;
 
 	INT32 nHardwareFlag = (BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK);
 
-	// See if nHardwareFlag belongs to any systems in gamehw_config
-	for (INT32 i = 0; gamehw_cfg[i].ini[0] != '\0'; i++) {
-		for (INT32 hw = 0; gamehw_cfg[i].hw[hw] != 0; hw++) {
-			if (gamehw_cfg[i].hw[hw] == nHardwareFlag)
-			{
-				szFileName = gamehw_cfg[i].ini;
-				nApplyHardwareDefaults = 1;
-				break;
-			}
-		}
+	if (nHardwareFlag == HARDWARE_CAPCOM_CPS1 || nHardwareFlag == HARDWARE_CAPCOM_CPS1_QSOUND || nHardwareFlag == HARDWARE_CAPCOM_CPS1_GENERIC || nHardwareFlag == HARDWARE_CAPCOM_CPSCHANGER || nHardwareFlag == HARDWARE_CAPCOM_CPS2 || nHardwareFlag == HARDWARE_CAPCOM_CPS3) {
+		szFileName = szDefaultCpsFile;
+		nApplyHardwareDefaults = 1;
+	}
+
+	if (nHardwareFlag == HARDWARE_SNK_NEOGEO || nHardwareFlag == HARDWARE_SNK_NEOCD) {
+		szFileName = szDefaultNeogeoFile;
+		nApplyHardwareDefaults = 1;
+	}
+
+	if (nHardwareFlag == HARDWARE_NES) {
+		szFileName = szDefaultNESFile;
+		nApplyHardwareDefaults = 1;
+	}
+
+	if (nHardwareFlag == HARDWARE_FDS) {
+		szFileName = szDefaultFDSFile;
+		nApplyHardwareDefaults = 1;
+	}
+
+	if (nHardwareFlag == HARDWARE_IGS_PGM) {
+		szFileName = szDefaultPgmFile;
+		nApplyHardwareDefaults = 1;
 	}
 
 	if (nApplyHardwareDefaults) {

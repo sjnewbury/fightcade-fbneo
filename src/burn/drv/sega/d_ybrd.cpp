@@ -554,9 +554,6 @@ static struct BurnRomInfo Gforce2RomDesc[] = {
 	{ "mpr-11465.107",    0x80000, 0xe1436dab, SYS16_ROM_PCMDATA | BRF_SND },
 	{ "epr-11516.106",    0x20000, 0x19d0e17f, SYS16_ROM_PCMDATA | BRF_SND },
 	{ "epr-11814.105",    0x20000, 0x0b05d376, SYS16_ROM_PCMDATA | BRF_SND },
-
-	{ "epr-11707.ic37",   0x08000, 0x00000000, BRF_OPT | BRF_NODUMP },
-	{ "epr-11707a.ic37",  0x08000, 0x00000000, BRF_OPT | BRF_NODUMP },
 };
 
 
@@ -621,9 +618,6 @@ static struct BurnRomInfo Gforce2sdRomDesc[] = {
 	{ "epr-11814.105",    0x20000, 0x0b05d376, SYS16_ROM_PCMDATA | BRF_SND },
 	
 	{ "motorpcb.prg",     0x08000, 0xfecee31e, BRF_OPT },
-	
-	{ "epr-11707.ic37",   0x08000, 0x00000000, BRF_OPT | BRF_NODUMP },
-	{ "epr-11707a.ic37",  0x08000, 0x00000000, BRF_OPT | BRF_NODUMP },
 };
 
 
@@ -686,9 +680,6 @@ static struct BurnRomInfo Gforce2jRomDesc[] = {
 	{ "mpr-11465.107",    0x80000, 0xe1436dab, SYS16_ROM_PCMDATA | BRF_SND },
 	{ "epr-11516.106",    0x20000, 0x19d0e17f, SYS16_ROM_PCMDATA | BRF_SND },
 	{ "epr-11814.105",    0x20000, 0x0b05d376, SYS16_ROM_PCMDATA | BRF_SND },
-	
-	{ "epr-11707.ic37",   0x08000, 0x00000000, BRF_OPT | BRF_NODUMP },
-	{ "epr-11707a.ic37",  0x08000, 0x00000000, BRF_OPT | BRF_NODUMP },
 };
 
 
@@ -751,9 +742,6 @@ static struct BurnRomInfo Gforce2jaRomDesc[] = {
 	{ "mpr-11465.107",    0x80000, 0xe1436dab, SYS16_ROM_PCMDATA | BRF_SND },
 	{ "epr-11516.106",    0x20000, 0x19d0e17f, SYS16_ROM_PCMDATA | BRF_SND },
 	{ "epr-11814.105",    0x20000, 0x0b05d376, SYS16_ROM_PCMDATA | BRF_SND },
-	
-	{ "epr-11707.ic37",   0x08000, 0x00000000, BRF_OPT | BRF_NODUMP },
-	{ "epr-11707a.ic37",  0x08000, 0x00000000, BRF_OPT | BRF_NODUMP },
 };
 
 
@@ -818,8 +806,6 @@ static struct BurnRomInfo GlocRomDesc[] = {
 	{ "epr-13036.107",    0x80000, 0x7890c26c, SYS16_ROM_PCMDATA | BRF_SND },
 	{ "epr-13035.106",    0x80000, 0x009fa13e, SYS16_ROM_PCMDATA | BRF_SND },
 	{ "epr-13034.105",    0x80000, 0xcd22d95d, SYS16_ROM_PCMDATA | BRF_SND },
-	
-	{ "epr-11830.ic37",   0x08000, 0xc1201c02, BRF_OPT },
 };
 
 
@@ -884,8 +870,6 @@ static struct BurnRomInfo GlocuRomDesc[] = {
 	{ "epr-13036.107",    0x80000, 0x7890c26c, SYS16_ROM_PCMDATA | BRF_SND },
 	{ "epr-13035.106",    0x80000, 0x009fa13e, SYS16_ROM_PCMDATA | BRF_SND },
 	{ "epr-13034.105",    0x80000, 0xcd22d95d, SYS16_ROM_PCMDATA | BRF_SND },
-	
-	{ "epr-11830.ic37",   0x08000, 0xc1201c02, BRF_OPT },
 };
 
 
@@ -1086,8 +1070,6 @@ static struct BurnRomInfo PdriftRomDesc[] = {
 	{ "epr-11896.ic2",    0x20000, 0x4bebc015, SYS16_ROM_PROM | BRF_OPT },
 	{ "epr-11897.ic3",    0x20000, 0x4463cb95, SYS16_ROM_PROM | BRF_OPT },
 	{ "epr-11898.ic4",    0x20000, 0x5d19d767, SYS16_ROM_PROM | BRF_OPT },
-	
-	{ "epr-11485.ic37",   0x08000, 0x00000000, BRF_OPT | BRF_NODUMP },
 };
 
 
@@ -1157,8 +1139,6 @@ static struct BurnRomInfo PdriftaRomDesc[] = {
 	{ "epr-11896.ic2",    0x20000, 0x4bebc015, SYS16_ROM_PROM | BRF_OPT },
 	{ "epr-11897.ic3",    0x20000, 0x4463cb95, SYS16_ROM_PROM | BRF_OPT },
 	{ "epr-11898.ic4",    0x20000, 0x5d19d767, SYS16_ROM_PROM | BRF_OPT },
-	
-	{ "epr-11485.ic37",   0x08000, 0x00000000, BRF_OPT | BRF_NODUMP },
 };
 
 
@@ -1228,8 +1208,6 @@ static struct BurnRomInfo PdrifteRomDesc[] = {
 	{ "epr-11896.ic2",    0x20000, 0x4bebc015, SYS16_ROM_PROM | BRF_OPT },
 	{ "epr-11897.ic3",    0x20000, 0x4463cb95, SYS16_ROM_PROM | BRF_OPT },
 	{ "epr-11898.ic4",    0x20000, 0x5d19d767, SYS16_ROM_PROM | BRF_OPT },
-	
-	{ "epr-11485.ic37",   0x08000, 0x00000000, BRF_OPT | BRF_NODUMP },
 };
 
 
@@ -1299,8 +1277,6 @@ static struct BurnRomInfo PdriftjRomDesc[] = {
 	{ "epr-11896.ic2",    0x20000, 0x4bebc015, SYS16_ROM_PROM | BRF_OPT },
 	{ "epr-11897.ic3",    0x20000, 0x4463cb95, SYS16_ROM_PROM | BRF_OPT },
 	{ "epr-11898.ic4",    0x20000, 0x5d19d767, SYS16_ROM_PROM | BRF_OPT },
-	
-	{ "epr-11485.ic37",   0x08000, 0x00000000, BRF_OPT | BRF_NODUMP },
 };
 
 
@@ -1614,15 +1590,27 @@ static void io_chip_w(UINT32 offset, UINT16 d)
 			System16VideoEnable = d & 0x80;
 			
 			if (d & 0x04) {
-				SekReset(2);
+				INT32 nLastCPU = nSekActive;
+				SekClose();
+				SekOpen(2);
+				SekReset();
+				SekClose();
+				SekOpen(nLastCPU);
 			}
 			
 			if (d & 0x08) {
-				SekReset(1);
+				INT32 nLastCPU = nSekActive;
+				SekClose();
+				SekOpen(1);
+				SekReset();
+				SekClose();
+				SekOpen(nLastCPU);
 			}
 			
 			if (!(d & 0x10)) {
-				ZetReset(0);
+				ZetOpen(0);
+				ZetReset();
+				ZetClose();
 			}
 			
 			return;
@@ -1717,7 +1705,9 @@ void __fastcall YBoardWriteByte(UINT32 a, UINT8 d)
 	switch (a) {
 		case 0x082001: {
 			System16SoundLatch = d & 0xff;
-			ZetNmi(0);
+			ZetOpen(0);
+			ZetNmi();
+			ZetClose();
 			return;
 		}
 	}

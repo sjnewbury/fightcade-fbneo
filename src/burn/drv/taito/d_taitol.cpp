@@ -3704,9 +3704,6 @@ static struct BurnRomInfo kurikintRomDesc[] = {
 
 	{ "b42-01.ic1",		0x80000, 0x7d1a1fec, 4 | BRF_GRA },           //  3 graphics data
 	{ "b42-02.ic5",		0x80000, 0x1a52e65c, 4 | BRF_GRA },           //  4
-	
-	{ "gal16v8-b42-03.ic4.bin",	 0x00117, 0xf7150d37, 0 | BRF_OPT },  //  5 plds
-	{ "gal16v8-b42-04.ic21.bin", 0x00117, 0xb57b806c, 0 | BRF_OPT },  //  6
 };
 
 STD_ROM_PICK(kurikint)
@@ -3733,9 +3730,6 @@ static struct BurnRomInfo kurikintwRomDesc[] = {
 
 	{ "b42-01.ic1",		0x80000, 0x7d1a1fec, 4 | BRF_GRA },           //  3 graphics data
 	{ "b42-02.ic5",		0x80000, 0x1a52e65c, 4 | BRF_GRA },           //  4
-	
-	{ "gal16v8-b42-03.ic4.bin",	 0x00117, 0xf7150d37, 0 | BRF_OPT },  //  5 plds
-	{ "gal16v8-b42-04.ic21.bin", 0x00117, 0xb57b806c, 0 | BRF_OPT },  //  6
 };
 
 STD_ROM_PICK(kurikintw)
@@ -3762,9 +3756,6 @@ static struct BurnRomInfo kurikintuRomDesc[] = {
 
 	{ "b42-01.ic1",		0x80000, 0x7d1a1fec, 4 | BRF_GRA },           //  3 graphics data
 	{ "b42-02.ic5",		0x80000, 0x1a52e65c, 4 | BRF_GRA },           //  4
-	
-	{ "gal16v8-b42-03.ic4.bin",	 0x00117, 0xf7150d37, 0 | BRF_OPT },  //  5 plds
-	{ "gal16v8-b42-04.ic21.bin", 0x00117, 0xb57b806c, 0 | BRF_OPT },  //  6
 };
 
 STD_ROM_PICK(kurikintu)
@@ -3791,9 +3782,6 @@ static struct BurnRomInfo kurikintjRomDesc[] = {
 
 	{ "b42-01.ic1",		0x80000, 0x7d1a1fec, 4 | BRF_GRA },           //  3 graphics data
 	{ "b42-02.ic5",		0x80000, 0x1a52e65c, 4 | BRF_GRA },           //  4
-	
-	{ "gal16v8-b42-03.ic4.bin",	 0x00117, 0xf7150d37, 0 | BRF_OPT },  //  5 plds
-	{ "gal16v8-b42-04.ic21.bin", 0x00117, 0xb57b806c, 0 | BRF_OPT },  //  6
 };
 
 STD_ROM_PICK(kurikintj)

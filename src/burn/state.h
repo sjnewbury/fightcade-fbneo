@@ -24,8 +24,10 @@ INT32 BurnAreaScan(INT32 nAction, INT32* pnMin);
 #define ACB_MEMCARD		 (16)
 #define ACB_MEMORY_RAM	 (32)
 #define ACB_DRIVER_DATA	 (64)
+#define ACB_CPS3_CRAM	 (128)
 
-#define ACB_FULLSCAN	(ACB_NVRAM | ACB_MEMCARD | ACB_MEMORY_RAM | ACB_DRIVER_DATA)
+#define ACB_FULLSCAN	(ACB_NVRAM | ACB_MEMCARD | ACB_MEMORY_RAM | ACB_DRIVER_DATA | ACB_CPS3_CRAM)
+#define ACB_FULLSCANL	(ACB_NVRAM | ACB_MEMCARD | ACB_MEMORY_RAM | ACB_DRIVER_DATA)
 
 #define ACB_ACCESSMASK	(ACB_READ | ACB_WRITE)
 #define ACB_TYPEMASK	(ACB_MEMORY_ROM | ACB_NVRAM | ACB_MEMCARD | ACB_MEMORY_RAM | ACB_DRIVER_DATA)
@@ -49,10 +51,9 @@ C_INLINE static void ScanVar(void* pv, INT32 nSize, char* szName)
 	BurnAcb(&ba);
 }
 
-// scan a variable, chunk of memory, pointerless struct, etc.
 #define SCAN_VAR(x) ScanVar(&x, sizeof(x), #x)
-// scan a memory offset - to safely state-ify pointers (see burn/drv/neogeo/neo_run.cpp or cpu/tlcs900/tlcs900.cpp)
-#define SCAN_OFF(x, y, a) { INT32 n = x - y; ScanVar(&n, sizeof(n), #x); if (a & ACB_WRITE) { x = y + n; } }
+
+#define SCAN_OFF(x, y, a) { INT32 n = x - y; ScanVar(&n, sizeof(n), #x); if (a & ACB_WRITE) {	x = y + n; } }
 
 #ifdef OSD_CPU_H
  /* wrappers for the MAME savestate functions (used by the FM sound cores) */

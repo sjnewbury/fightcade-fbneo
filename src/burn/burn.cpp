@@ -40,8 +40,8 @@ UINT32 nCurrentFrame;			// Framecount for emulated game
 
 UINT32 nFramesEmulated;		// Counters for FPS	display
 UINT32 nFramesRendered;		//
-bool bForce60Hz = false;
-bool bBurnUseBlend = true;
+INT32 bForce60Hz = 0;
+INT32 bBurnUseBlend = 1;
 INT32 nBurnFPS = 6000;
 INT32 nBurnCPUSpeedAdjust = 0x0100;	// CPU speed adjustment (clock * nBurnCPUSpeedAdjust / 0x0100)
 
@@ -301,6 +301,10 @@ extern "C" TCHAR* BurnDrvGetText(UINT32 i)
 	if (i & DRV_UNICODEONLY) {
 		return NULL;
 	}
+
+  if (nBurnDrvActive == -1) {
+		return NULL;
+  }
 
 	switch (i & 0xFF) {
 		case DRV_NAME:

@@ -188,7 +188,11 @@ static void progolf_main_write(UINT16 address, UINT8 data)
 
 		case 0x9a00:
 			soundlatch = data;
-			M6502SetIRQLine(1, 0, CPU_IRQSTATUS_ACK);
+			M6502Close();
+			M6502Open(1);
+			M6502SetIRQLine(0, CPU_IRQSTATUS_ACK);
+			M6502Close();
+			M6502Open(0);
 		return;
 
 		case 0x9e00:
@@ -475,7 +479,9 @@ static INT32 DrvFrame()
 		}
 
 		if (prev_coin == 0 && ((DrvInputs[2] | DrvInputs[3]) & 0xc0) != 0) {
-			M6502SetIRQLine(0, 0x20, CPU_IRQSTATUS_AUTO);
+			M6502Open(0);
+			M6502SetIRQLine(0x20, CPU_IRQSTATUS_AUTO);
+			M6502Close();
 		}
 	}
 
@@ -488,11 +494,11 @@ static INT32 DrvFrame()
 	for (INT32 i = 0; i < nInterleave; i++)
 	{
 		M6502Open(0);
-		CPU_RUN(0, M6502);
+		nCyclesDone[0] += M6502Run(((i + 1) * nCyclesTotal[0] / nInterleave) - nCyclesDone[0]);
 		M6502Close();
 
 		M6502Open(1);
-		CPU_RUN(1, M6502);
+		nCyclesDone[1] += M6502Run(((i + 1) * nCyclesTotal[1] / nInterleave) - nCyclesDone[1]);
 		M6502Close();
 
 		if (i == 248/8) vblank = 0x00;

@@ -296,8 +296,6 @@ static INT32 DrvDoReset()
 	SoundLatch = 0;
 	FlipScreen = 0;
 
-	HiscoreReset();
-
 	return 0;
 }
 
@@ -684,7 +682,7 @@ struct BurnDriver BurnDrvPrehisle = {
 	"prehisle", NULL, NULL, NULL, "1989",
 	"Prehistoric Isle in 1930 (World)\0", NULL, "SNK", "Prehistoric Isle (SNK)",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_HISCORE_SUPPORTED, 2, HARDWARE_MISC_PRE90S, GBF_HORSHOOT, 0,
+	BDF_GAME_WORKING, 2, HARDWARE_MISC_PRE90S, GBF_HORSHOOT, 0,
 	NULL, PrehisleRomInfo, PrehisleRomName, NULL, NULL, NULL, NULL, PrehisleInputInfo, PrehisleDIPInfo,
 	PrehisleInit, DrvExit, DrvFrame, DrvDraw, DrvScan, NULL, 0x800,
 	256, 224, 4, 3
@@ -721,7 +719,7 @@ struct BurnDriver BurnDrvPrehislu = {
 	"prehisleu", "prehisle", NULL, NULL, "1989",
 	"Prehistoric Isle in 1930 (US)\0", NULL, "SNK of America", "Prehistoric Isle (SNK)",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_MISC_PRE90S, GBF_HORSHOOT, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_MISC_PRE90S, GBF_HORSHOOT, 0,
 	NULL, PrehisluRomInfo, PrehisluRomName, NULL, NULL, NULL, NULL, PrehisleInputInfo, PrehisleDIPInfo,
 	PrehisleInit, DrvExit, DrvFrame, DrvDraw, DrvScan, NULL, 0x800,
 	256, 224, 4, 3
@@ -758,7 +756,7 @@ struct BurnDriver BurnDrvPrehislk = {
 	"prehislek", "prehisle", NULL, NULL, "1989",
 	"Prehistoric Isle in 1930 (Korea)\0", NULL, "SNK (Victor license)", "Prehistoric Isle (SNK)",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_MISC_PRE90S, GBF_HORSHOOT, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_MISC_PRE90S, GBF_HORSHOOT, 0,
 	NULL, PrehislkRomInfo, PrehislkRomName, NULL, NULL, NULL, NULL, PrehisleInputInfo, PrehisleDIPInfo,
 	PrehisleInit, DrvExit, DrvFrame, DrvDraw, DrvScan, NULL, 0x800,
 	256, 224, 4, 3
@@ -795,7 +793,7 @@ struct BurnDriver BurnDrvGensitou = {
 	"gensitou", "prehisle", NULL, NULL, "1989",
 	"Genshi-Tou 1930's (Japan)\0", NULL, "SNK", "Prehistoric Isle (SNK)",
 	L"Genshi-Tou 1930's (Japan)\0\u539F\u59CB\u5CF6 1930's\0", NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_MISC_PRE90S, GBF_HORSHOOT, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_MISC_PRE90S, GBF_HORSHOOT, 0,
 	NULL, GensitouRomInfo, GensitouRomName, NULL, NULL, NULL, NULL, PrehisleInputInfo, PrehisleDIPInfo,
 	PrehisleInit, DrvExit, DrvFrame, DrvDraw, DrvScan, NULL, 0x800,
 	256, 224, 4, 3
@@ -850,7 +848,7 @@ struct BurnDriver BurnDrvPrehislb = {
 	"prehisleb", "prehisle", NULL, NULL, "1989",
 	"Prehistoric Isle in 1930 (World, bootleg)\0", NULL, "bootleg", "Prehistoric Isle (SNK)",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_BOOTLEG | BDF_HISCORE_SUPPORTED, 2, HARDWARE_MISC_PRE90S, GBF_HORSHOOT, 0,
+	BDF_GAME_WORKING | BDF_CLONE | BDF_BOOTLEG, 2, HARDWARE_MISC_PRE90S, GBF_HORSHOOT, 0,
 	NULL, PrehislbRomInfo, PrehislbRomName, NULL, NULL, NULL, NULL, PrehisleInputInfo, PrehisleDIPInfo,
 	PrehisleInit, DrvExit, DrvFrame, DrvDraw, DrvScan, NULL, 0x800,
 	256, 224, 4, 3

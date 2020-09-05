@@ -187,7 +187,6 @@ struct BurnDIPInfo {
 	char* szText;
 };
 
-#define DIP_OFFSET(x) {x, 0xf0, 0xff, 0xff, NULL},
 
 // ---------------------------------------------------------------------------
 // Common CPU definitions
@@ -195,12 +194,9 @@ struct BurnDIPInfo {
 // sync to nCyclesDone[]
 #define CPU_RUN(num,proc) do { nCyclesDone[num] += proc ## Run(((i + 1) * nCyclesTotal[num] / nInterleave) - nCyclesDone[num]); } while (0)
 #define CPU_IDLE(num,proc) do { nCyclesDone[num] += proc ## Idle(((i + 1) * nCyclesTotal[num] / nInterleave) - nCyclesDone[num]); } while (0)
-#define CPU_IDLE_NULL(num) do { nCyclesDone[num] += ((i + 1) * nCyclesTotal[num] / nInterleave) - nCyclesDone[num]; } while (0)
 // sync to cpuTotalCycles()
 #define CPU_RUN_SYNCINT(num,proc) do { nCyclesDone[num] += proc ## Run(((i + 1) * nCyclesTotal[num] / nInterleave) - proc ## TotalCycles()); } while (0)
 #define CPU_IDLE_SYNCINT(num,proc) do { nCyclesDone[num] += proc ## Idle(((i + 1) * nCyclesTotal[num] / nInterleave) - proc ## TotalCycles()); } while (0)
-// sync to timer
-#define CPU_RUN_TIMER(num) do { BurnTimerUpdate((i + 1) * nCyclesTotal[num] / nInterleave); if (i == nInterleave - 1) BurnTimerEndFrame(nCyclesTotal[num]); } while (0)
 
 #define CPU_IRQSTATUS_NONE	0
 #define CPU_IRQSTATUS_ACK	1
@@ -251,8 +247,8 @@ extern UINT32 nFramesEmulated;
 extern UINT32 nFramesRendered;
 extern clock_t starttime;					// system time when emulation started and after roms loaded
 
-extern bool bForce60Hz;
-extern bool bBurnUseBlend;
+extern INT32 bForce60Hz;
+extern INT32 bBurnUseBlend;
 
 extern INT32 nBurnFPS;
 extern INT32 nBurnCPUSpeedAdjust;
@@ -408,7 +404,7 @@ void IpsApplyPatches(UINT8* base, char* rom_name);
 #define BDF_HISCORE_SUPPORTED							(1 << 11)
 
 // Flags for the hardware member
-// Format: 0xDDEEFFFF, where DD: Manufacturer, EE: Hardware platform, FFFF: Flags (used by driver)
+// Format: 0xDDEEFFFF, where EE: Manufacturer, DD: Hardware platform, FFFF: Flags (used by driver)
 
 #define HARDWARE_PUBLIC_MASK							(0x7FFF0000)
 
@@ -446,10 +442,6 @@ void IpsApplyPatches(UINT8* base, char* rom_name);
 #define HARDWARE_PREFIX_SPECTRUM                        (0x1D000000)
 #define HARDWARE_PREFIX_NES                             (0x1E000000)
 #define HARDWARE_PREFIX_FDS                             (0x1F000000)
-#define HARDWARE_PREFIX_NGP                             (0x20000000)
-
-#define HARDWARE_SNK_NGP								(HARDWARE_PREFIX_NGP | 0x00000000)
-#define HARDWARE_SNK_NGPC								(HARDWARE_PREFIX_NGP | 0x00000001)
 
 #define HARDWARE_MISC_PRE90S							(HARDWARE_PREFIX_MISC_PRE90S)
 #define HARDWARE_MISC_POST90S							(HARDWARE_PREFIX_MISC_POST90S)
@@ -700,8 +692,6 @@ void IpsApplyPatches(UINT8* base, char* rom_name);
 #define GBF_RUNGUN  									(1 << 21)
 #define GBF_STRATEGY									(1 << 22)
 #define GBF_VECTOR                                      (1 << 23)
-#define GBF_RPG                                         (1 << 24)
-#define GBF_SIM                                         (1 << 25)
 
 // flags for the family member
 #define FBF_MSLUG										(1 << 0)

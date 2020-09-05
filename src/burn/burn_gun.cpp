@@ -313,22 +313,6 @@ void BurnTrackballUpdateSlither(INT32 dev)
 	}
 }
 
-// returns current dial.Forward, dial.Backward, dial.Velocity
-void BurnPaddleGetDial(BurnDialINF &dial, INT32 num, INT32 isB)
-{
-	if (num > MAX_GUNS - 1) return;
-
-	dial.Velocity = DIAL_VEL[(num*2) + ((isB) ? 1 : 0)];
-
-	if (TrackRev[(num*2) + ((isB) ? 1 : 0)]) { // reversed!
-		dial.Backward = DrvJoyT[(num*4) + ((isB) ? 2 : 0) + 1];
-		dial.Forward  = DrvJoyT[(num*4) + ((isB) ? 2 : 0) + 0];
-	} else {
-		dial.Backward = DrvJoyT[(num*4) + ((isB) ? 2 : 0) + 0];
-		dial.Forward  = DrvJoyT[(num*4) + ((isB) ? 2 : 0) + 1];
-	}
-}
-
 UINT8 BurnTrackballRead(INT32 dev, INT32 isB)
 {
 	if (isB)
@@ -447,7 +431,7 @@ void BurnTrackballSetVelocityCurve(INT32 bLogarithmic)
 
 	if (bLogarithmic) {
 		for (INT32 i = 0; i < 0x100; i++) {
-			CURVE[i] = 1 + (log((double)i) * 1.2);
+			CURVE[i] = 1 + (log(i) * 1.2);
 		}
 	} else {
 		for (INT32 i = 0; i < 0x100; i++) {

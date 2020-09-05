@@ -13,13 +13,13 @@ UINT8  System16InputPort4[8]  = {0, 0, 0, 0, 0, 0, 0, 0};
 UINT8  System16InputPort5[8]  = {0, 0, 0, 0, 0, 0, 0, 0};
 UINT8  System16InputPort6[8]  = {0, 0, 0, 0, 0, 0, 0, 0};
 UINT8  System16Gear           = 0;
-INT16  System16AnalogPort0    = 0;
-INT16  System16AnalogPort1    = 0;
-INT16  System16AnalogPort2    = 0;
-INT16  System16AnalogPort3    = 0;
-INT16  System16AnalogPort4    = 0;
-INT16  System16AnalogPort5    = 0;
-INT16  System16AnalogSelect   = 0;
+INT32  System16AnalogPort0    = 0;
+INT32  System16AnalogPort1    = 0;
+INT32  System16AnalogPort2    = 0;
+INT32  System16AnalogPort3    = 0;
+INT32  System16AnalogPort4    = 0;
+INT32  System16AnalogPort5    = 0;
+INT32  System16AnalogSelect   = 0;
 UINT8  System16Dip[3]         = {0, 0, 0};
 UINT8  System16Input[7]       = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 UINT8  System16Reset          = 0;
@@ -316,27 +316,18 @@ static INT32 System16DoReset()
 	if (System16MSM6295RomSize) {
 		MSM6295Reset(0);
 	}
-
+	
 	if ((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) == HARDWARE_SEGA_SYSTEM18) {
-		GenesisVDPReset();
-		ZetOpen(0);
 		BurnYM3438Reset();
 		RF5C68PCMReset();
-		ZetClose();
 	} else {
 		if (BurnDrvGetHardwareCode() & HARDWARE_SEGA_YM2203) {
-			ZetOpen(0);
 			BurnYM2203Reset();
-			ZetClose();
 		} else {
 			if (BurnDrvGetHardwareCode() & HARDWARE_SEGA_YM2413) {
-				ZetOpen(0);
 				BurnYM2413Reset();
-				ZetClose();
 			} else {
-				ZetOpen(0);
 				BurnYM2151Reset();
-				ZetClose();
 			}
 		}
 	}
@@ -394,17 +385,20 @@ static INT32 System16DoReset()
 	System16ColScroll = 0;
 	System16RowScroll = 0;
 	System16MCUData = 0;
-
-	HiscoreReset();
-
+	
 	return 0;
 }
 
 INT32 __fastcall OutrunResetCallback()
 {
-	SekReset(1);
-
-	SekRunEnd();
+	INT32 nLastCPU = nSekActive;
+	SekClose();
+	
+	SekOpen(1);
+	SekReset();
+	SekClose();
+	
+	SekOpen(nLastCPU);
 
 	return 0;
 }
@@ -780,11 +774,9 @@ void __fastcall System18Z80PortWrite(UINT16 a, UINT8 d)
 		
 		case 0xc0: {
 			System16MCUData = d;
-			if (System16I8751RomNum) {
-				mcs51_set_irq_line(MCS51_INT1_LINE, CPU_IRQSTATUS_ACK);
-				nSystem16CyclesDone[2] += mcs51Run(2000);
-				mcs51_set_irq_line(MCS51_INT1_LINE, CPU_IRQSTATUS_NONE);
-			}
+			mcs51_set_irq_line(MCS51_INT1_LINE, CPU_IRQSTATUS_ACK);
+			nSystem16CyclesDone[2] += mcs51Run(2000);
+			mcs51_set_irq_line(MCS51_INT1_LINE, CPU_IRQSTATUS_NONE);
 			return;
 		}
 	}
@@ -797,7 +789,7 @@ void __fastcall System18Z80PortWrite(UINT16 a, UINT8 d)
 UINT8 __fastcall System18Z80Read(UINT16 a)
 {
 	if (a >= 0xd000 && a <= 0xdfff) {
-		return RF5C68PCMRead(a & 0x0fff);
+		return RF5C68PCMRead(a - 0xd000);
 	}
 
 #if 0 && defined FBNEO_DEBUG
@@ -810,12 +802,12 @@ UINT8 __fastcall System18Z80Read(UINT16 a)
 void __fastcall System18Z80Write(UINT16 a, UINT8 d)
 {
 	if (a >= 0xc000 && a <= 0xc00f) {
-		RF5C68PCMRegWrite(a & 0x000f, d);
+		RF5C68PCMRegWrite(a - 0xc000, d);
 		return;
 	}
 	
 	if (a >= 0xd000 && a <= 0xdfff) {
-		RF5C68PCMWrite(a & 0x0fff, d);
+		RF5C68PCMWrite(a - 0xd000, d);
 		return;
 	}
 
@@ -1861,11 +1853,7 @@ Main Driver Init function
 INT32 System16Init()
 {
 	INT32 nRet = 0, nLen;
-
-	if ((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) == HARDWARE_SEGA_SYSTEM18) {
-		BurnSetRefreshRate(57.23);
-	}
-
+	
 	// Allocate and Blank all required memory
 	Mem = NULL;
 	System16LoadRoms(0); // Get required rom sizes
@@ -2121,7 +2109,7 @@ INT32 System16Init()
 		BurnYM3438SetAllRoutes(0, 0.40, BURN_SND_ROUTE_BOTH);
 		BurnYM3438SetAllRoutes(1, 0.40, BURN_SND_ROUTE_BOTH);
 		
-		RF5C68PCMInit(10000000, ZetTotalCycles, 8000000, 0);
+		RF5C68PCMInit(10000000);
 		RF5C68PCMSetAllRoutes(1.00, BURN_SND_ROUTE_BOTH);
 		
 		System16TileBankSize = 0x400;
@@ -2969,7 +2957,7 @@ INT32 System16BFrame()
 
 INT32 System18Frame()
 {
-	INT32 nInterleave = 800; // mwalk needs huge interleave
+	INT32 nInterleave = nBurnSoundLen;
 
 	if (HammerAway) nInterleave = 100;
 
@@ -2979,11 +2967,13 @@ INT32 System18Frame()
 	
 	if (nBurnGunNumPlayers) System16GunMakeInputs();
 	
-	nCyclesTotal[0] = (INT32)((INT64)10000000 * nBurnCPUSpeedAdjust / (0x0100 * 57.23));
-	nCyclesTotal[1] = (INT32)((double)8000000 / 57.23);
+	nCyclesTotal[0] = (INT32)((INT64)10000000 * nBurnCPUSpeedAdjust / (0x0100 * 60));
+	nCyclesTotal[1] = 8000000 / 60;
 	nCyclesTotal[2] = (8000000 / 12) / 60;
 	nSystem16CyclesDone[0] = nSystem16CyclesDone[1] = nSystem16CyclesDone[2] = 0;
 	
+	INT32 nSoundBufferPos = 0;
+
 	SekNewFrame();
 	ZetNewFrame();
 	
@@ -3001,7 +2991,7 @@ INT32 System18Frame()
 		
 		nCurrentCPU = 1;
 		ZetOpen(0);
-		BurnTimerUpdate((i + 1) * (nCyclesTotal[nCurrentCPU] / nInterleave));
+		BurnTimerUpdate(i * (nCyclesTotal[nCurrentCPU] / nInterleave));
 		ZetClose();
 		
 		if (System16I8751RomNum) {
@@ -3016,6 +3006,13 @@ INT32 System18Frame()
 				mcs51_set_irq_line(MCS51_INT0_LINE, CPU_IRQSTATUS_NONE);
 			}
 		}
+		
+		if (pBurnSoundOut) {
+			INT32 nSegmentLength = nBurnSoundLen / nInterleave;
+			INT16* pSoundBuf = pBurnSoundOut + (nSoundBufferPos << 1);
+			RF5C68PCMUpdate(pSoundBuf, nSegmentLength);
+			nSoundBufferPos += nSegmentLength;
+		}
 	}
 
 	if (!System16I8751RomNum && System1668KEnable) SekSetIRQLine(4, CPU_IRQSTATUS_AUTO);
@@ -3023,10 +3020,19 @@ INT32 System18Frame()
 	
 	ZetOpen(0);
 	BurnTimerEndFrame(nCyclesTotal[1]);
+	ZetClose();
+	
 	if (pBurnSoundOut) {
-		RF5C68PCMUpdate(pBurnSoundOut, nBurnSoundLen);
-		BurnYM3438Update(pBurnSoundOut, nBurnSoundLen);
+		INT32 nSegmentLength = nBurnSoundLen - nSoundBufferPos;
+		INT16* pSoundBuf = pBurnSoundOut + (nSoundBufferPos << 1);
+
+		if (nSegmentLength) {
+			RF5C68PCMUpdate(pSoundBuf, nSegmentLength);
+		}
 	}
+	
+	ZetOpen(0);
+	if (pBurnSoundOut) BurnYM3438Update(pBurnSoundOut, nBurnSoundLen);
 	ZetClose();
 
 	if (pBurnDraw) {
@@ -3292,7 +3298,7 @@ INT32 OutrunFrame()
 
 INT32 XBoardFrame()
 {
-	INT32 nInterleave = 262, i;
+	INT32 nInterleave = 100, i;
 
 	if (System16Reset) System16DoReset();
 
@@ -3320,13 +3326,8 @@ INT32 XBoardFrame()
 		nNext = (i + 1) * nCyclesTotal[nCurrentCPU] / nInterleave;
 		nCyclesSegment = nNext - nSystem16CyclesDone[nCurrentCPU];
 		nSystem16CyclesDone[nCurrentCPU] += SekRun(nCyclesSegment);
-
-		if ((i % 2) != 0) {
-			if (segaic16_compare_timer_clock(0)) {
-				SekSetIRQLine(2, CPU_IRQSTATUS_AUTO);
-			}
-		}
-		if (i == nInterleave-1) SekSetIRQLine(4, CPU_IRQSTATUS_AUTO);
+		if (i == 20 || i == 40 || i == 60 || i == 80) SekSetIRQLine(2, CPU_IRQSTATUS_AUTO);
+		if (i == 99) SekSetIRQLine(4, CPU_IRQSTATUS_AUTO);
 		SekClose();
 		
 		// Run 68000 #2
@@ -3336,7 +3337,7 @@ INT32 XBoardFrame()
 		nCyclesSegment = nNext - nSystem16CyclesDone[nCurrentCPU];
 		nCyclesSegment = SekRun(nCyclesSegment);
 		nSystem16CyclesDone[nCurrentCPU] += nCyclesSegment;
-		if (i == nInterleave-1) SekSetIRQLine(4, CPU_IRQSTATUS_AUTO);
+		if (i == 99) SekSetIRQLine(4, CPU_IRQSTATUS_AUTO);
 		SekClose();
 
 		// Run Z80

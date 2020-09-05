@@ -3,7 +3,7 @@
 #include <shlobj.h>
 
 #define		HORIZONTAL_ORIENTED_RES		0
-#define		VERTICAL_ORIENTED_RES		1
+#define		VERTICAL_ORIENTED_RES			1
 
 int nActiveGame;
 
@@ -26,7 +26,6 @@ int nSavestateSlot = 1;
 
 static TCHAR* szClass = _T("FinalBurn Neo");					// Window class name
 HWND hScrnWnd = NULL;									// Handle to the screen window
-HWND hRebar = NULL;										// Handle to the Rebar control containing the menu
 
 static bool bMaximised;
 static int nPrevWidth, nPrevHeight;
@@ -43,6 +42,7 @@ static bool bDrag = false;
 static int nDragX, nDragY;
 static int nOldWindowX, nOldWindowY;
 static int nLeftButtonX, nLeftButtonY;
+static int nWindowStyles, nWindowExStyles;
 
 static int OnCreate(HWND, LPCREATESTRUCT);
 static void OnActivateApp(HWND, BOOL, DWORD);
@@ -87,80 +87,10 @@ void SetPauseMode(bool bPause)
 		if (UseDialogs()) {
 			InputSetCooperativeLevel(false, bAlwaysProcessKeyboardInput);
 		}
-	} else {
+	}
+	else {
 		GameInpCheckMouse();
 	}
-}
-
-static char* CreateKailleraList()
-{
-	unsigned int nOldDrvSelect = nBurnDrvActive;
-	int nSize = 256 * 1024;
-	char* pList = (char*)malloc(nSize);
-	char* pName = pList;
-
-	if (pList == NULL) {
-		return NULL;
-	}
-
-	// Add chat option to the gamelist
-	pName += sprintf(pName, "* Chat only");
-	pName++;
-
-	// Put games in the Favorites list at the top of the list.
-	{ // (don't check avOk, this should work even if romlist isn't scanned! -dink)
-		LoadFavorites();
-
-		for (nBurnDrvActive = 0; nBurnDrvActive < nBurnDrvCount; nBurnDrvActive++) {
-			if (CheckFavorites(BurnDrvGetTextA(DRV_NAME)) != -1) {
-				char* szDecoratedName = DecorateGameName(nBurnDrvActive);
-
-				if (pName + strlen(szDecoratedName) >= pList + nSize) {
-					char* pNewList;
-					nSize <<= 1;
-					pNewList = (char*)realloc(pList, nSize);
-					if (pNewList == NULL) {
-						return NULL;
-					}
-					pName -= (INT_PTR)pList;
-					pList = pNewList;
-					pName += (INT_PTR)pList;
-				}
-				pName += sprintf(pName, "%s", szDecoratedName);
-				pName++;
-			}
-		}
-	}
-
-	if (avOk) {
-		// Add all the driver names to the list
-		for (nBurnDrvActive = 0; nBurnDrvActive < nBurnDrvCount; nBurnDrvActive++) {
-			if(BurnDrvGetFlags() & BDF_GAME_WORKING && gameAv[nBurnDrvActive]) {
-				char* szDecoratedName = DecorateGameName(nBurnDrvActive);
-
-				if (pName + strlen(szDecoratedName) >= pList + nSize) {
-					char* pNewList;
-					nSize <<= 1;
-					pNewList = (char*)realloc(pList, nSize);
-					if (pNewList == NULL) {
-						return NULL;
-					}
-					pName -= (INT_PTR)pList;
-					pList = pNewList;
-					pName += (INT_PTR)pList;
-				}
-				pName += sprintf(pName, "%s", szDecoratedName);
-				pName++;
-			}
-		}
-	}
-
-	*pName = '\0';
-	pName++;
-
-	nBurnDrvActive = nOldDrvSelect;
-
-	return pList;
 }
 
 void DeActivateChat()
@@ -197,121 +127,7 @@ int ActivateChat()
 
 INT32 is_netgame_or_recording() // returns: 1 = netgame, 2 = recording/playback
 {
-	return (kNetGame | (movieFlags & (1<<1))); // netgame or recording from power_on
-}
-
-static int WINAPI gameCallback(char* game, int player, int numplayers)
-{
-	bool bFound = false;
-	HWND hActive;
-
-	for (nBurnDrvActive = 0; nBurnDrvActive < nBurnDrvCount; nBurnDrvActive++) {
-
-		char* szDecoratedName = DecorateGameName(nBurnDrvActive);
-
-		if (!strcmp(szDecoratedName, game)) {
-			bFound = true;
-			break;
-		}
-	}
-
-	if (!bFound) {
-//		kailleraEndGame();
-		Kaillera_End_Game();
-		return 1;
-	}
-
-	kNetGame = 1;
-	hActive = GetActiveWindow();
-
-	bCheatsAllowed = false;								// Disable cheats during netplay
-	AudSoundStop();										// Stop while we load roms
-	DrvInit(nBurnDrvActive, false);						// Init the game driver
-	ScrnInit();
-	AudSoundPlay();										// Restart sound
-	VidInit();
-	SetFocus(hScrnWnd);
-
-//	dprintf(_T(" ** OSD startnet text sent.\n"));
-
-	TCHAR szTemp1[256];
-	TCHAR szTemp2[256];
-	VidSAddChatMsg(FBALoadStringEx(hAppInst, IDS_NETPLAY_START, true), 0xFFFFFF, BurnDrvGetText(DRV_FULLNAME), 0xFFBFBF);
-	_sntprintf(szTemp1, 256, FBALoadStringEx(hAppInst, IDS_NETPLAY_START_YOU, true), player);
-	_sntprintf(szTemp2, 256, FBALoadStringEx(hAppInst, IDS_NETPLAY_START_TOTAL, true), numplayers);
-	VidSAddChatMsg(szTemp1, 0xFFFFFF, szTemp2, 0xFFBFBF);
-
-	RunMessageLoop();
-
-	DrvExit();
-	if (kNetGame) {
-		kNetGame = 0;
-//		kailleraEndGame();
-		Kaillera_End_Game();
-	}
-	DeActivateChat();
-
-	bCheatsAllowed = true;								// reenable cheats netplay has ended
-
-	SetFocus(hActive);
-	return 0;
-}
-
-static void WINAPI kChatCallback(char* nick, char* text)
-{
-	TCHAR szTemp[128];
-	_sntprintf(szTemp, 128, _T("%.32hs "), nick);
-	VidSAddChatMsg(szTemp, 0xBFBFFF, ANSIToTCHAR(text, NULL, 0), 0x7F7FFF);
-}
-
-static void WINAPI kDropCallback(char *nick, int playernb)
-{
-	TCHAR szTemp[128];
-	_sntprintf(szTemp, 128, FBALoadStringEx(hAppInst, IDS_NETPLAY_DROP, true), playernb, nick);
-	VidSAddChatMsg(szTemp, 0xFFFFFF, NULL, 0);
-}
-
-static void DoNetGame()
-{
-	kailleraInfos ki;
-	char tmpver[128];
-	char* gameList;
-
-	if(bDrvOkay) {
-		DrvExit();
-		ScrnTitle();
-	}
-	MenuEnableItems();
-
-#ifdef _UNICODE
-	_snprintf(tmpver, 128, APP_TITLE " v%.20ls", szAppBurnVer);
-#else
-	_snprintf(tmpver, 128, APP_TITLE " v%.20s", szAppBurnVer);
-#endif
-
-	gameList = CreateKailleraList();
-
-	ki.appName = tmpver;
-	ki.gameList = gameList;
-	ki.gameCallback = &gameCallback;
-	ki.chatReceivedCallback = &kChatCallback;
-	ki.clientDroppedCallback = &kDropCallback;
-	ki.moreInfosCallback = NULL;
-
-	Kaillera_Set_Infos(&ki);
-	//kailleraSetInfos(&ki);
-
-	Kaillera_Select_Server_Dialog(NULL);
-	//kailleraSelectServerDialog(NULL);
-
-	if (gameList) {
-		free(gameList);
-		gameList = NULL;
-	}
-
-	End_Network();
-
-	POST_INITIALISE_MESSAGE;
+	return (kNetGame | (movieFlags & (1 << 1))); // netgame or recording from power_on
 }
 
 int CreateDatfileWindows(int bType)
@@ -333,7 +149,6 @@ int CreateDatfileWindows(int bType)
 	if (bType == DAT_SPECTRUM_ONLY) _sntprintf(szConsoleString, 64, _T(", ZX Spectrum Games only"));
 	if (bType == DAT_NES_ONLY) _sntprintf(szConsoleString, 64, _T(", NES Games only"));
 	if (bType == DAT_FDS_ONLY) _sntprintf(szConsoleString, 64, _T(", FDS Games only"));
-	if (bType == DAT_NGP_ONLY) _sntprintf(szConsoleString, 64, _T(", NeoGeo Pocket Games only"));
 
 	TCHAR szProgramString[25];
 	_sntprintf(szProgramString, 25, _T("ClrMame Pro XML"));
@@ -385,26 +200,18 @@ int CreateAllDatfilesWindows()
 
 	pItemIDList = SHBrowseForFolder(&bInfo);
 
-	if (!pItemIDList) {	// User clicked 'Cancel'
-		pMalloc->Release();
-		return nRet;
-	}
-
-	if (!SHGetPathFromIDList(pItemIDList, buffer)) {	// Browse dialog returned non-filesystem path
-		pMalloc->Free(pItemIDList);
-		pMalloc->Release();
-		return nRet;
-	}
-
-	int strLen = _tcslen(buffer);
-	if (strLen) {
-		if (buffer[strLen - 1] != _T('\\')) {
-			buffer[strLen]		= _T('\\');
-			buffer[strLen + 1]	= _T('\0');
+	if (pItemIDList) {
+		if (SHGetPathFromIDList(pItemIDList, buffer)) {
+			int strLen = _tcslen(buffer);
+			if (strLen) {
+				if (buffer[strLen - 1] != _T('\\')) {
+					buffer[strLen]		= _T('\\');
+					buffer[strLen + 1]	= _T('\0');
+				}
+			}
 		}
+		pMalloc->Free(pItemIDList);
 	}
-
-	pMalloc->Free(pItemIDList);
 	pMalloc->Release();
 
 	_sntprintf(szFilename, MAX_PATH, _T("%s") _T(APP_TITLE) _T(" v%.20s (%s%s).dat"), buffer, szAppBurnVer, szProgramString, _T(""));
@@ -446,9 +253,6 @@ int CreateAllDatfilesWindows()
 	_sntprintf(szFilename, MAX_PATH, _T("%s") _T(APP_TITLE) _T(" v%.20s (%s%s).dat"), buffer, szAppBurnVer, szProgramString, _T(", FDS Games only"));
 	create_datfile(szFilename, DAT_FDS_ONLY);
 
-	_sntprintf(szFilename, MAX_PATH, _T("%s") _T(APP_TITLE) _T(" v%.20s (%s%s).dat"), buffer, szAppBurnVer, szProgramString, _T(", Neo Geo Pocket Games only"));
-	create_datfile(szFilename, DAT_NGP_ONLY);
-
 	return nRet;
 }
 
@@ -460,6 +264,9 @@ static bool VidInitNeeded()
 		return true;
 	}
 	if (nVidSelect == 3) {
+		return true;
+	}
+	if (nVidSelect == 4) {
 		return true;
 	}
 
@@ -486,7 +293,7 @@ static LRESULT CALLBACK ScrnProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
 {
 	switch (Msg) {
 		HANDLE_MSG(hWnd, WM_CREATE,			OnCreate);
-		HANDLE_MSG(hWnd, WM_ACTIVATEAPP,	OnActivateApp);
+		HANDLE_MSG(hWnd, WM_ACTIVATEAPP,OnActivateApp);
 		HANDLE_MSGB(hWnd,WM_PAINT,			OnPaint);
 		HANDLE_MSG(hWnd, WM_CLOSE,			OnClose);
 		HANDLE_MSG(hWnd, WM_DESTROY,		OnDestroy);
@@ -494,11 +301,12 @@ static LRESULT CALLBACK ScrnProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
 
 		// We can't use the macro from windowsx.h macro for this one
 		case WM_SYSCOMMAND: {
-			if (OnSysCommand(hWnd,(UINT)wParam,(int)(short)LOWORD(lParam),(int)(short)HIWORD(lParam))) {
+			if (OnSysCommand(hWnd, (UINT)wParam, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam))) {
 				return 0;
 			}
 			break;
 		}
+
 		// - dink - handle return from Hibernation
 		case WM_POWERBROADCAST: {
 			if (wParam == PBT_APMRESUMESUSPEND || wParam == PBT_APMSUSPEND) {
@@ -506,30 +314,31 @@ static LRESULT CALLBACK ScrnProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
 			}
 			break;
 		}
+
 		// - dink - end
-		HANDLE_MSG(hWnd, WM_SIZE,			OnSize);
-		HANDLE_MSG(hWnd, WM_ENTERSIZEMOVE,	OnEnterSizeMove);
-		HANDLE_MSG(hWnd, WM_EXITSIZEMOVE,	OnExitSizeMove);
-		HANDLE_MSG(hWnd, WM_ENTERIDLE,		OnEnterIdle);
+		HANDLE_MSG(hWnd, WM_SIZE, OnSize);
+		HANDLE_MSG(hWnd, WM_ENTERSIZEMOVE, OnEnterSizeMove);
+		HANDLE_MSG(hWnd, WM_EXITSIZEMOVE, OnExitSizeMove);
+		HANDLE_MSG(hWnd, WM_ENTERIDLE, OnEnterIdle);
 
-		HANDLE_MSG(hWnd, WM_MOUSEMOVE,		OnMouseMove);
-		HANDLE_MSG(hWnd, WM_LBUTTONUP,		OnLButtonUp);
-		HANDLE_MSG(hWnd, WM_LBUTTONDOWN,	OnLButtonDown);
+		HANDLE_MSG(hWnd, WM_MOUSEMOVE, OnMouseMove);
+		HANDLE_MSG(hWnd, WM_LBUTTONUP, OnLButtonUp);
+		HANDLE_MSG(hWnd, WM_LBUTTONDOWN, OnLButtonDown);
 
-		HANDLE_MSG(hWnd, WM_LBUTTONDBLCLK,	OnLButtonDblClk);
+		HANDLE_MSG(hWnd, WM_LBUTTONDBLCLK, OnLButtonDblClk);
 
-		HANDLE_MSG(hWnd, WM_RBUTTONUP,		OnRButtonUp);
-		HANDLE_MSG(hWnd, WM_RBUTTONDBLCLK,	OnRButtonDown);
-		HANDLE_MSG(hWnd, WM_RBUTTONDOWN,	OnRButtonDown);
+		HANDLE_MSG(hWnd, WM_RBUTTONUP, OnRButtonUp);
+		HANDLE_MSG(hWnd, WM_RBUTTONDBLCLK, OnRButtonDown);
+		HANDLE_MSG(hWnd, WM_RBUTTONDOWN, OnRButtonDown);
 
-		HANDLE_MSG(hWnd, WM_NOTIFY,			OnNotify);
-		HANDLE_MSG(hWnd, WM_MENUSELECT,		OnMenuSelect);
-		HANDLE_MSG(hWnd, WM_ENTERMENULOOP,	OnEnterMenuLoop);
-		HANDLE_MSGB(hWnd,WM_EXITMENULOOP,	OnExitMenuLoop);
-		HANDLE_MSGB(hWnd,WM_INITMENUPOPUP,	OnInitMenuPopup);
-		HANDLE_MSG(hWnd, WM_UNINITMENUPOPUP,OnUnInitMenuPopup);
+		HANDLE_MSG(hWnd, WM_NOTIFY, OnNotify);
+		HANDLE_MSG(hWnd, WM_MENUSELECT, OnMenuSelect);
+		HANDLE_MSG(hWnd, WM_ENTERMENULOOP, OnEnterMenuLoop);
+		HANDLE_MSGB(hWnd, WM_EXITMENULOOP, OnExitMenuLoop);
+		HANDLE_MSGB(hWnd, WM_INITMENUPOPUP, OnInitMenuPopup);
+		HANDLE_MSG(hWnd, WM_UNINITMENUPOPUP, OnUnInitMenuPopup);
 
-		HANDLE_MSG(hWnd, WM_DISPLAYCHANGE,	OnDisplayChange);
+		HANDLE_MSG(hWnd, WM_DISPLAYCHANGE, OnDisplayChange);
 	}
 
 	return DefWindowProc(hWnd, Msg, wParam, lParam);
@@ -598,7 +407,8 @@ static int OnMouseMove(HWND hwnd, int x, int y, UINT keyIndicators)
 
 		if ((nLeftButtonX - (clientRect.left + x)) < nDragX && (nLeftButtonX - (clientRect.left + x)) > -nDragX && (nLeftButtonY - (clientRect.top + y)) < nDragY && (nLeftButtonY - (clientRect.top + y)) > -nDragY) {
 			SetWindowPos(hScrnWnd, NULL, nOldWindowX, nOldWindowY, 0, 0, SWP_NOREPOSITION | SWP_NOSIZE);
-		} else {
+		}
+		else {
 			nWindowPosX = nOldWindowX - (nLeftButtonX - (clientRect.left + x));
 			nWindowPosY = nOldWindowY - (nLeftButtonY - (clientRect.top + y));
 
@@ -684,7 +494,7 @@ static void OnActivateApp(HWND hwnd, BOOL fActivate, DWORD /* dwThreadId */)
 {
 	bHasFocus = fActivate;
 	if (!kNetGame && bAutoPause && !bAltPause && hInpdDlg == NULL && hInpCheatDlg == NULL && hInpDIPSWDlg == NULL) {
-		bRunPause = fActivate? 0 : 1;
+		//bRunPause = fActivate ? 0 : 1;
 	}
 	if (fActivate == false && hwnd == hScrnWnd) {
 		EndMenu();
@@ -706,31 +516,27 @@ extern HWND hSelDlg;
 
 void PausedRedraw(void)
 {
-    if (bVidOkay && bRunPause && bDrvOkay && (hSelDlg == NULL)) { // Redraw the screen to show certain messages while paused. - dink
-        INT16 *pBtemp = pBurnSoundOut;
-        pBurnSoundOut = NULL;
+	if (bVidOkay && bRunPause && bDrvOkay && (hSelDlg == NULL)) { // Redraw the screen to show certain messages while paused. - dink
+		INT16 *pBtemp = pBurnSoundOut;
+		pBurnSoundOut = NULL;
 
 		VidRedraw();
 		VidPaint(0);
 
-        pBurnSoundOut = pBtemp;
-    }
+		pBurnSoundOut = pBtemp;
+	}
 }
 
 static void OnPaint(HWND hWnd)
 {
 	if (hWnd == hScrnWnd)
 	{
-		VidPaint(1);
+		if (bRunPause || !bDrvOkay || bBackFromHibernation)
+			VidPaint(1);
 
 		if (bBackFromHibernation) {
 			PausedRedraw(); // redraw game screen if paused and returning from hibernation - dink
 			bBackFromHibernation = 0;
-		}
-
-		// draw menu
-		if (!nVidFullscreen) {
-			RedrawWindow(hRebar, NULL, NULL, RDW_FRAME | RDW_UPDATENOW | RDW_ALLCHILDREN);
 		}
 	}
 }
@@ -740,13 +546,13 @@ static void OnClose(HWND)
 #ifdef INCLUDE_AVI_RECORDING
 	AviStop();
 #endif
-    PostQuitMessage(0);					// Quit the program if the window is closed
+	PostQuitMessage(0);					// Quit the program if the window is closed
 }
 
 static void OnDestroy(HWND)
 {
-    VidExit();							// Stop using video with the Window
-    hScrnWnd = NULL;					// Make sure handle is not used again
+	VidExit();							// Stop using video with the Window
+	hScrnWnd = NULL;					// Make sure handle is not used again
 }
 
 OPENFILENAME	bgFn;
@@ -754,11 +560,15 @@ TCHAR			szFile[MAX_PATH];
 
 static void UpdatePreviousGameList()
 {
+	if (nBurnDrvActive == -1) {
+		return;
+	}
+
 	int nRecentIdenticalTo = -1;
 
 	// check if this game is identical to any of the listed in the recent menu
-	for(int x = 0; x < SHOW_PREV_GAMES; x++) {
-		if(!_tcscmp(BurnDrvGetText(DRV_NAME), szPrevGames[x])) {
+	for (int x = 0; x < SHOW_PREV_GAMES; x++) {
+		if (!_tcscmp(BurnDrvGetText(DRV_NAME), szPrevGames[x])) {
 			nRecentIdenticalTo = x;
 		}
 	}
@@ -767,11 +577,11 @@ static void UpdatePreviousGameList()
 	TCHAR szTmp[SHOW_PREV_GAMES][32];
 
 	// Backup info for later use
-	for(int x = 0; x < SHOW_PREV_GAMES; x++) {
+	for (int x = 0; x < SHOW_PREV_GAMES; x++) {
 		_tcscpy(szTmp[x], szPrevGames[x]);
 	}
 
-	switch(nRecentIdenticalTo)
+	switch (nRecentIdenticalTo)
 	{
 		case -1:
 			// Normal rotation when recent game is not identical to any of the ones listed
@@ -969,7 +779,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 		case MENU_LOAD: {
 			int nGame;
 
-			if(kNetGame || !UseDialogs() || bLoading) {
+			if (kNetGame || !UseDialogs() || bLoading) {
 				break;
 			}
 
@@ -1068,33 +878,6 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			break;
 		}
 
-		case MENU_STARTNET:
-			if (Init_Network()) {
-				MessageBox(hScrnWnd, FBALoadStringEx(hAppInst, IDS_ERR_NO_NETPLAYDLL, true), FBALoadStringEx(hAppInst, IDS_ERR_ERROR, true), MB_OK);
-				break;
-			}
-#ifdef BUILD_A68K
-			if (bBurnUseASMCPUEmulation) {
-				FBAPopupAddText(PUF_TEXT_DEFAULT, _T("Please uncheck \"Misc -> Options -> Use Assembly MC68000 Core\" before starting a netgame!"));
-				FBAPopupDisplay(PUF_TYPE_ERROR);
-				break;
-			}
-#endif
-			if (!kNetGame) {
-				InputSetCooperativeLevel(false, bAlwaysProcessKeyboardInput);
-				AudBlankSound();
-				SplashDestroy(1);
-				StopReplay();
-#ifdef INCLUDE_AVI_RECORDING
-				AviStop();
-#endif
-				DrvExit();
-				DoNetGame();
-				MenuEnableItems();
-				InputSetCooperativeLevel(false, bAlwaysProcessKeyboardInput);
-			}
-			break;
-
 		case MENU_STARTREPLAY:
 			if (UseDialogs()) {
 				InputSetCooperativeLevel(false, bAlwaysProcessKeyboardInput);
@@ -1121,7 +904,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			break;
 
 #ifdef INCLUDE_AVI_RECORDING
-			case MENU_AVISTART:
+		case MENU_AVISTART:
 			if (AviStart()) {
 				AviStop();
 			} else {
@@ -1146,10 +929,8 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 				AviStop();
 #endif
 				DrvExit();
-  				if (kNetGame) {
-					kNetGame = 0;
-//					kailleraEndGame();
-					Kaillera_End_Game();
+				if (kNetGame) {
+					QuarkEnd();
 					DeActivateChat();
 					PostQuitMessage(0);
 				}
@@ -1158,7 +939,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 				ScrnSize();
 				ScrnTitle();
 				MenuEnableItems();
-				//nDialogSelect = -1;
+				nDialogSelect = -1;
 				nBurnDrvActive = ~0U;
 
 				POST_INITIALISE_MESSAGE;
@@ -1171,9 +952,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			AviStop();
 #endif
 			if (kNetGame) {
-				kNetGame = 0;
-//				kailleraEndGame();
-				Kaillera_End_Game();
+				QuarkEnd();
 				DeActivateChat();
 			}
 			PostQuitMessage(0);
@@ -1378,7 +1157,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			POST_INITIALISE_MESSAGE;
 			break;
 #if 0
-			case MENU_BLITTER_6:
+		case MENU_BLITTER_6:
 			VidSelect(5);
 			POST_INITIALISE_MESSAGE;
 			break;
@@ -1401,7 +1180,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			}
 			break;
 
-		case MENU_SINGLESIZESCREEN:
+		case MENU_1XSIZESCREEN:
 			nScreenSizeHor = 1;
 			bVidArcaderesHor = false;
 			if ((bDrvOkay) && !(BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL)) {
@@ -1409,7 +1188,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 				bVidArcaderes = bVidArcaderesHor;
 			}
 			break;
-		case MENU_DOUBLESIZESCREEN:
+		case MENU_2XSIZESCREEN:
 			nScreenSizeHor = 2;
 			bVidArcaderesHor = false;
 			if ((bDrvOkay) && !(BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL)) {
@@ -1417,7 +1196,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 				bVidArcaderes = bVidArcaderesHor;
 			}
 			break;
-		case MENU_TRIPLESIZESCREEN:
+		case MENU_3XSIZESCREEN:
 			nScreenSizeHor = 3;
 			bVidArcaderesHor = false;
 			if ((bDrvOkay) && !(BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL)) {
@@ -1425,7 +1204,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 				bVidArcaderes = bVidArcaderesHor;
 			}
 			break;
-		case MENU_QUADSIZESCREEN:
+		case MENU_4XSIZESCREEN:
 			nScreenSizeHor = 4;
 			bVidArcaderesHor = false;
 			if ((bDrvOkay) && !(BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL)) {
@@ -1442,8 +1221,8 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			if ((bDrvOkay) && !(BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL)) {
 				nScreenSize = nScreenSizeHor;
 				bVidArcaderes = bVidArcaderesHor;
-				nVidWidth	= nVidHorWidth;
-				nVidHeight	= nVidHorHeight;
+				nVidWidth = nVidHorWidth;
+				nVidHeight = nVidHorHeight;
 			}
 			break;
 		case MENU_RES_2:
@@ -1454,8 +1233,8 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			if ((bDrvOkay) && !(BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL)) {
 				nScreenSize = nScreenSizeHor;
 				bVidArcaderes = bVidArcaderesHor;
-				nVidWidth	= nVidHorWidth;
-				nVidHeight	= nVidHorHeight;
+				nVidWidth = nVidHorWidth;
+				nVidHeight = nVidHorHeight;
 			}
 			break;
 		case MENU_RES_3:
@@ -1466,8 +1245,8 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			if ((bDrvOkay) && !(BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL)) {
 				nScreenSize = nScreenSizeHor;
 				bVidArcaderes = bVidArcaderesHor;
-				nVidWidth	= nVidHorWidth;
-				nVidHeight	= nVidHorHeight;
+				nVidWidth = nVidHorWidth;
+				nVidHeight = nVidHorHeight;
 			}
 			break;
 		case MENU_RES_4:
@@ -1478,8 +1257,8 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			if ((bDrvOkay) && !(BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL)) {
 				nScreenSize = nScreenSizeHor;
 				bVidArcaderes = bVidArcaderesHor;
-				nVidWidth	= nVidHorWidth;
-				nVidHeight	= nVidHorHeight;
+				nVidWidth = nVidHorWidth;
+				nVidHeight = nVidHorHeight;
 			}
 			break;
 
@@ -1515,7 +1294,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			}
 			break;
 
-		case MENU_SINGLESIZESCREEN_VERTICAL:
+		case MENU_1XSIZESCREEN_VERTICAL:
 			nScreenSizeVer = 1;
 			bVidArcaderesVer = false;
 			if ((bDrvOkay) && (BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL)) {
@@ -1523,7 +1302,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 				bVidArcaderes = bVidArcaderesVer;
 			}
 			break;
-		case MENU_DOUBLESIZESCREEN_VERTICAL:
+		case MENU_2XSIZESCREEN_VERTICAL:
 			nScreenSizeVer = 2;
 			bVidArcaderesVer = false;
 			if ((bDrvOkay) && (BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL)) {
@@ -1531,7 +1310,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 				bVidArcaderes = bVidArcaderesVer;
 			}
 			break;
-		case MENU_TRIPLESIZESCREEN_VERTICAL:
+		case MENU_3XSIZESCREEN_VERTICAL:
 			nScreenSizeVer = 3;
 			bVidArcaderesVer = false;
 			if ((bDrvOkay) && (BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL)) {
@@ -1539,7 +1318,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 				bVidArcaderes = bVidArcaderesVer;
 			}
 			break;
-		case MENU_QUADSIZESCREEN_VERTICAL:
+		case MENU_4XSIZESCREEN_VERTICAL:
 			nScreenSizeVer = 4;
 			bVidArcaderesVer = false;
 			if ((bDrvOkay) && (BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL)) {
@@ -1556,8 +1335,8 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			if ((bDrvOkay) && (BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL)) {
 				nScreenSize = nScreenSizeVer;
 				bVidArcaderes = bVidArcaderesVer;
-				nVidWidth	= nVidVerWidth;
-				nVidHeight	= nVidVerHeight;
+				nVidWidth = nVidVerWidth;
+				nVidHeight = nVidVerHeight;
 			}
 			break;
 		case MENU_RES_2_VERTICAL:
@@ -1568,8 +1347,8 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			if ((bDrvOkay) && (BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL)) {
 				nScreenSize = nScreenSizeVer;
 				bVidArcaderes = bVidArcaderesVer;
-				nVidWidth	= nVidVerWidth;
-				nVidHeight	= nVidVerHeight;
+				nVidWidth = nVidVerWidth;
+				nVidHeight = nVidVerHeight;
 			}
 			break;
 		case MENU_RES_3_VERTICAL:
@@ -1580,8 +1359,8 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			if ((bDrvOkay) && (BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL)) {
 				nScreenSize = nScreenSizeVer;
 				bVidArcaderes = bVidArcaderesVer;
-				nVidWidth	= nVidVerWidth;
-				nVidHeight	= nVidVerHeight;
+				nVidWidth = nVidVerWidth;
+				nVidHeight = nVidVerHeight;
 			}
 			break;
 		case MENU_RES_4_VERTICAL:
@@ -1592,8 +1371,8 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			if ((bDrvOkay) && (BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL)) {
 				nScreenSize = nScreenSizeVer;
 				bVidArcaderes = bVidArcaderesVer;
-				nVidWidth	= nVidVerWidth;
-				nVidHeight	= nVidVerHeight;
+				nVidWidth = nVidVerWidth;
+				nVidHeight = nVidVerHeight;
 			}
 			break;
 
@@ -1775,33 +1554,39 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 				POST_INITIALISE_MESSAGE;
 			}
 			break;
-		case MENU_SINGLESIZEWINDOW:
+		case MENU_1XSIZEWINDOW:
 			if (nWindowSize != 1) {
 				nWindowSize = 1;
 				POST_INITIALISE_MESSAGE;
 			}
 			break;
-		case MENU_DOUBLESIZEWINDOW:
+		case MENU_2XSIZEWINDOW:
 			if (nWindowSize != 2) {
 				nWindowSize = 2;
 				POST_INITIALISE_MESSAGE;
 			}
 			break;
-		case MENU_TRIPLESIZEWINDOW:
+		case MENU_3XSIZEWINDOW:
 			if (nWindowSize != 3) {
 				nWindowSize = 3;
 				POST_INITIALISE_MESSAGE;
 			}
 			break;
-		case MENU_QUADSIZEWINDOW:
+		case MENU_4XSIZEWINDOW:
 			if (nWindowSize != 4) {
 				nWindowSize = 4;
 				POST_INITIALISE_MESSAGE;
 			}
 			break;
+		case MENU_5XSIZEWINDOW:
+			if (nWindowSize != 5) {
+				nWindowSize = 5;
+				POST_INITIALISE_MESSAGE;
+			}
+			break;
 		case MENU_MAXIMUMSIZEWINDOW:
-			if (nWindowSize <= 4) {
-				nWindowSize = 9999;
+			if (nWindowSize <= 5) {
+				nWindowSize = 9;
 				POST_INITIALISE_MESSAGE;
 			}
 			break;
@@ -1884,7 +1669,6 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 
 		case MENU_AUTOFRAMESKIP:
 			bAlwaysDrawFrames = !bAlwaysDrawFrames;
-			POST_INITIALISE_MESSAGE;
 			break;
 
 		case MENU_AUD_PLUGIN_1:
@@ -1962,7 +1746,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 		case MENU_FRAMES:
 			if (UseDialogs()) {
 				if (!bDrvOkay) {
-//					AudBlankSound();
+					//AudBlankSound();
 					NumDialCreate(0);
 					POST_INITIALISE_MESSAGE;
 				}
@@ -2021,7 +1805,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 
 		case MENU_DISPLAYINDICATOR:
 			nVidSDisplayStatus = !nVidSDisplayStatus;
-//			VidRedraw();
+			//VidRedraw();
 			VidPaint(2);
 			break;
 
@@ -2228,27 +2012,29 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 		case MENU_INPUT_AUTOFIRE_RATE_3: nAutoFireRate =  8; break;
 		case MENU_INPUT_AUTOFIRE_RATE_4: nAutoFireRate =  4; break;
 
-		case MENU_PRIORITY_REALTIME: // bad idea, this will freeze the entire system.
+		case MENU_PRIORITY_REALTIME:
+			nAppThreadPriority = THREAD_PRIORITY_TIME_CRITICAL;
+			SetThreadPriority(GetCurrentThread(), nAppThreadPriority);
 			break;
 		case MENU_PRIORITY_HIGH:
-			nAppProcessPriority = HIGH_PRIORITY_CLASS;
-			SetPriorityClass(GetCurrentProcess(), nAppProcessPriority);
+			nAppThreadPriority = THREAD_PRIORITY_HIGHEST;
+			SetThreadPriority(GetCurrentThread(), nAppThreadPriority);
 			break;
 		case MENU_PRIORITY_ABOVE_NORMAL:
-			nAppProcessPriority = ABOVE_NORMAL_PRIORITY_CLASS;
-			SetPriorityClass(GetCurrentProcess(), nAppProcessPriority);
+			nAppThreadPriority = THREAD_PRIORITY_ABOVE_NORMAL;
+			SetThreadPriority(GetCurrentThread(), nAppThreadPriority);
 			break;
 		case MENU_PRIORITY_NORMAL:
-			nAppProcessPriority = NORMAL_PRIORITY_CLASS;
-			SetPriorityClass(GetCurrentProcess(), nAppProcessPriority);
+			nAppThreadPriority = THREAD_PRIORITY_NORMAL;
+			SetThreadPriority(GetCurrentThread(), nAppThreadPriority);
 			break;
 		case MENU_PRIORITY_BELOW_NORMAL:
-			nAppProcessPriority = BELOW_NORMAL_PRIORITY_CLASS;
-			SetPriorityClass(GetCurrentProcess(), nAppProcessPriority);
+			nAppThreadPriority = THREAD_PRIORITY_BELOW_NORMAL;
+			SetThreadPriority(GetCurrentThread(), nAppThreadPriority);
 			break;
 		case MENU_PRIORITY_LOW:
-			nAppProcessPriority = IDLE_PRIORITY_CLASS;
-			SetPriorityClass(GetCurrentProcess(), nAppProcessPriority);
+			nAppThreadPriority = THREAD_PRIORITY_LOWEST;
+			SetThreadPriority(GetCurrentThread(), nAppThreadPriority);
 			break;
 
 		case MENU_CLRMAME_PRO_XML:
@@ -2279,13 +2065,13 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			if (UseDialogs()) {
 				CreateDatfileWindows(DAT_SGX_ONLY);
 			}
-                        break;
+			break;
 
 		case MENU_CLRMAME_PRO_XML_SG1000_ONLY:
 			if (UseDialogs()) {
 				CreateDatfileWindows(DAT_SG1000_ONLY);
 			}
-                        break;
+			break;
 
 		case MENU_CLRMAME_PRO_XML_COLECO_ONLY:
 			if (UseDialogs()) {
@@ -2326,12 +2112,6 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 		case MENU_CLRMAME_PRO_XML_FDS_ONLY:
 			if (UseDialogs()) {
 				CreateDatfileWindows(DAT_FDS_ONLY);
-			}
-			break;
-
-		case MENU_CLRMAME_PRO_XML_NGP_ONLY:
-			if (UseDialogs()) {
-				CreateDatfileWindows(DAT_NGP_ONLY);
 			}
 			break;
 
@@ -2395,7 +2175,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 
 			TCHAR szText[100];
 			_stprintf(szText, FBALoadStringEx(hAppInst, IDS_CHEAT_SEARCH_NEW, true));
-			VidSAddChatMsg(NULL, 0xFFFFFF, szText, 0xFFBFBF);
+			VidSAddChatLine(NULL, 0xFFFFFF, szText, 0xFFBFBF);
 
 			EnableMenuItem(hMenu, MENU_CHEATSEARCH_NOCHANGE, MF_ENABLED | MF_BYCOMMAND);
 			EnableMenuItem(hMenu, MENU_CHEATSEARCH_CHANGE, MF_ENABLED | MF_BYCOMMAND);
@@ -2411,12 +2191,12 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			unsigned int nValues = CheatSearchValueNoChange();
 
 			_stprintf(tmpmsg, FBALoadStringEx(hAppInst, IDS_CHEAT_SEARCH_ADD_MATCH, true), nValues);
-			VidSAddChatMsg(NULL, 0xFFFFFF, tmpmsg, 0xFFBFBF);
+			VidSAddChatLine(NULL, 0xFFFFFF, tmpmsg, 0xFFBFBF);
 
 			if (nValues <= CHEATSEARCH_SHOWRESULTS) {
 				for (unsigned int i = 0; i < nValues; i++) {
 					_stprintf(tmpmsg, FBALoadStringEx(hAppInst, IDS_CHEAT_SEARCH_RESULTS, true), CheatSearchShowResultAddresses[i], CheatSearchShowResultValues[i]);
-					VidSAddChatMsg(NULL, 0xFFFFFF, tmpmsg, 0xFFBFBF);
+					VidSAddChatLine(NULL, 0xFFFFFF, tmpmsg, 0xFFBFBF);
 				}
 			}
 			break;
@@ -2427,12 +2207,12 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			unsigned int nValues = CheatSearchValueChange();
 
 			_stprintf(tmpmsg, FBALoadStringEx(hAppInst, IDS_CHEAT_SEARCH_ADD_MATCH, true), nValues);
-			VidSAddChatMsg(NULL, 0xFFFFFF, tmpmsg, 0xFFBFBF);
+			VidSAddChatLine(NULL, 0xFFFFFF, tmpmsg, 0xFFBFBF);
 
 			if (nValues <= CHEATSEARCH_SHOWRESULTS) {
 				for (unsigned int i = 0; i < nValues; i++) {
 					_stprintf(tmpmsg, FBALoadStringEx(hAppInst, IDS_CHEAT_SEARCH_RESULTS, true), CheatSearchShowResultAddresses[i], CheatSearchShowResultValues[i]);
-					VidSAddChatMsg(NULL, 0xFFFFFF, tmpmsg, 0xFFBFBF);
+					VidSAddChatLine(NULL, 0xFFFFFF, tmpmsg, 0xFFBFBF);
 				}
 			}
 			break;
@@ -2443,12 +2223,12 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			unsigned int nValues = CheatSearchValueDecreased();
 
 			_stprintf(tmpmsg, FBALoadStringEx(hAppInst, IDS_CHEAT_SEARCH_ADD_MATCH, true), nValues);
-			VidSAddChatMsg(NULL, 0xFFFFFF, tmpmsg, 0xFFBFBF);
+			VidSAddChatLine(NULL, 0xFFFFFF, tmpmsg, 0xFFBFBF);
 
 			if (nValues <= CHEATSEARCH_SHOWRESULTS) {
 				for (unsigned int i = 0; i < nValues; i++) {
 					_stprintf(tmpmsg, FBALoadStringEx(hAppInst, IDS_CHEAT_SEARCH_RESULTS, true), CheatSearchShowResultAddresses[i], CheatSearchShowResultValues[i]);
-					VidSAddChatMsg(NULL, 0xFFFFFF, tmpmsg, 0xFFBFBF);
+					VidSAddChatLine(NULL, 0xFFFFFF, tmpmsg, 0xFFBFBF);
 				}
 			}
 			break;
@@ -2460,12 +2240,12 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			unsigned int nValues = CheatSearchValueIncreased();
 
 			_stprintf(tmpmsg, FBALoadStringEx(hAppInst, IDS_CHEAT_SEARCH_ADD_MATCH, true), nValues);
-			VidSAddChatMsg(NULL, 0xFFFFFF, tmpmsg, 0xFFBFBF);
+			VidSAddChatLine(NULL, 0xFFFFFF, tmpmsg, 0xFFBFBF);
 
 			if (nValues <= CHEATSEARCH_SHOWRESULTS) {
 				for (unsigned int i = 0; i < nValues; i++) {
 					_stprintf(tmpmsg, FBALoadStringEx(hAppInst, IDS_CHEAT_SEARCH_RESULTS, true), CheatSearchShowResultAddresses[i], CheatSearchShowResultValues[i]);
-					VidSAddChatMsg(NULL, 0xFFFFFF, tmpmsg, 0xFFBFBF);
+					VidSAddChatLine(NULL, 0xFFFFFF, tmpmsg, 0xFFBFBF);
 				}
 			}
 			break;
@@ -2481,7 +2261,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 
 			TCHAR szText[100];
 			_stprintf(szText, FBALoadStringEx(hAppInst, IDS_CHEAT_SEARCH_EXIT, true));
-			VidSAddChatMsg(NULL, 0xFFFFFF, szText, 0xFFBFBF);
+			VidSAddChatLine(NULL, 0xFFFFFF, szText, 0xFFBFBF);
 
 			EnableMenuItem(hMenu, MENU_CHEATSEARCH_NOCHANGE, MF_GRAYED | MF_BYCOMMAND);
 			EnableMenuItem(hMenu, MENU_CHEATSEARCH_CHANGE, MF_GRAYED | MF_BYCOMMAND);
@@ -2495,7 +2275,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 		case MENU_ASSOCIATE:
 			RegisterExtensions(true);
 			break;
-        case MENU_DISASSOCIATE:
+		case MENU_DISASSOCIATE:
 			RegisterExtensions(false);
 			break;
 
@@ -2571,6 +2351,46 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			if (!nVidFullscreen) {
 				ShellExecute(NULL, _T("open"), _T("https://github.com/finalburnneo/FBNeo"), NULL, NULL, SW_SHOWNORMAL);
 			}
+			break;
+
+		case MENU_WWW_FIGHTCADE:
+			if (!nVidFullscreen) {
+				ShellExecute(NULL, _T("open"), _T("https://www.fightcade.com/"), NULL, NULL, SW_SHOWNORMAL);
+			}
+			break;
+
+		case MENU_OVERLAY:
+			bVidOverlay = !bVidOverlay;
+			break;
+
+		case MENU_BIG_OVERLAY:
+			bVidBigOverlay = !bVidBigOverlay;
+			break;
+
+		case MENU_UNRANKED_SCORES:
+			bVidUnrankedScores = !bVidUnrankedScores;
+			break;
+
+		case MENU_SAVE_OVERLAY_FILES:
+			bVidSaveOverlayFiles = !bVidSaveOverlayFiles;
+			break;
+
+		case MENU_RUNAHEAD_DISABLED:
+			nVidRunahead = 0;
+			break;
+
+		case MENU_RUNAHEAD_1F:
+			if (nVidRunahead == 0) {
+				MessageBox(NULL, FBALoadStringEx(hAppInst, IDS_RUNAHEAD_WARNING, true), FBALoadStringEx(hAppInst, IDS_ERR_INFORMATION, true), MB_OK);
+			}
+			nVidRunahead = 1;
+			break;
+
+		case MENU_RUNAHEAD_2F:
+				if (nVidRunahead == 0) {
+				MessageBox(NULL, FBALoadStringEx(hAppInst, IDS_RUNAHEAD_WARNING, true), FBALoadStringEx(hAppInst, IDS_ERR_INFORMATION, true), MB_OK);
+			}
+			nVidRunahead = 2;
 			break;
 
 //		default:
@@ -2879,17 +2699,17 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 				// Options for the DirectX Graphics 9 blitter
 				case MENU_DX9_POINT:
 					nVidBlitterOpt[nVidSelect] &= ~(3 << 24);
-					nVidBlitterOpt[nVidSelect] |=  (0 << 24);
+					nVidBlitterOpt[nVidSelect] |= (0 << 24);
 					POST_INITIALISE_MESSAGE;
 					break;
 				case MENU_DX9_LINEAR:
 					nVidBlitterOpt[nVidSelect] &= ~(3 << 24);
-					nVidBlitterOpt[nVidSelect] |=  (1 << 24);
+					nVidBlitterOpt[nVidSelect] |= (1 << 24);
 					POST_INITIALISE_MESSAGE;
 					break;
 				case MENU_DX9_CUBIC:
 					nVidBlitterOpt[nVidSelect] &= ~(3 << 24);
-					nVidBlitterOpt[nVidSelect] |=  (2 << 24);
+					nVidBlitterOpt[nVidSelect] |= (2 << 24);
 					POST_INITIALISE_MESSAGE;
 					break;
 
@@ -2904,7 +2724,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 					VidRedraw();
 					break;
 				case MENU_DX9_CUBIC_NOTCH:
-					dVidCubicB =  3.0 / 2.0;
+					dVidCubicB = 3.0 / 2.0;
 					dVidCubicC = -0.25;
 					VidRedraw();
 					break;
@@ -2941,23 +2761,26 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 					break;
 */
 
-				case MENU_EXP_SCAN:
-					bVidScanlines = !bVidScanlines;
-					POST_INITIALISE_MESSAGE;
+				case MENU_DX9_SCANLINES:
+					bVidDX9Scanlines = !bVidDX9Scanlines;
 					break;
+
 				case MENU_EXP_SCANINTENSITY:
 					if (UseDialogs()) {
 						InputSetCooperativeLevel(false, bAlwaysProcessKeyboardInput);
-						AudBlankSound();
-						if (!bVidScanlines) {
-							bVidScanlines = 1;
-							ScrnSize();
-							VidInit();
-							VidRedraw();
-						}
 						ScanlineDialog();
 						GameInpCheckMouse();
 					}
+					break;
+
+				case MENU_DX9_WIN_FULLSCREEN:
+					bVidDX9WinFullscreen = !bVidDX9WinFullscreen;
+					break;
+
+				case MENU_DX9_LEGACY_RENDERER:
+					bVidDX9LegacyRenderer = !bVidDX9LegacyRenderer;
+
+					POST_INITIALISE_MESSAGE;
 					break;
 
 				case MENU_DX9_FPTERXTURES:
@@ -2965,48 +2788,48 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 					break;
 
 				case MENU_DX9_FORCE_PS14:
-					nVidBlitterOpt[nVidSelect] ^=  (1 <<  9);
+					nVidBlitterOpt[nVidSelect] ^= (1 << 9);
 					POST_INITIALISE_MESSAGE;
 					break;
 
 				case MENU_DX9_CUBIC0:
 					nVidBlitterOpt[nVidSelect] &= ~(7 << 28);
-					nVidBlitterOpt[nVidSelect] |=  (0 << 28);
+					nVidBlitterOpt[nVidSelect] |= (0 << 28);
 
-					nVidBlitterOpt[nVidSelect] |=  (1 <<  8);
-					nVidBlitterOpt[nVidSelect] |=  (1 <<  9);
+					nVidBlitterOpt[nVidSelect] |= (1 << 8);
+					nVidBlitterOpt[nVidSelect] |= (1 << 9);
 					POST_INITIALISE_MESSAGE;
 					break;
 				case MENU_DX9_CUBIC1:
 					nVidBlitterOpt[nVidSelect] &= ~(7 << 28);
-					nVidBlitterOpt[nVidSelect] |=  (1 << 28);
+					nVidBlitterOpt[nVidSelect] |= (1 << 28);
 
-					nVidBlitterOpt[nVidSelect] |=  (1 <<  8);
-					nVidBlitterOpt[nVidSelect] |=  (1 <<  9);
+					nVidBlitterOpt[nVidSelect] |= (1 << 8);
+					nVidBlitterOpt[nVidSelect] |= (1 << 9);
 					POST_INITIALISE_MESSAGE;
 					break;
 				case MENU_DX9_CUBIC2:
 					nVidBlitterOpt[nVidSelect] &= ~(7 << 28);
-					nVidBlitterOpt[nVidSelect] |=  (2 << 28);
+					nVidBlitterOpt[nVidSelect] |= (2 << 28);
 
-					nVidBlitterOpt[nVidSelect] |=  (1 <<  8);
-					nVidBlitterOpt[nVidSelect] |=  (1 <<  9);
+					nVidBlitterOpt[nVidSelect] |= (1 << 8);
+					nVidBlitterOpt[nVidSelect] |= (1 << 9);
 					POST_INITIALISE_MESSAGE;
 					break;
 				case MENU_DX9_CUBIC3:
 					nVidBlitterOpt[nVidSelect] &= ~(7 << 28);
-					nVidBlitterOpt[nVidSelect] |=  (3 << 28);
+					nVidBlitterOpt[nVidSelect] |= (3 << 28);
 
-					nVidBlitterOpt[nVidSelect] |=  (1 <<  8);
-					nVidBlitterOpt[nVidSelect] |=  (1 <<  9);
+					nVidBlitterOpt[nVidSelect] |= (1 << 8);
+					nVidBlitterOpt[nVidSelect] |= (1 << 9);
 					POST_INITIALISE_MESSAGE;
 					break;
 				case MENU_DX9_CUBIC4:
 					nVidBlitterOpt[nVidSelect] &= ~(7 << 28);
-					nVidBlitterOpt[nVidSelect] |=  (4 << 28);
+					nVidBlitterOpt[nVidSelect] |= (4 << 28);
 
-					nVidBlitterOpt[nVidSelect] &= ~(1 <<  8);
-					nVidBlitterOpt[nVidSelect] &= ~(1 <<  9);
+					nVidBlitterOpt[nVidSelect] &= ~(1 << 8);
+					nVidBlitterOpt[nVidSelect] &= ~(1 << 9);
 					POST_INITIALISE_MESSAGE;
 					break;
 
@@ -3017,12 +2840,10 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 				// Options for the DirectX Graphics 9 Alternate blitter
 				case MENU_DX9_ALT_POINT:
 					bVidDX9Bilinear = 0;
-					POST_INITIALISE_MESSAGE;
 					break;
 
 				case MENU_DX9_ALT_LINEAR:
 					bVidDX9Bilinear = 1;
-					POST_INITIALISE_MESSAGE;
 					break;
 
 				case MENU_DX9_ALT_SOFT_STRETCH:
@@ -3084,6 +2905,38 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 					bVidForce16bitDx9Alt = !bVidForce16bitDx9Alt;
 					POST_INITIALISE_MESSAGE;
 					break;
+
+				case MENU_DX9_SCANLINES:
+					bVidDX9Scanlines = !bVidDX9Scanlines;
+					break;
+
+				case MENU_EXP_SCANINTENSITY:
+					if (UseDialogs()) {
+						InputSetCooperativeLevel(false, bAlwaysProcessKeyboardInput);
+						ScanlineDialog();
+						GameInpCheckMouse();
+					}
+					break;
+
+				case MENU_DX9_WIN_FULLSCREEN:
+					bVidDX9WinFullscreen = !bVidDX9WinFullscreen;
+					break;
+
+				case MENU_DX9_LEGACY_RENDERER:
+					bVidDX9LegacyRenderer = !bVidDX9LegacyRenderer;
+
+					POST_INITIALISE_MESSAGE;
+					break;
+
+				case MENU_DX9_ALT_HARD_FX_NONE:
+				case MENU_DX9_ALT_HARD_FX_CRT_APERTURE:
+				case MENU_DX9_ALT_HARD_FX_CRT_CALIGARI:
+				case MENU_DX9_ALT_HARD_FX_CRT_CGWG_FAST:
+				case MENU_DX9_ALT_HARD_FX_CRT_EASY_MODE:
+				case MENU_DX9_ALT_HARD_FX_CRT_STANDARD:
+				case MENU_DX9_ALT_HARD_FX_CRT_BICUBIC:
+					nVidDX9HardFX = id - MENU_DX9_ALT_HARD_FX_NONE;
+					break;
 			}
 			break;
 	}
@@ -3139,8 +2992,6 @@ static void OnSize(HWND, UINT state, int cx, int cy)
 	} else {
 		bool bSizeChanged = false;
 
-		MoveWindow(hRebar, 0, 0, cx, nMenuHeight, TRUE);
-
 		if (hwndChat) {
 			MoveWindow(hwndChat, 0, cy - 32, cx, 32, FALSE);
 		}
@@ -3195,8 +3046,8 @@ static void OnEnterIdle(HWND /*hwnd*/, UINT /*source*/, HWND /*hwndSource*/)
 {
 	MSG Message;
 
-    // Modeless dialog is idle
-    while (kNetGame && !PeekMessage(&Message, NULL, 0, 0, PM_NOREMOVE)) {
+	// Modeless dialog is idle
+	while (kNetGame && !PeekMessage(&Message, NULL, 0, 0, PM_NOREMOVE)) {
 		RunIdle();
 	}
 }
@@ -3227,14 +3078,14 @@ static int ScrnRegister()
 
 	// Register the window class
 	memset(&WndClassEx, 0, sizeof(WndClassEx)); 		// Init structure to all zeros
-	WndClassEx.cbSize			= sizeof(WndClassEx);
-	WndClassEx.style			= CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS | CS_CLASSDC;// These cause flicker in the toolbar
-	WndClassEx.lpfnWndProc		= ScrnProc;
-	WndClassEx.hInstance		= hAppInst;
-	WndClassEx.hIcon			= LoadIcon(hAppInst, MAKEINTRESOURCE(IDI_APP));
-	WndClassEx.hCursor			= LoadCursor(NULL, IDC_ARROW);
-	WndClassEx.hbrBackground	= static_cast<HBRUSH>( GetStockObject ( BLACK_BRUSH ));
-	WndClassEx.lpszClassName	= szClass;
+	WndClassEx.cbSize = sizeof(WndClassEx);
+	WndClassEx.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS | CS_CLASSDC;// These cause flicker in the toolbar
+	WndClassEx.lpfnWndProc = ScrnProc;
+	WndClassEx.hInstance = hAppInst;
+	WndClassEx.hIcon = LoadIcon(hAppInst, MAKEINTRESOURCE(IDI_APP));
+	WndClassEx.hCursor = LoadCursor(NULL, IDC_ARROW);
+	WndClassEx.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
+	WndClassEx.lpszClassName = szClass;
 
 	// Register the window class with the above information:
 	Atom = RegisterClassEx(&WndClassEx);
@@ -3247,29 +3098,16 @@ static int ScrnRegister()
 
 int ScrnSize()
 {
-	int x, y, w, h, ew, eh;
+	if (hScrnWnd == NULL || nVidFullscreen) {
+		return 1;
+	}
+
 	int nScrnWidth, nScrnHeight;
-	int nWorkWidth, nWorkHeight;
 	int nBmapWidth = nVidImageWidth, nBmapHeight = nVidImageHeight;
 	int nGameAspectX = 4, nGameAspectY = 3;
 	int nMaxSize;
 
-	// SystemWorkArea = resolution of desktop
-	// RealWorkArea = resolution of desktop - taskbar (if avail)
-	RECT RealWorkArea;
-	SystemParametersInfo(SPI_GETWORKAREA, 0, &RealWorkArea, 0);	// Find the size of the visible WorkArea
-
-	HMONITOR monitor = MonitorFromRect(&RealWorkArea, MONITOR_DEFAULTTOPRIMARY);
-	MONITORINFO mi;
-
-	memset(&mi, 0, sizeof(mi));
-	mi.cbSize = sizeof(mi);
-	GetMonitorInfo(monitor, &mi);
-	SystemWorkArea = mi.rcMonitor; // needs to be set to monitor's resolution for proper aspect calculation
-
-	if (hScrnWnd == NULL || nVidFullscreen) {
-		return 1;
-	}
+	SystemParametersInfo(SPI_GETWORKAREA, 0, &SystemWorkArea, 0);	// Find the size of the visible WorkArea
 
 	if (bDrvOkay) {
 		if ((BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL) && (nVidRotationAdjust & 1)) {
@@ -3291,9 +3129,6 @@ int ScrnSize()
 	nScrnWidth = SystemWorkArea.right - SystemWorkArea.left;
 	nScrnHeight = SystemWorkArea.bottom - SystemWorkArea.top;
 
-	nWorkWidth = RealWorkArea.right - RealWorkArea.left;
-	nWorkHeight = RealWorkArea.bottom - RealWorkArea.top;
-
 	if (nVidSelect == 2 && nVidBlitterOpt[2] & 0x0100) {								// The Software effects blitter uses a fixed size
 		nMaxSize = 9;
 	} else {
@@ -3306,71 +3141,38 @@ int ScrnSize()
 			}
 		} else {
 			if (nBmapWidth < nBmapHeight) {
-				if (nWorkHeight <= 600) {
+				if (nScrnHeight <= 600) {
 					nMaxSize = 1;
+				} else if (nScrnHeight <= 960) {
+					nMaxSize = 2;
+				} else if (nScrnHeight <= 1280) {
+					nMaxSize = 3;
+				} else if (nScrnHeight <= 1600) {
+					nMaxSize = 4;
 				} else {
-					if (nWorkHeight <= 960) {
-						nMaxSize = 2;
-					} else {
-						if (nWorkHeight <= 1280) {
-							nMaxSize = 3;
-						} else {
-							nMaxSize = 4;
-						}
-					}
+					nMaxSize = 5;
 				}
 			} else {
-				if (nWorkWidth <= 640) {
+				if (nScrnWidth <= 640) {
 					nMaxSize = 1;
+				} else if (nScrnWidth <= 1152) {
+					nMaxSize = 2;
+				} else if (nScrnWidth <= 1600) {
+					nMaxSize = 3;
+				} else if (nScrnWidth <= 1920) {
+					nMaxSize = 4;
 				} else {
-					if (nWorkWidth <= 1152) {
-						nMaxSize = 2;
-					} else {
-						if (nWorkWidth <= 1600) {
-							nMaxSize = 3;
-						} else {
-							nMaxSize = 4;
-						}
-					}
+					nMaxSize = 5;
 				}
 			}
 		}
 	}
 
 	// Find the width and height
-	w = nWorkWidth;
-	h = nWorkHeight;
+	int w = nScrnWidth;
+	int h = nScrnHeight;
 
-	// Find out how much space is taken up by the borders
-	ew = GetSystemMetrics(SM_CXSIZEFRAME) << 1;
-	eh = GetSystemMetrics(SM_CYSIZEFRAME) << 1;
-
-	// Visual Studio 2012 (seems to have an issue with these, other reports on the web about it too
-#if defined _MSC_VER
-	#if _MSC_VER >= 1700
-		// using the old XP supporting SDK we don't need to alter anything
-		#if !defined BUILD_VS_XP_TARGET
-			ew <<= 1;
-			eh <<= 1;
-		#endif
-	#endif
-#endif
-
-	if (bMenuEnabled) {
-		eh += GetSystemMetrics(SM_CYCAPTION);
-		eh += nMenuHeight;
-	} else {
-		eh += 1 << 1;
-		ew += 1 << 1;
-	}
-
-	if (bMenuEnabled || !bVidScanlines || nVidSelect == 2) {
-		// Subtract the border space
-		w -= ew;
-		h -= eh;
-	}
-
-	if ((bVidCorrectAspect || bVidFullStretch) && !(nVidSelect == 2 && (nVidBlitterOpt[2] & 0x0100) == 0)) {
+	if ((bVidCorrectAspect || bVidFullStretch) && (nVidSelect == 2 && (nVidBlitterOpt[2] & 0x0100) != 0)) {
 		int ww = w;
 		int hh = h;
 
@@ -3379,23 +3181,26 @@ int ScrnSize()
 				if (ww > nBmapWidth * nMaxSize) {
 					ww = nBmapWidth * nMaxSize;
 				}
-				if (hh > (INT64)ww * nVidScrnAspectX * nGameAspectY * nScrnHeight / (nScrnWidth * nVidScrnAspectY * nGameAspectX)) {
-					hh = (INT64)ww * nVidScrnAspectX * nGameAspectY * nScrnHeight / (nScrnWidth * nVidScrnAspectY * nGameAspectX);
+				if (hh > ww * nVidScrnAspectX * nGameAspectY * nScrnHeight / (nScrnWidth * nVidScrnAspectY * nGameAspectX)) {
+					hh = ww * nVidScrnAspectX * nGameAspectY * nScrnHeight / (nScrnWidth * nVidScrnAspectY * nGameAspectX);
 				}
 			} else {
 				if (hh > nBmapHeight * nMaxSize) {
 					hh = nBmapHeight * nMaxSize;
 				}
-				if (ww > (INT64)hh * nVidScrnAspectY * nGameAspectX * nScrnWidth / (nScrnHeight * nVidScrnAspectX * nGameAspectY)) {
-					ww = (INT64)hh * nVidScrnAspectY * nGameAspectX * nScrnWidth / (nScrnHeight * nVidScrnAspectX * nGameAspectY);
+				if (ww > hh * nVidScrnAspectY * nGameAspectX * nScrnWidth / (nScrnHeight * nVidScrnAspectX * nGameAspectY)) {
+					ww = hh * nVidScrnAspectY * nGameAspectX * nScrnWidth / (nScrnHeight * nVidScrnAspectX * nGameAspectY);
 				}
 			}
 		} while ((ww > w || hh > h) && nMaxSize-- > 1);
 		w =	ww;
 		h = hh;
 	} else {
-		while ((nBmapWidth * nMaxSize > w || nBmapHeight * nMaxSize > h) && nMaxSize > 1) {
-			nMaxSize--;
+		if (nMaxSize >= 9) {
+			while ((nBmapWidth * nMaxSize > w || nBmapHeight * nMaxSize > h) && nMaxSize > 1) {
+				nMaxSize--;
+			}
+			nMaxSize++;
 		}
 
 		if (w > nBmapWidth * nMaxSize || h > nBmapHeight * nMaxSize) {
@@ -3409,34 +3214,48 @@ int ScrnSize()
 		if (h < 224) h = 224;
 	}
 
-	RECT rect = { 0, 0, w, h };
+		
+	RECT rect = { 0,0, w,h };
 	VidImageSize(&rect, nBmapWidth, nBmapHeight);
-	w = rect.right - rect.left + ew;
-	h = rect.bottom - rect.top + eh;
+	AdjustWindowRectEx(&rect, nWindowStyles, bMenuEnabled, nWindowExStyles);
+	
+	int x = nWindowPosX;
+	int y = nWindowPosY;
+	w = rect.right - rect.left;
+	h = rect.bottom - rect.top;
 
-	x = nWindowPosX; y = nWindowPosY;
-	if (x + w > SystemWorkArea.right || y + h > SystemWorkArea.bottom) {
+	// clamp size
+	if (w > (SystemWorkArea.right - SystemWorkArea.left)) {
+		int rw = SystemWorkArea.right - SystemWorkArea.left;
+		w = rw;
+		h = (h * rw) / w;
+	}
+	if (h > (SystemWorkArea.bottom - SystemWorkArea.top)) {
+		int rh = SystemWorkArea.bottom - SystemWorkArea.top;
+		h = rh;
+		w = (w * rh) / h;
+	}
+
+	if (nMaxSize > 9) {
 		// Find the midpoint for the window
-		x = SystemWorkArea.left + SystemWorkArea.right;
-		x /= 2;
-		y = SystemWorkArea.bottom + SystemWorkArea.top;
-		y /= 2;
-
-		x -= w / 2;
-		y -= h / 2;
+		x = (SystemWorkArea.left + SystemWorkArea.right - w) / 2;
+		y = 0;
+	}	else {
+		if (x < SystemWorkArea.left || y < SystemWorkArea.top|| x + w > SystemWorkArea.right || y + h > SystemWorkArea.bottom) 
+		// Find the midpoint for the window
+		x = (SystemWorkArea.left + SystemWorkArea.right - w) / 2;
+		y = (SystemWorkArea.bottom + SystemWorkArea.top - h) / 2;
 	}
 
 	MenuUpdate();
 
 	bMaximised = false;
+	nWindowPosX = x;
+	nWindowPosY = y;
 
-	MoveWindow(hScrnWnd, x, y, w, h, true);
+	MoveWindow(hScrnWnd, x, y, w, h, TRUE);
 
-//	SetWindowPos(hScrnWnd, NULL, x, y, w, h, SWP_NOREDRAW | SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_NOZORDER);
-
-	nWindowPosX = x; nWindowPosY = y;
-
-  	return 0;
+	return 0;
 }
 
 #include "neocdlist.h" // IsNeoGeoCD()
@@ -3450,7 +3269,8 @@ int ScrnTitle()
 		TCHAR* pszPosition = szText;
 		TCHAR* pszName = BurnDrvGetText(DRV_FULLNAME);
 
-		pszPosition += _sntprintf(szText, 1024, _T(APP_TITLE) _T( " v%.20s") _T(SEPERATOR_1) _T("%s"), szAppBurnVer, pszName);
+		//pszPosition += _sntprintf(szText, 1024, _T(APP_TITLE) _T( " v%.20s") _T(SEPERATOR_1) _T("%s"), szAppBurnVer, pszName);
+		pszPosition += _sntprintf(szText, 1024, _T(APP_TITLE) _T(" v%.20s") _T(SEPERATOR_1) _T("%s"), szAppBurnVer, pszName);
 		while ((pszName = BurnDrvGetText(DRV_NEXTNAME | DRV_FULLNAME)) != NULL) {
 			if (pszPosition + _tcslen(pszName) - 1024 > szText) {
 				break;
@@ -3464,7 +3284,7 @@ int ScrnTitle()
 		}
 
 	} else {
-		_stprintf(szText, _T(APP_TITLE) _T( " v%.20s") _T(SEPERATOR_1) _T("[%s]"), szAppBurnVer, FBALoadStringEx(hAppInst, IDS_SCRN_NOGAME, true));
+		_stprintf(szText, _T(APP_TITLE) _T(" v%.20s") _T(SEPERATOR_1) _T("[%s]"), szAppBurnVer, FBALoadStringEx(hAppInst, IDS_SCRN_NOGAME, true));
 	}
 
 	SetWindowText(hScrnWnd, szText);
@@ -3475,11 +3295,6 @@ int ScrnTitle()
 // Init the screen window (create it)
 int ScrnInit()
 {
-	REBARINFO rebarInfo;
-	REBARBANDINFO rebarBandInfo;
-	RECT rect;
-	int nWindowStyles, nWindowExStyles;
-
 	ScrnExit();
 
 	if (ScrnRegister() != 0) {
@@ -3499,54 +3314,16 @@ int ScrnInit()
 		}
 	}
 
-	hScrnWnd = CreateWindowEx(nWindowExStyles, szClass, _T(APP_TITLE), nWindowStyles,
-		0, 0, 0, 0,									   			// size of window
-		NULL, NULL, hAppInst, NULL);
-
+	hScrnWnd = CreateWindowEx(nWindowExStyles, szClass, _T(APP_TITLE), nWindowStyles, 0, 0, 0, 0, NULL, NULL, hAppInst, NULL);
 	if (hScrnWnd == NULL) {
 		ScrnExit();
 		return 1;
 	}
 
-	nMenuHeight = 0;
 	if (!nVidFullscreen) {
-
 		// Create the menu toolbar itself
 		MenuCreate();
-
-		// Create the toolbar
-		if (bMenuEnabled) {
-			// Create the Rebar control that will contain the menu toolbar
-			hRebar = CreateWindowEx(WS_EX_TOOLWINDOW,
-				REBARCLASSNAME, NULL,
-				RBS_BANDBORDERS | CCS_NOPARENTALIGN | CCS_NODIVIDER | WS_BORDER | WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE,
-				0, 0, 0, 0,
-				hScrnWnd, NULL, hAppInst, NULL);
-
-			rebarInfo.cbSize = sizeof(REBARINFO);
-			rebarInfo.fMask = 0;
-			rebarInfo.himl = NULL;
-
-			SendMessage(hRebar, RB_SETBARINFO, 0, (LPARAM)&rebarInfo);
-
-			// Add the menu toolbar to the rebar
-			GetWindowRect(hMenubar, &rect);
-
-			rebarBandInfo.cbSize		= sizeof(REBARBANDINFO);
-			rebarBandInfo.fMask			= RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_SIZE | RBBIM_STYLE;// | RBBIM_BACKGROUND;
-			rebarBandInfo.fStyle		= 0;//RBBS_GRIPPERALWAYS;// | RBBS_FIXEDBMP;
-			rebarBandInfo.hwndChild		= hMenubar;
-			rebarBandInfo.cxMinChild	= 100;
-			rebarBandInfo.cyMinChild	= ((SendMessage(hMenubar, TB_GETBUTTONSIZE, 0, 0)) >> 16) + 1;
-			rebarBandInfo.cx			= rect.right - rect.left;
-
-			SendMessage(hRebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rebarBandInfo);
-
-			GetWindowRect(hRebar, &rect);
-			nMenuHeight = rect.bottom - rect.top;
-
-		}
-
+		SetMenu(hScrnWnd, !nVidFullscreen && bMenuEnabled ? hMenu : NULL);
 		ScrnTitle();
 		ScrnSize();
 	}
@@ -3560,9 +3337,9 @@ int ScrnExit()
 	// Ensure the window is destroyed
 	DeActivateChat();
 
-	if (hRebar) {
-		DestroyWindow(hRebar);
-		hRebar = NULL;
+	if (hMenu) {
+		DestroyMenu(hMenu);
+		hMenu = NULL;
 	}
 
 	if (hScrnWnd) {

@@ -360,7 +360,7 @@ static int GameInfoInit()
 		nRet += BurnDrvGetRomName(&szRomName, i, 0);
 
 		if (ri.nLen == 0) continue;
-		if (ri.nType & BRF_BIOS && i >= 0x80) continue;
+		if (ri.nType & BRF_BIOS) continue;
 
 		LvItem.iItem = RomPos;
 		LvItem.iSubItem = 0;
@@ -760,7 +760,8 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		hGameInfoDlg = hDlg;
 
 		if (bDrvOkay) {
-			if (!kNetGame && bAutoPause) bRunPause = 1;
+			if (!kNetGame && bAutoPause)
+				bRunPause = 1;
 			AudSoundStop();
 		}
 

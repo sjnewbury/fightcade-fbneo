@@ -3193,7 +3193,7 @@ static void metro_common_map_ram(UINT32 chip_address, INT32 main_ram_address, IN
 
 static void __fastcall blzntrnd_roz_write_word(UINT32 address, UINT16 data)
 {
-	*((UINT16*)(DrvK053936RAM + (address & 0x3fffe))) = BURN_ENDIAN_SWAP_INT16(data);
+	*((UINT16*)(DrvK053936RAM + (address & 0x3fffe))) = data;
 	GenericTilemapSetTileDirty(0, (address & 0x3fffe) / 2);
 }
 
@@ -3205,7 +3205,7 @@ static void __fastcall blzntrnd_roz_write_byte(UINT32 address, UINT8 data)
 
 static tilemap_callback( blzntrnd )
 {
-	INT32 code = BURN_ENDIAN_SWAP_INT16(*((UINT16*)(DrvK053936RAM + offs * 2)));
+	INT32 code = *((UINT16*)(DrvK053936RAM + offs * 2));
 	
 	TILE_SET_INFO(0, code, 0, 0);
 }
@@ -3322,7 +3322,7 @@ static tilemap_scan( gstrik2 )
 
 static tilemap_callback( gstrik2 )
 {
-	INT32 code = BURN_ENDIAN_SWAP_INT16(*((UINT16*)(DrvK053936RAM + offs * 2)));
+	INT32 code = *((UINT16*)(DrvK053936RAM + offs * 2));
 	
 	TILE_SET_INFO(0, code >> 2, 0, 0);
 }
@@ -4764,7 +4764,7 @@ struct BurnDriver BurnDrvPoitto = {
 // Poitto! (revision C)
 
 static struct BurnRomInfo poittocRomDesc[] = {
-	{ "pt-jc05.20e",		0x020000, 0x96681051, 1 | BRF_PRG | BRF_ESS }, //  0 68k Code
+	{ "pt-jc05.20e",		0x020000, 0x6b1be034, 1 | BRF_PRG | BRF_ESS }, //  0 68k Code
 	{ "pt-jc06.20c",		0x020000, 0x00000000, 1 | BRF_PRG | BRF_ESS | BRF_NODUMP }, //  1
 
 	{ "pt-jc08.3i",			0x020000, 0xf32d386a, 2 | BRF_PRG | BRF_ESS }, //  2 uPD7810 Code
@@ -5411,7 +5411,7 @@ struct BurnDriver BurnDrvPuzzli = {
 
 static struct BurnRomInfo puzzliaRomDesc[] = {
 	{ "pz-ja-5.20e",		0x020000, 0x4e162574, 1 | BRF_PRG | BRF_ESS }, //  0 68k Code
-	{ "pz-ja-6.20c",		0x020000, 0x19210626, 1 | BRF_PRG | BRF_ESS }, //  1
+	{ "pz-jb-6.20c",		0x020000, 0x19210626, 1 | BRF_PRG | BRF_ESS }, //  1
 
 	{ "pz-ja-8.3i",			0x020000, 0xfd492a57, 2 | BRF_PRG | BRF_ESS }, //  2 uPD7810 Code
 

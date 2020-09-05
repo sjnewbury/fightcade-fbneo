@@ -51,7 +51,7 @@ ifndef BUILD_X86_ASM
 	COMPILENAME := $(COMPILENAME)x
 endif
 ifdef BUILD_X64_EXE
-	NAME = fbneo64
+	NAME = fba64
 	COMPILENAME = 6
 endif
 ifdef	DEBUG
@@ -95,11 +95,8 @@ ifdef UNICODE
 # lib	= -lunicows
 endif
 
-lib	+=	-luser32 -lgdi32 -lcomdlg32 -lcomctl32 -lshell32 -lwinmm -lshlwapi -ladvapi32 -lsetupapi -lole32 -luuid -lwininet 
+lib	+=	-luser32 -lgdi32 -lcomdlg32 -lcomctl32 -lshell32 -lwinmm -lshlwapi -ladvapi32 -lsetupapi -lole32 -luuid -lwininet
 
-ifdef INCLUDE_AVI_RECORDING
-lib +=	-lvfw32
-endif
 
 depobj	+=	resource.o \
 
@@ -269,12 +266,6 @@ ifdef BUILD_X86_ASM
 	CFLAGS	 += -mmmx
 	CXXFLAGS += -mmmx
 endif
-
-ifdef BUILD_NATIVE
-	CFLAGS	 += -march=native -mtune=native
-	CXXFLAGS += -march=native -mtune=native 
-endif
-
 
 # For zlib
 DEF := $(DEF) -DNO_VIZ -D_LARGEFILE64_SOURCE=0 -D_FILE_OFFSET_BITS=32
@@ -641,10 +632,8 @@ else
 	@echo Making normal build...
 endif
 	@echo
-	-@cmd /q /e:on /c for %i in ($(foreach dir,$(alldir),$(subst /,\,$(objdir)$(dir))),) do mkdir %i \>nul 2\>nul
-	-@cmd /q /e:on /c mkdir $(subst /,\,$(srcdir))dep\generated
-
-
+	@mingw-mkdir -p $(foreach dir, $(alldir),$(objdir)$(dir))
+	@mingw-mkdir -p $(srcdir)dep/generated
 
 cleandep:
 	@echo Removing depend files from $(objdir)...

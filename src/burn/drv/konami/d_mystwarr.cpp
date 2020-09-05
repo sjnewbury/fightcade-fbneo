@@ -3,6 +3,9 @@
 
 /*
 	known bugs:
+		violent storm:
+			background layer #2 on intro (bad guy on motorcycle), bottom clipped??
+
 		mystwarr:
 			missing some sounds due to sound irq timing too slow. (wip)
 
@@ -16,6 +19,13 @@
 		2: missing some sounds. (watch the first attract mode)
 		3: end of fight "fade-outs" are flickery _sometimes_ (panda scene, whitehouse scene)
 		   only thing that seems to fix this is upping the cycles by 6mhz.
+	unkown bugs.
+		probably a lot! go ahead and fix it!
+
+	to do:
+		fix bugs
+		clean up
+		optimize
 */
 
 #include "tiles_generic.h"
@@ -436,7 +446,7 @@ static void __fastcall mystwarr_main_write_word(UINT32 address, UINT16 data)
 		if ((address & 0xf0) == 0)
 			K053247WriteWord(((address & 0x000e) | ((address & 0xff00) >> 4)), data);
 
-		*((UINT16*)(DrvSpriteRam + (address & 0xfffe))) = BURN_ENDIAN_SWAP_INT16(data);
+		*((UINT16*)(DrvSpriteRam + (address & 0xfffe))) = data;
 		return;
 	}
 
@@ -812,7 +822,7 @@ static void __fastcall metamrph_main_write_word(UINT32 address, UINT16 data)
 		return;
 	}
 
-	if (address >= 0x300000 && address <= 0x305fff) {
+	if ((address & 0xffc000) == 0x300000) {
 		K056832RamWriteWord(address & 0x1fff, data);
 		return;
 	}
@@ -894,18 +904,14 @@ static void __fastcall metamrph_main_write_byte(UINT32 address, UINT8 data)
 		return;
 	}
 
-	if (address >= 0x300000 && address <= 0x305fff) {
+	if ((address & 0xffc000) == 0x300000) {
 		K056832RamWriteByte(address & 0x1fff, data);
 		return;
 	}
 
 	if ((address & 0xffffc0) == 0x25c000) {
 		UINT8 *prot = (UINT8*)&prot_data;
-#ifdef LSB_FIRST
 		prot[(address & 0x3f) ^ 1] = data;
-#else
-		prot[address & 0x3f] = data;
-#endif	
 		K055550_word_write(address, data, 0xff << ((address & 1) * 8));
 		return;
 	}
@@ -948,7 +954,7 @@ static UINT16 __fastcall metamrph_main_read_word(UINT32 address)
 		return 0;
 	}
 
-	if (address >= 0x300000 && address <= 0x305fff) {
+	if ((address & 0xffc000) == 0x300000) {
 		return K056832RamReadWord(address & 0x1fff);
 	}
 
@@ -997,7 +1003,7 @@ static UINT8 __fastcall metamrph_main_read_byte(UINT32 address)
 		return 0;
 	}
 
-	if (address >= 0x300000 && address <= 0x305fff) {
+	if ((address & 0xffc000) == 0x300000) {
 		return K056832RamReadByte(address & 0x1fff);
 	}
 
@@ -1182,7 +1188,7 @@ static void __fastcall martchmp_main_write_word(UINT32 address, UINT16 data)
 		if ((address & 0x30) == 0)
 			K053247WriteWord(((address & 0x000e) | ((address & 0x3FC0) >> 2)), data);
 
-		*((UINT16*)(DrvSpriteRam + (address & 0x3ffe))) = BURN_ENDIAN_SWAP_INT16(data);
+		*((UINT16*)(DrvSpriteRam + (address & 0x3ffe))) = data;
 		return;
 	}
 
@@ -1370,7 +1376,7 @@ static void __fastcall dadandrn_main_write_word(UINT32 address, UINT16 data)
 		if ((address & 0xf0) == 0)
 			K053247WriteWord(((address & 0x000e) | ((address & 0xff00) >> 4)), data);
 
-		*((UINT16*)(DrvSpriteRam + (address & 0xfffe))) = BURN_ENDIAN_SWAP_INT16(data);
+		*((UINT16*)(DrvSpriteRam + (address & 0xfffe))) = data;
 		return;
 	}
 
@@ -2515,7 +2521,7 @@ static INT32 GaiapolisInit()
 
 	{
 		DrvGfxExpand(DrvGfxROM2	, 0x180000);
-		if ((pMystwarrRozBitmap = (UINT16*)BurnMalloc(((512 * 16) * 2) * (512 * 16) * 2)) == NULL) return 1;
+		pMystwarrRozBitmap = (UINT16*)BurnMalloc(((512 * 16) * 2) * (512 * 16) * 2);
 		GaiapolisRozTilemapdraw();
 
 		m_k053936_0_ctrl = (UINT16*)DrvK053936Ctrl;
@@ -2672,7 +2678,7 @@ static INT32 DadandrnInit()
 	EEPROMInit(&mystwarr_eeprom_interface);
 
 	{
-		if ((pMystwarrRozBitmap = (UINT16*)BurnMalloc(((512 * 16) * 2) * (512 * 16) * 2)) == NULL) return 1;
+		pMystwarrRozBitmap = (UINT16*)BurnMalloc(((512 * 16) * 2) * (512 * 16) * 2);
 		DadandrnRozTilemapdraw();
 
 		m_k053936_0_ctrl = (UINT16*)DrvK053936Ctrl;
@@ -2738,9 +2744,9 @@ static void DrvPaletteRecalc()
 
 	for (INT32 i = 0; i < 0x2000/2; i+=2)
 	{
-		INT32 r = BURN_ENDIAN_SWAP_INT16(pal[i+0]) & 0xff;
-		INT32 g = BURN_ENDIAN_SWAP_INT16(pal[i+1]) >> 8;
-		INT32 b = BURN_ENDIAN_SWAP_INT16(pal[i+1]) & 0xff;
+		INT32 r = pal[i+0] & 0xff;
+		INT32 g = pal[i+1] >> 8;
+		INT32 b = pal[i+1] & 0xff;
 
 		DrvPalette[i/2] = (r << 16) + (g << 8) + b;
 	}
@@ -2896,7 +2902,7 @@ static INT32 DrvFrame()
 				if (K053246_is_IRQ_enabled())
 					SekSetIRQLine(5, CPU_IRQSTATUS_AUTO);
 
-				if (pBurnDraw && nGame == 2) { // metamrph only
+				if (pBurnDraw) {
 					// draw here to fix flickery and missing text in service mode
 					DrvDraw();
 					drawn = 1;
@@ -2935,8 +2941,8 @@ static INT32 DrvFrame()
 			}
 		}
 
-		CPU_RUN(0, Sek);
-		CPU_RUN(1, Zet);
+		nCyclesDone[0] += SekRun(((i + 1) * nCyclesTotal[0] / nInterleave) - nCyclesDone[0]);
+		nCyclesDone[1] += ZetRun(((i + 1) * nCyclesTotal[1] / nInterleave) - nCyclesDone[1]);
 
 		if (((i % (nInterleave / 8)) == ((nInterleave / 8) - 1)) || (nCurrentFrame&1 && i==0)) {// && sound_nmi_enable && sound_control) { // iq_132
 			ZetNmi();

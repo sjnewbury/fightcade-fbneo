@@ -584,10 +584,9 @@ static INT32 DrvFrame()
 
 		hblank = 0;
 		INT32 sek_line = ((i + 1) * nCyclesTotal[0] / nInterleave) - nCyclesDone[0];
-		// run to hblank
 		nCyclesDone[0] += SekRun((INT32)((double)sek_line * 0.9));
 		hblank = 1;
-		CPU_RUN(0, Sek); // finish line
+		nCyclesDone[0] += SekRun(((i + 1) * nCyclesTotal[0] / nInterleave) - nCyclesDone[0]);
 
 		if ((i % 64) == 0) draw_scanline(i);
 
@@ -681,7 +680,7 @@ static struct BurnRomInfo reliefRomDesc[] = {
 	{ "136093-0030a.9b",			0x80000, 0xf4c567f5, 3 | BRF_SND },           //  9 Samples
 	{ "136093-0031a.10b",			0x80000, 0xba908d73, 3 | BRF_SND },           // 10
 
-	{ "relief_rev_d-eeprom.bin",	0x00800, 0x66069f60, 4 | BRF_PRG | BRF_ESS }, // 11 Default EEPROM Data
+	{ "relief-eeprom.bin",			0x00800, 0x66069f60, 4 | BRF_PRG | BRF_ESS }, // 11 Default EEPROM Data
 
 	{ "gal16v8a-136093-0002.15f",	0x00117, 0xb111d5f2, 5 | BRF_OPT },           // 12 PLDs
 	{ "gal16v8a-136093-0003.11r",	0x00117, 0x67165ed2, 5 | BRF_OPT },           // 13
@@ -710,8 +709,8 @@ struct BurnDriver BurnDrvRelief = {
 // Relief Pitcher (set 2, 26 Apr 1992 / 08 Apr 1992)
 
 static struct BurnRomInfo relief2RomDesc[] = {
-	{ "136093-0011c.19e",			0x20000, 0x41373e02, 1 | BRF_PRG | BRF_ESS }, //  0 68k Code
-	{ "136093-0012c.19j",			0x20000, 0x8187b026, 1 | BRF_PRG | BRF_ESS }, //  1
+	{ "19e",						0x20000, 0x41373e02, 1 | BRF_PRG | BRF_ESS }, //  0 68k Code
+	{ "19j",						0x20000, 0x8187b026, 1 | BRF_PRG | BRF_ESS }, //  1
 	{ "136093-0013.17e",			0x20000, 0x1e1e82e5, 1 | BRF_PRG | BRF_ESS }, //  2
 	{ "136093-0014.17j",			0x20000, 0x19e5decd, 1 | BRF_PRG | BRF_ESS }, //  3
 
@@ -724,7 +723,7 @@ static struct BurnRomInfo relief2RomDesc[] = {
 	{ "136093-0030a.9b",			0x80000, 0xf4c567f5, 3 | BRF_SND },           //  9 Samples
 	{ "136093-0031a.10b",			0x80000, 0xba908d73, 3 | BRF_SND },           // 10
 
-	{ "relief-eeprom.bin",			0x00800, 0x2131fc40, 4 | BRF_PRG | BRF_ESS }, // 11 Default EEPROM Data
+	{ "relief2-eeprom.bin",			0x00800, 0x2131fc40, 4 | BRF_PRG | BRF_ESS }, // 11 Default EEPROM Data
 
 	{ "gal16v8a-136093-0002.15f",	0x00117, 0xb111d5f2, 5 | BRF_OPT },           // 12 PLDs
 	{ "gal16v8a-136093-0003.11r",	0x00117, 0x67165ed2, 5 | BRF_OPT },           // 13
@@ -767,7 +766,7 @@ static struct BurnRomInfo relief3RomDesc[] = {
 	{ "136093-0030a.9b",			0x80000, 0xf4c567f5, 3 | BRF_SND },           //  9 Samples
 	{ "136093-0031a.10b",			0x80000, 0xba908d73, 3 | BRF_SND },           // 10
 
-	{ "relief-eeprom.bin",			0x00800, 0x2131fc40, 4 | BRF_PRG | BRF_ESS }, // 11 Default EEPROM Data
+	{ "relief3-eeprom.bin",			0x00800, 0x2131fc40, 4 | BRF_PRG | BRF_ESS }, // 11 Default EEPROM Data
 
 	{ "gal16v8a-136093-0002.15f",	0x00117, 0xb111d5f2, 5 | BRF_OPT },           // 12 PLDs
 	{ "gal16v8a-136093-0003.11r",	0x00117, 0x67165ed2, 5 | BRF_OPT },           // 13

@@ -71,8 +71,6 @@ static INT32 InitEEPROMCount;
 
 static INT32 uses_k007232 = 0;
 
-static INT32 is_tmnt2 = 0;
-
 static const eeprom_interface BlswhstlEEPROMInterface =
 {
 	7,
@@ -2526,7 +2524,7 @@ static INT32 DrvDoReset()
 	PlayTitleSample = 0;
 	TitleSamplePos = 0;
 	PriorityFlag = 0;
-
+	
 	return 0;
 }
 
@@ -2660,8 +2658,6 @@ static INT32 SsridersDoReset()
 
 	dim_c = 0;
 	dim_v = 0;
-
-	HiscoreReset();
 
 	return 0;
 }
@@ -5000,8 +4996,6 @@ static INT32 BlswhstlInit()
 	K053260SetRoute(0, BURN_SND_K053260_ROUTE_2, 0.50, BURN_SND_ROUTE_LEFT);
 
 	EEPROMInit(&BlswhstlEEPROMInterface);
-
-	NoDim = 1;
 	
 	// Reset the driver
 	BlswhstlDoReset();
@@ -5357,8 +5351,6 @@ static INT32 Tmnt2Init()
 	// Reset the driver
 	SsridersDoReset();
 
-	is_tmnt2 = 1;
-
 	return 0;
 }
 
@@ -5561,7 +5553,6 @@ static INT32 CommonExit()
 	DrvVBlank = 0;
 	InitEEPROMCount = 0;
 	uses_k007232 = 0;
-	is_tmnt2 = 0;
 
 	return 0;
 }
@@ -5666,7 +5657,7 @@ static inline void BlswhstlCalcPaletteWithContrast(INT32 i, INT32 brt)
 	DrvPalette[i] = (r<<16) | (g<<8) | b;
 }
 
-static void PaletteDim(INT32 layer2, INT32 layer0)
+static void PaletteDim(INT32 dimslayer)
 {
 	INT32 i, dim, en, cb, ce, brt;
 
@@ -5677,30 +5668,17 @@ static void PaletteDim(INT32 layer2, INT32 layer0)
 	if (en) brt -= 40*dim/8;
 
 	if (brt < 100 && !NoDim) {
-		cb = LayerColourBase[layer2] << 4;
+		cb = LayerColourBase[dimslayer] << 4;
 		ce = cb + 128;
 
-		//bprintf(0, _T("--pri(5) = %02x    pri(6) = %02x\n"), K053251GetPriority(5), K053251GetPriority(6));
-		//bprintf(0, _T("dimming layer %x:  %x - %x\n"), layer2, cb, ce);
-		if (is_tmnt2 && K053251GetPriority(5) == 0x30) {
-			// dim just the first layer (Mars through the windows)
-			cb = LayerColourBase[layer0] << 4;
-			ce = cb + 128;
-			for (i = 0; i < 0x800; i++)
-				BlswhstlCalcPaletteWithContrast(i, 100);
+		for (i =  0; i < cb; i++)
+			BlswhstlCalcPaletteWithContrast(i, brt);
 
-			for (i = cb; i < ce; i++) // selected layer
-				BlswhstlCalcPaletteWithContrast(i, brt);
-		} else {
-			for (i =  0; i < cb; i++)
-				BlswhstlCalcPaletteWithContrast(i, brt);
+		for (i = cb; i < ce; i++) // text
+			BlswhstlCalcPaletteWithContrast(i, 100);
 
-			for (i = cb; i < ce; i++) // text
-				BlswhstlCalcPaletteWithContrast(i, 100);
-
-			for (i = ce; i < 0x800; i++)
-				BlswhstlCalcPaletteWithContrast(i, brt);
-		}
+		for (i = ce; i < 2048; i++)
+			BlswhstlCalcPaletteWithContrast(i, brt);
 
 		if (~dim_c & 0x10) {
 			konami_set_highlight_over_sprites_mode(1);
@@ -5734,15 +5712,15 @@ static INT32 TmntDraw()
 static INT32 BlswhstlDraw()
 {
 	INT32 Layer[3];
-
+	
 	K052109UpdateScroll();
 	
-	INT32 BGColourBase = K053251GetPaletteIndex(0);
+	INT32 BGColourBase   = K053251GetPaletteIndex(0);
 	SpriteColourBase   = K053251GetPaletteIndex(1);
 	LayerColourBase[0] = K053251GetPaletteIndex(2);
 	LayerColourBase[1] = K053251GetPaletteIndex(4);
 	LayerColourBase[2] = K053251GetPaletteIndex(3);
-
+	
 	LayerPri[0] = K053251GetPriority(2);
 	LayerPri[1] = K053251GetPriority(4);
 	LayerPri[2] = K053251GetPriority(3);
@@ -5753,10 +5731,9 @@ static INT32 BlswhstlDraw()
 	KonamiClearBitmaps(DrvPalette[16 * BGColourBase]);
 
 	sortlayers(Layer, LayerPri);
-	PaletteDim(Layer[2], Layer[0]);
-	// save for later (dink)
-	//bprintf(0, _T("layer order: %x   %x   %x\n"), Layer[0], Layer[1], Layer[2]);
-	//bprintf(0, _T("pri   order: %x   %x   %x\n"), LayerPri[0], LayerPri[1], LayerPri[2]);
+
+	PaletteDim(Layer[2]);
+
 	if (nBurnLayer & 1) K052109RenderLayer(Layer[0], 0, 1);
 	if (nBurnLayer & 2) K052109RenderLayer(Layer[1], 0, 2);
 	if (nBurnLayer & 4) K052109RenderLayer(Layer[2], 0, 4);
@@ -5775,7 +5752,7 @@ static INT32 Thndrx2Draw()
 	BlswhstlCalcPalette();
 	K052109UpdateScroll();
 	
-	INT32 BGColourBase = K053251GetPaletteIndex(0);
+	INT32 BGColourBase   = K053251GetPaletteIndex(0);
 	SpriteColourBase   = K053251GetPaletteIndex(1);
 	LayerColourBase[0] = K053251GetPaletteIndex(2);
 	LayerColourBase[1] = K053251GetPaletteIndex(4);
@@ -6305,38 +6282,43 @@ static INT32 LgtnfghtFrame()
 
 static INT32 Tmnt2Frame()
 {
+	INT32 nInterleave = 262;
+	INT32 nSoundBufferPos = 0;
+
 	if (DrvReset) SsridersDoReset();
 
 	SsridersMakeInputs();
 
-	INT32 nInterleave = 262;
-	INT32 nSoundBufferPos = 0;
 	nCyclesTotal[0] = 16000000 / 60;
 	nCyclesTotal[1] = 8000000 / 60;
 	nCyclesDone[0] = nCyclesDone[1] = 0;
-	INT32 drawn = 0;
 
 	SekNewFrame();
 	ZetNewFrame();
-
+	
 	for (INT32 i = 0; i < nInterleave; i++) {
+		INT32 nCurrentCPU, nNext;
+
+		// Run 68000
+		nCurrentCPU = 0;
 		SekOpen(0);
-		CPU_RUN(0, Sek);
+		nNext = (i + 1) * nCyclesTotal[nCurrentCPU] / nInterleave;
+		nCyclesSegment = nNext - nCyclesDone[nCurrentCPU];
+		nCyclesDone[nCurrentCPU] += SekRun(nCyclesSegment);
 		if (i == 19) DrvVBlank = 0;
-		if (i == 243) {
-			DrvVBlank = 1;
-			if (K052109_irq_enabled) {
-				SekSetIRQLine(4, CPU_IRQSTATUS_AUTO);
-				if (pBurnDraw) BlswhstlDraw();
-				drawn = 1;
-			}
-		}
+		if (i == 243) DrvVBlank = 1;
+		if (i == 243 && K052109_irq_enabled) SekSetIRQLine(4, CPU_IRQSTATUS_AUTO);
 		SekClose();
-
+		
+		// Run Z80
+		nCurrentCPU = 1;
 		ZetOpen(0);
-		CPU_RUN(1, Zet);
+		nNext = (i + 1) * nCyclesTotal[nCurrentCPU] / nInterleave;
+		nCyclesSegment = nNext - nCyclesDone[nCurrentCPU];
+		nCyclesSegment = ZetRun(nCyclesSegment);
+		nCyclesDone[nCurrentCPU] += nCyclesSegment;
 		ZetClose();
-
+		
 		if (pBurnSoundOut) {
 			INT32 nSegmentLength = nBurnSoundLen / nInterleave;
 			INT16* pSoundBuf = pBurnSoundOut + (nSoundBufferPos << 1);
@@ -6356,8 +6338,8 @@ static INT32 Tmnt2Frame()
 			K053260Update(0, pSoundBuf, nSegmentLength);
 		}
 	}
-
-	if (pBurnDraw && !drawn) BlswhstlDraw();
+	
+	if (pBurnDraw) BlswhstlDraw();
 
 	return 0;
 }
@@ -6461,8 +6443,6 @@ static INT32 DrvScan(INT32 nAction, INT32 *pnMin)
 		SCAN_VAR(PlayTitleSample);
 		SCAN_VAR(TitleSamplePos);
 		SCAN_VAR(PriorityFlag);
-		//SCAN_VAR(dim_c);
-		//SCAN_VAR(dim_v);
 
 		BurnRandomScan(nAction);
 	}
@@ -6754,7 +6734,7 @@ struct BurnDriver BurnDrvSsriders = {
 	"ssriders", NULL, NULL, NULL, "1991",
 	"Sunset Riders (4 Players ver. EAC)\0", NULL, "Konami", "GX064",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_HISCORE_SUPPORTED, 4, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
+	BDF_GAME_WORKING, 4, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
 	NULL, SsridersRomInfo, SsridersRomName, NULL, NULL, NULL, NULL, Ssriders4pInputInfo, NULL,
 	SsridersInit, BlswhstlExit, SsridersFrame, BlswhstlDraw, SsridersScan,
 	NULL, 0x810, 288, 224, 4, 3
@@ -6764,7 +6744,7 @@ struct BurnDriver BurnDrvSsridersebd = {
 	"ssridersebd", "ssriders", NULL, NULL, "1991",
 	"Sunset Riders (2 Players ver. EBD)\0", NULL, "Konami", "GX064",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
 	NULL, SsridersebdRomInfo, SsridersebdRomName, NULL, NULL, NULL, NULL, SsridersInputInfo, NULL,
 	SsridersInit, BlswhstlExit, SsridersFrame, BlswhstlDraw, SsridersScan,
 	NULL, 0x810, 288, 224, 4, 3
@@ -6774,7 +6754,7 @@ struct BurnDriver BurnDrvSsridersebc = {
 	"ssridersebc", "ssriders", NULL, NULL, "1991",
 	"Sunset Riders (2 Players ver. EBC)\0", NULL, "Konami", "GX064",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
 	NULL, SsridersebcRomInfo, SsridersebcRomName, NULL, NULL, NULL, NULL, SsridersInputInfo, NULL,
 	SsridersInit, BlswhstlExit, SsridersFrame, BlswhstlDraw, SsridersScan,
 	NULL, 0x810, 288, 224, 4, 3
@@ -6784,7 +6764,7 @@ struct BurnDriver BurnDrvSsridersuda = {
 	"ssridersuda", "ssriders", NULL, NULL, "1991",
 	"Sunset Riders (4 Players ver. UDA)\0", NULL, "Konami", "GX064",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 4, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 4, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
 	NULL, SsridersudaRomInfo, SsridersudaRomName, NULL, NULL, NULL, NULL, Ssriders4psInputInfo, NULL,
 	SsridersInit, BlswhstlExit, SsridersFrame, BlswhstlDraw, SsridersScan,
 	NULL, 0x810, 288, 224, 4, 3
@@ -6794,7 +6774,7 @@ struct BurnDriver BurnDrvSsriderseaa = {
 	"ssriderseaa", "ssriders", NULL, NULL, "1991",
 	"Sunset Riders (4 Players ver. EAA)\0", NULL, "Konami", "GX064",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 4, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 4, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
 	NULL, SsriderseaaRomInfo, SsriderseaaRomName, NULL, NULL, NULL, NULL, Ssriders4psInputInfo, NULL,
 	SsridersInit, BlswhstlExit, SsridersFrame, BlswhstlDraw, SsridersScan,
 	NULL, 0x810, 288, 224, 4, 3
@@ -6804,7 +6784,7 @@ struct BurnDriver BurnDrvSsridersuab = {
 	"ssridersuab", "ssriders", NULL, NULL, "1991",
 	"Sunset Riders (4 Players ver. UAB)\0", NULL, "Konami", "GX064",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 4, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 4, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
 	NULL, SsridersuabRomInfo, SsridersuabRomName, NULL, NULL, NULL, NULL, Ssriders4pInputInfo, NULL,
 	SsridersInit, BlswhstlExit, SsridersFrame, BlswhstlDraw, SsridersScan,
 	NULL, 0x810, 288, 224, 4, 3
@@ -6814,7 +6794,7 @@ struct BurnDriver BurnDrvSsridersuac = {
 	"ssridersuac", "ssriders", NULL, NULL, "1991",
 	"Sunset Riders (4 Players ver. UAC)\0", NULL, "Konami", "GX064",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 4, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 4, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
 	NULL, SsridersuacRomInfo, SsridersuacRomName, NULL, NULL, NULL, NULL, Ssriders4pInputInfo, NULL,
 	SsridersInit, BlswhstlExit, SsridersFrame, BlswhstlDraw, SsridersScan,
 	NULL, 0x810, 288, 224, 4, 3
@@ -6824,7 +6804,7 @@ struct BurnDriver BurnDrvSsridersubc = {
 	"ssridersubc", "ssriders", NULL, NULL, "1991",
 	"Sunset Riders (2 Players ver. UBC)\0", NULL, "Konami", "GX064",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
 	NULL, SsridersubcRomInfo, SsridersubcRomName, NULL, NULL, NULL, NULL, SsridersInputInfo, NULL,
 	SsridersInit, BlswhstlExit, SsridersFrame, BlswhstlDraw, SsridersScan,
 	NULL, 0x810, 288, 224, 4, 3
@@ -6834,7 +6814,7 @@ struct BurnDriver BurnDrvSsridersabd = {
 	"ssridersabd", "ssriders", NULL, NULL, "1991",
 	"Sunset Riders (2 Players ver. ABD)\0", NULL, "Konami", "GX064",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
 	NULL, SsridersabdRomInfo, SsridersabdRomName, NULL, NULL, NULL, NULL, SsridersInputInfo, NULL,
 	SsridersInit, BlswhstlExit, SsridersFrame, BlswhstlDraw, SsridersScan,
 	NULL, 0x810, 288, 224, 4, 3
@@ -6844,7 +6824,7 @@ struct BurnDriver BurnDrvSsridersadd = {
 	"ssridersadd", "ssriders", NULL, NULL, "1991",
 	"Sunset Riders (4 Players ver. ADD)\0", NULL, "Konami", "GX064",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 4, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 4, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
 	NULL, SsridersaddRomInfo, SsridersaddRomName, NULL, NULL, NULL, NULL, Ssriders4psInputInfo, NULL,
 	SsridersInit, BlswhstlExit, SsridersFrame, BlswhstlDraw, SsridersScan,
 	NULL, 0x810, 288, 224, 4, 3
@@ -6854,7 +6834,7 @@ struct BurnDriver BurnDrvSsridersjac = {
 	"ssridersjac", "ssriders", NULL, NULL, "1991",
 	"Sunset Riders (4 Players ver. JAC)\0", NULL, "Konami", "GX064",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
 	NULL, SsridersjacRomInfo, SsridersjacRomName, NULL, NULL, NULL, NULL, SsridersInputInfo, NULL,
 	SsridersInit, BlswhstlExit, SsridersFrame, BlswhstlDraw, SsridersScan,
 	NULL, 0x810, 288, 224, 4, 3
@@ -6864,7 +6844,7 @@ struct BurnDriver BurnDrvSsridersjad = {
 	"ssridersjad", "ssriders", NULL, NULL, "1991",
 	"Sunset Riders (4 Players ver. JAD)\0", NULL, "Konami", "GX064",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
 	NULL, SsridersjadRomInfo, SsridersjadRomName, NULL, NULL, NULL, NULL, SsridersInputInfo, NULL,
 	SsridersInit, BlswhstlExit, SsridersFrame, BlswhstlDraw, SsridersScan,
 	NULL, 0x810, 288, 224, 4, 3
@@ -6874,7 +6854,7 @@ struct BurnDriver BurnDrvSsridersjbd = {
 	"ssridersjbd", "ssriders", NULL, NULL, "1991",
 	"Sunset Riders (2 Players ver. JBD)\0", NULL, "Konami", "GX064",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
 	NULL, SsridersjbdRomInfo, SsridersjbdRomName, NULL, NULL, NULL, NULL, SsridersInputInfo, NULL,
 	SsridersInit, BlswhstlExit, SsridersFrame, BlswhstlDraw, SsridersScan,
 	NULL, 0x810, 288, 224, 4, 3
@@ -6889,7 +6869,7 @@ struct BurnDriverD BurnDrvSsridersb = {
 	"ssridersb", "ssriders", NULL, NULL, "1991",
 	"Sunset Riders (bootleg 4 Players ver. ADD)\0", NULL, "Konami", "GX064",
 	NULL, NULL, NULL, NULL,
-	BDF_CLONE | BDF_BOOTLEG | BDF_HISCORE_SUPPORTED, 2, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
+	BDF_CLONE | BDF_BOOTLEG, 2, HARDWARE_KONAMI_68K_Z80, GBF_RUNGUN, 0,
 	NULL, ssridersbRomInfo, ssridersbRomName, NULL, NULL, NULL, NULL, Ssriders4psInputInfo, NULL,
 	SsridersbInit, CommonExit, SsridersFrame, BlswhstlDraw, SsridersScan,
 	NULL, 0x810, 288, 224, 4, 3
@@ -6899,7 +6879,7 @@ struct BurnDriver BurnDrvThndrx2 = {
 	"thndrx2", NULL, NULL, NULL, "1991",
 	"Thunder Cross II (World)\0", NULL, "Konami", "GX073",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_HISCORE_SUPPORTED, 2, HARDWARE_KONAMI_68K_Z80, GBF_HORSHOOT, 0,
+	BDF_GAME_WORKING, 2, HARDWARE_KONAMI_68K_Z80, GBF_HORSHOOT, 0,
 	NULL, thndrx2RomInfo, thndrx2RomName, NULL, NULL, NULL, NULL, Thndrx2InputInfo, NULL,
 	Thndrx2Init, BlswhstlExit, Thndrx2Frame, Thndrx2Draw, Thndrx2aScan,
 	NULL, 0x800, 288, 224, 4, 3
@@ -6909,7 +6889,7 @@ struct BurnDriver BurnDrvThndrx2a = {
 	"thndrx2a", "thndrx2", NULL, NULL, "1991",
 	"Thunder Cross II (Asia)\0", NULL, "Konami", "GX073",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_KONAMI_68K_Z80, GBF_HORSHOOT, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_KONAMI_68K_Z80, GBF_HORSHOOT, 0,
 	NULL, thndrx2aRomInfo, thndrx2aRomName, NULL, NULL, NULL, NULL, Thndrx2InputInfo, NULL,
 	Thndrx2Init, BlswhstlExit, Thndrx2Frame, Thndrx2Draw, Thndrx2aScan,
 	NULL, 0x800, 288, 224, 4, 3
@@ -6919,7 +6899,7 @@ struct BurnDriver BurnDrvThndrx2j = {
 	"thndrx2j", "thndrx2", NULL, NULL, "1991",
 	"Thunder Cross II (Japan)\0", NULL, "Konami", "GX073",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_KONAMI_68K_Z80, GBF_HORSHOOT, 0,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_KONAMI_68K_Z80, GBF_HORSHOOT, 0,
 	NULL, thndrx2jRomInfo, thndrx2jRomName, NULL, NULL, NULL, NULL, Thndrx2InputInfo, NULL,
 	Thndrx2Init, BlswhstlExit, Thndrx2Frame, Thndrx2Draw, Thndrx2aScan,
 	NULL, 0x800, 288, 224, 4, 3

@@ -4,28 +4,10 @@
 
 int bDrvOkay = 0;						// 1 if the Driver has been initted okay, and it's okay to use the BurnDrv functions
 
-TCHAR szAppRomPaths[DIRS_MAX][MAX_PATH] = {
-	{ _T("") },
-	{ _T("") },
-	{ _T("") },
-	{ _T("") },
-	{ _T("") },
-	{ _T("roms/ngp/") },
-	{ _T("roms/nes/") },
-	{ _T("roms/fds/") },
-	{ _T("roms/spectrum/") },
-	{ _T("roms/msx/") },
-	{ _T("roms/sms/") },
-	{ _T("roms/gamegear/") },
-	{ _T("roms/sg1000/") },
-	{ _T("roms/coleco/") },
-	{ _T("roms/tg16/") },
-	{ _T("roms/sgx/") },
-	{ _T("roms/pce/") },
-	{ _T("roms/megadrive/") },
-	{ _T("roms/arcade/") },
-	{ _T("roms/") }
-};
+TCHAR szAppRomPaths[DIRS_MAX][MAX_PATH] = { { _T("") }, { _T("") }, { _T("") }, { _T("") }, { _T("") },
+											{ _T("") }, { _T("roms/nes/") }, { _T("roms/nes_fds/") }, { _T("roms/nes_hb/") }, { _T("roms/spectrum/") },
+											{ _T("roms/msx/") }, { _T("roms/sms/") }, { _T("roms/gamegear/") }, { _T("roms/sg1000/") }, { _T("roms/coleco/") },
+											{ _T("roms/tg16/") }, { _T("roms/sgx/") }, { _T("roms/pce/") }, { _T("roms/megadrive/") }, { _T("roms/") } };
 
 static bool bSaveRAM = false;
 
@@ -162,7 +144,7 @@ int DrvInit(int nDrvNum, bool bRestore)
 	int nStatus;
 
 	DrvExit();						// Make sure exitted
-	MediaExit();
+	MediaExit(false);
 
 	nBurnDrvActive = nDrvNum;		// Set the driver number
 
@@ -226,6 +208,8 @@ int DrvInit(int nDrvNum, bool bRestore)
 
 		NeoCDZRateChangeback();
 
+		nBurnDrvActive = -1;
+
 		POST_INITIALISE_MESSAGE;
 		return 1;
 	}
@@ -248,8 +232,8 @@ int DrvInit(int nDrvNum, bool bRestore)
 
 	bSaveRAM = false;
 	if (kNetGame) {
-		KailleraInitInput();
-		KailleraGetInput();
+		NetworkInitInput();
+		NetworkGetInput();
 	} else {
 		if (bRestore) {
 			StatedAuto(0);
@@ -266,6 +250,7 @@ int DrvInit(int nDrvNum, bool bRestore)
 
 	VidExit();
 	POST_INITIALISE_MESSAGE;
+	CallRegisteredLuaFunctions(LUACALL_ONSTART);
 
 	return 0;
 }
@@ -315,7 +300,7 @@ int DrvExit()
 
 	if (bAudOkay) {
 		// Write silence into the sound buffer on exit, and for drivers which don't use pBurnSoundOut
-		memset(nAudNextSound, 0, nAudSegLen << 2);
+		AudWriteSilence();
 	}
 
 	CDEmuExit();

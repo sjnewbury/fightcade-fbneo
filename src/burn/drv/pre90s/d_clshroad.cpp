@@ -241,7 +241,7 @@ static tilemap_callback( fg )
 	UINT8 attr = DrvVidRAM1[offs + 0x400];
 
 	TILE_SET_INFO(1, DrvVidRAM1[offs] + ((attr & 0x10) << 4), attr, 0);
-	sTile->category = attr & 0x3f;
+	*category = attr & 0x3f;
 }
 
 static INT32 DrvDoReset()

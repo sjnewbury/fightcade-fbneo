@@ -195,8 +195,10 @@ static Z80ReadOpArgHandler Z80CPUReadOpArg;
 #define IFF2 Z80.iff2
 #define HALT Z80.halt
 
+int z80_ICount;
+static INT32 end_run;
 static Z80_Regs Z80;
-#define EA Z80.EA
+UINT32 EA;
 
 void (*z80edfe_callback)(Z80_Regs *Regs) = NULL;
 
@@ -445,7 +447,7 @@ Z80_INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
 	if( cycles > 0 )
 	{
 		R += (cycles / cyclesum) * opcodes;
-		Z80.ICount -= (cycles / cyclesum) * cyclesum;
+		z80_ICount -= (cycles / cyclesum) * cyclesum;
 	}
 }
 
@@ -457,7 +459,7 @@ Z80_INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
 /***************************************************************
  * adjust cycle count by n T-states
  ***************************************************************/
-#define CC(prefix,opcode) Z80.ICount -= cc[Z80_TABLE_##prefix][opcode]
+#define CC(prefix,opcode) z80_ICount -= cc[Z80_TABLE_##prefix][opcode]
 
 /***************************************************************
  * execute an opcode
@@ -554,7 +556,7 @@ Z80_INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
 	PC--;														\
 	HALT = 1;													\
 	if( Z80.irq_state == Z80_CLEAR_LINE )							\
-		Z80Burn( Z80.ICount );									\
+		Z80Burn( z80_ICount );									\
 }
 
 /***************************************************************
@@ -671,7 +673,7 @@ Z80_INLINE UINT32 ARG16(void)
 	if( PCD == oldpc )											\
 	{															\
 		if( Z80.irq_state == Z80_CLEAR_LINE )						\
-			BURNODD( Z80.ICount, 1, cc[Z80_TABLE_op][0xc3] );	\
+			BURNODD( z80_ICount, 1, cc[Z80_TABLE_op][0xc3] );	\
 	}															\
 	else														\
 	{															\
@@ -682,7 +684,7 @@ Z80_INLINE UINT32 ARG16(void)
 			if ( op == 0x00 || op == 0xfb )						\
 			{													\
 				if( Z80.irq_state == Z80_CLEAR_LINE )				\
-					BURNODD( Z80.ICount-cc[Z80_TABLE_op][0x00], \
+					BURNODD( z80_ICount-cc[Z80_TABLE_op][0x00], \
 						2, cc[Z80_TABLE_op][0x00]+cc[Z80_TABLE_op][0xc3]); \
 			}													\
 		}														\
@@ -691,7 +693,7 @@ Z80_INLINE UINT32 ARG16(void)
 		if( PCD == oldpc-3 && op == 0x31 )						\
 		{														\
 			if( Z80.irq_state == Z80_CLEAR_LINE )					\
-				BURNODD( Z80.ICount-cc[Z80_TABLE_op][0x31],		\
+				BURNODD( z80_ICount-cc[Z80_TABLE_op][0x31],		\
 					2, cc[Z80_TABLE_op][0x31]+cc[Z80_TABLE_op][0xc3]); \
 		}														\
 	}															\
@@ -735,7 +737,7 @@ Z80_INLINE UINT32 ARG16(void)
 	if( PCD == oldpc )											\
 	{															\
 		if( Z80.irq_state == Z80_CLEAR_LINE )						\
-			BURNODD( Z80.ICount, 1, cc[Z80_TABLE_op][0x18] );	\
+			BURNODD( z80_ICount, 1, cc[Z80_TABLE_op][0x18] );	\
 	}															\
 	else														\
 	{															\
@@ -746,7 +748,7 @@ Z80_INLINE UINT32 ARG16(void)
 			if ( op == 0x00 || op == 0xfb )						\
 			{													\
 				if( Z80.irq_state == Z80_CLEAR_LINE )				\
-				   BURNODD( Z80.ICount-cc[Z80_TABLE_op][0x00],	\
+				   BURNODD( z80_ICount-cc[Z80_TABLE_op][0x00],	\
 					   2, cc[Z80_TABLE_op][0x00]+cc[Z80_TABLE_op][0x18]); \
 			}													\
 		}														\
@@ -755,7 +757,7 @@ Z80_INLINE UINT32 ARG16(void)
 		if( PCD == oldpc-3 && op == 0x31 )						\
 		{														\
 			if( Z80.irq_state == Z80_CLEAR_LINE )					\
-			   BURNODD( Z80.ICount-cc[Z80_TABLE_op][0x31],		\
+			   BURNODD( z80_ICount-cc[Z80_TABLE_op][0x31],		\
 				   2, cc[Z80_TABLE_op][0x31]+cc[Z80_TABLE_op][0x18]); \
 		}														\
 	}															\
@@ -3372,7 +3374,7 @@ static void take_interrupt(void)
 		RM16( irq_vector, &Z80.pc );
 //		LOG(("Z80 #%d IM2 [$%04x] = $%04x\n",cpu_getactivecpu() , irq_vector, PCD));
 		/* CALL opcode timing */
-		Z80.ICount -= cc[Z80_TABLE_op][0xcd];
+		z80_ICount -= cc[Z80_TABLE_op][0xcd];
 	}
 	else
 	/* Interrupt mode 1. RST 38h */
@@ -3382,7 +3384,7 @@ static void take_interrupt(void)
 		PUSH( pc );
 		PCD = 0x0038;
 		/* RST $38 + 'interrupt latency' cycles */
-		Z80.ICount -= cc[Z80_TABLE_op][0xff] + cc[Z80_TABLE_ex][0xff];
+		z80_ICount -= cc[Z80_TABLE_op][0xff] + cc[Z80_TABLE_ex][0xff];
 	}
 	else
 	{
@@ -3396,18 +3398,18 @@ static void take_interrupt(void)
 				PUSH( pc );
 				PCD = irq_vector & 0xffff;
 				 /* CALL $xxxx + 'interrupt latency' cycles */
-				Z80.ICount -= cc[Z80_TABLE_op][0xcd] + cc[Z80_TABLE_ex][0xff];
+				z80_ICount -= cc[Z80_TABLE_op][0xcd] + cc[Z80_TABLE_ex][0xff];
 				break;
 			case 0xc30000:	/* jump */
 				PCD = irq_vector & 0xffff;
 				/* JP $xxxx + 2 cycles */
-				Z80.ICount -= cc[Z80_TABLE_op][0xc3] + cc[Z80_TABLE_ex][0xff];
+				z80_ICount -= cc[Z80_TABLE_op][0xc3] + cc[Z80_TABLE_ex][0xff];
 				break;
 			default:		/* rst (or other opcodes?) */
 				PUSH( pc );
 				PCD = irq_vector & 0x0038;
 				/* RST $xx + 2 cycles */
-				Z80.ICount -= cc[Z80_TABLE_op][PCD] + cc[Z80_TABLE_ex][PCD];
+				z80_ICount -= cc[Z80_TABLE_op][PCD] + cc[Z80_TABLE_ex][PCD];
 				break;
 		}
 	}
@@ -3566,9 +3568,9 @@ void Z80Exit()
 
 int Z80Execute(int cycles)
 {
-	Z80.ICount = cycles;
+	z80_ICount = cycles;
 	Z80.cycles_left = cycles;
-	Z80.end_run = 0;
+	end_run = 0;
 
 	/* check for NMIs on the way in; they can only be set externally */
 	/* via timers, and can't be dynamically enabled, so it is safe */
@@ -3584,7 +3586,7 @@ int Z80Execute(int cycles)
 		PCD = 0x0066;
 		WZ=PCD;
 		change_pc(PCD);
-		Z80.ICount -= 11;
+		z80_ICount -= 11;
 		Z80.nmi_pending = FALSE;
 	}
 
@@ -3599,11 +3601,11 @@ int Z80Execute(int cycles)
 //		CALL_DEBUGGER(PCD);
 		R++;
 		EXEC_INLINE(op,ROP());
-	} while( Z80.ICount > 0 && !Z80.end_run );
+	} while( z80_ICount > 0 && !end_run );
 
-	cycles = cycles - Z80.ICount;
+	cycles = cycles - z80_ICount;
 
-	Z80.cycles_left = Z80.ICount = 0;
+	Z80.cycles_left = z80_ICount = 0;
 
     if (Z80.daisy && z80daisy_has_ctc) {
         z80ctc_timer_update(cycles);
@@ -3614,12 +3616,12 @@ int Z80Execute(int cycles)
 
 void Z80StopExecute()
 {
-	Z80.end_run = 1;
+	end_run = 1;
 }
 
 INT32 z80TotalCycles()
 {
-	return Z80.cycles_left - Z80.ICount;
+	return Z80.cycles_left - z80_ICount;
 }
 
 void Z80Burn(int cycles)
@@ -3629,7 +3631,7 @@ void Z80Burn(int cycles)
 		/* NOP takes 4 cycles per instruction */
 		int n = (cycles + 3) / 4;
 		R += n;
-		Z80.ICount -= 4 * n;
+		z80_ICount -= 4 * n;
 	}
 }
 
@@ -3937,7 +3939,7 @@ static void z80_exit(void)
 
 static int z80_execute(int cycles)
 {
-	Z80.ICount = cycles;
+	z80_ICount = cycles;
 
 	/* check for NMIs on the way in; they can only be set externally */
 	/* via timers, and can't be dynamically enabled, so it is safe */
@@ -3953,7 +3955,7 @@ static int z80_execute(int cycles)
 		PCD = 0x0066;
 		WZ=PCD;
 		change_pc(PCD);
-		Z80.ICount -= 11;
+		z80_ICount -= 11;
 		Z80.nmi_pending = FALSE;
 	}
 
@@ -3968,9 +3970,9 @@ static int z80_execute(int cycles)
 		CALL_DEBUGGER(PCD);
 		R++;
 		EXEC_INLINE(op,ROP());
-	} while( Z80.ICount > 0 );
+	} while( z80_ICount > 0 );
 
-	return cycles - Z80.ICount;
+	return cycles - z80_ICount;
 }
 
 /****************************************************************************
@@ -3983,7 +3985,7 @@ static void z80_burn(int cycles)
 		/* NOP takes 4 cycles per instruction */
 		int n = (cycles + 3) / 4;
 		R += n;
-		Z80.ICount -= 4 * n;
+		z80_ICount -= 4 * n;
 	}
 }
 
@@ -4156,7 +4158,7 @@ void z80_get_info(UINT32 state, cpuinfo *info)
 #ifdef ENABLE_DEBUGGER
 		case CPUINFO_PTR_DISASSEMBLE:				info->disassemble = z80_dasm;				break;
 #endif
-		case CPUINFO_PTR_INSTRUCTION_COUNTER:				info->icount = &Z80.ICount;			break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:				info->icount = &z80_ICount;			break;
 		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_op:	info->p = (void *)cc[Z80_TABLE_op];	break;
 		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_cb:	info->p = (void *)cc[Z80_TABLE_cb];	break;
 		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_ed:	info->p = (void *)cc[Z80_TABLE_ed];	break;

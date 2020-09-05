@@ -76,7 +76,7 @@
 #include "neocdlist.h"
 
 // #undef USE_SPEEDHACKS
-static INT32 NEO_RASTER_IRQ_TWEAK = 0; // spinmast prefers offset of 3 here.
+
 // #define LOG_IRQ
 // #define LOG_DRAW
 
@@ -674,7 +674,6 @@ static INT32 LoadRoms()
 	if (!strcmp("alpham2p", BurnDrvGetTextA(DRV_NAME))) nYM2610ADPCMASize[nNeoActiveSlot] = 0x200000;
 	if (!strcmp("burningfp", BurnDrvGetTextA(DRV_NAME))) nYM2610ADPCMASize[nNeoActiveSlot] = 0x180000;
 	if (!strcmp("burningfpa", BurnDrvGetTextA(DRV_NAME))) nYM2610ADPCMASize[nNeoActiveSlot] = 0x200000;
-	if (!strcmp("burningfpb", BurnDrvGetTextA(DRV_NAME))) nYM2610ADPCMASize[nNeoActiveSlot] = 0x200000;
 	if (!strcmp("gpilotsp", BurnDrvGetTextA(DRV_NAME))) nYM2610ADPCMASize[nNeoActiveSlot] = 0x180000;
 	if (!strcmp("lresortp", BurnDrvGetTextA(DRV_NAME))) nYM2610ADPCMASize[nNeoActiveSlot] = 0x200000;
 	if (!strcmp("kotm2p", BurnDrvGetTextA(DRV_NAME))) nYM2610ADPCMASize[nNeoActiveSlot] = 0x300000;
@@ -1485,7 +1484,6 @@ INT32 NeoScan(INT32 nAction, INT32* pnMin)
 		SCAN_VAR(nNeoWatchdog);
 #endif
 
-		SCAN_VAR(bZ80BoardROMBankedIn);
 		SCAN_VAR(b68KBoardROMBankedIn);
 		if (nNeoSystemType & NEO_SYS_CART) {
 			SCAN_VAR(bBIOSTextROMEnabled);
@@ -3588,7 +3586,7 @@ static UINT16 __fastcall neogeoReadWordTransfer(UINT32 sekAddress)
 
 	switch (nActiveTransferArea) {
 		case 0:							// Sprites
-			return BURN_ENDIAN_SWAP_INT16(*((UINT16*)(NeoSpriteRAM + nSpriteTransferBank + (sekAddress & 0xFFFFF))));
+			return *((UINT16*)(NeoSpriteRAM + nSpriteTransferBank + (sekAddress & 0xFFFFF)));
 			break;
 		case 1:							// ADPCM
 			return 0xFF00 | YM2610ADPCMAROM[nNeoActiveSlot][nADPCMTransferBank + ((sekAddress & 0x0FFFFF) >> 1)];
@@ -3646,7 +3644,7 @@ static void __fastcall neogeoWriteWordTransfer(UINT32 sekAddress, UINT16 wordVal
 
 	switch (nActiveTransferArea) {
 		case 0:							// Sprites
-			*((UINT16*)(NeoSpriteRAM + nSpriteTransferBank + (sekAddress & 0xFFFFF))) = BURN_ENDIAN_SWAP_INT16(wordValue);
+			*((UINT16*)(NeoSpriteRAM + nSpriteTransferBank + (sekAddress & 0xFFFFF))) = wordValue;
 			NeoCDOBJBankUpdate[nSpriteTransferBank >> 20] = true;
 			break;
 		case 1:							// ADPCM
@@ -3666,10 +3664,10 @@ static void __fastcall neogeoWriteWordTransfer(UINT32 sekAddress, UINT16 wordVal
 static UINT16 __fastcall neogeoCDReadWord68KProgram(UINT32 sekAddress)
 {
 	if (sekAddress < 0x80 && NeoCDVectorSwitch == 0) {
-		return BURN_ENDIAN_SWAP_INT16(*((UINT16*)(NeoVectorActive + sekAddress)));
+		return *((UINT16*)(NeoVectorActive + sekAddress));
 	}
 
-	return BURN_ENDIAN_SWAP_INT16(*((UINT16*)(Neo68KROMActive + sekAddress)));
+	return *((UINT16*)(Neo68KROMActive + sekAddress));
 }
 
 static UINT8 __fastcall neogeoCDReadByte68KProgram(UINT32 sekAddress)
@@ -4084,8 +4082,6 @@ static INT32 NeoInitCommon()
 	nScanlineOffset = 0xF8;									// correct as verified on MVS hardware
 #endif
 
-	NEO_RASTER_IRQ_TWEAK = 0;
-
 	// These games rely on reading the line counter for synchronising raster effects
 	if (!strcmp(BurnDrvGetTextA(DRV_NAME), "mosyougi")) {
 		bRenderLineByLine = true;
@@ -4100,9 +4096,6 @@ static INT32 NeoInitCommon()
 	}
 	if (!strcmp(BurnDrvGetTextA(DRV_NAME), "zedblade")) {
 		bRenderLineByLine = true;
-	}
-	if (!strcmp(BurnDrvGetTextA(DRV_NAME), "spinmast")) {
-		NEO_RASTER_IRQ_TWEAK = 3; // fix glitches along the bottom of screen in the water level.
 	}
 
 	//if (!strcmp(BurnDrvGetTextA(DRV_NAME), "neocdz")) {
@@ -4863,7 +4856,7 @@ INT32 NeoFrame()
 			case 0x0061: bRenderMode = 1; break; // ssideki2 (cd)
 			case 0x0200: bRenderMode = 1; break; // turfmasters (cd)
 		}
-		bRenderLineByLine = /*(!bNeoCDIRQEnabled) &&*/ bRenderMode;
+		bRenderLineByLine = (!bNeoCDIRQEnabled) && bRenderMode;
 	}
 
 	bRenderImage = pBurnDraw != NULL && bNeoEnableGraphics;
@@ -4896,12 +4889,12 @@ INT32 NeoFrame()
 				bForcePartialRender = bRenderImage;
 				if (bForcePartialRender) {
 					nSliceStart = nSliceEnd;
-					nSliceEnd = SekCurrentScanline() - 5 + NEO_RASTER_IRQ_TWEAK;
+					nSliceEnd = SekCurrentScanline() - 5;
 				}
 			} else {
 				if (bForcePartialRender) {
 					nSliceStart = nSliceEnd;
-					nSliceEnd = SekCurrentScanline() - 6 + NEO_RASTER_IRQ_TWEAK;
+					nSliceEnd = SekCurrentScanline() - 6;
 				}
 			}
 
@@ -4962,7 +4955,7 @@ INT32 NeoFrame()
 				if (bForcePartialRender) {
 
 					nSliceStart = nSliceEnd;
-					nSliceEnd = SekCurrentScanline() - 5 + NEO_RASTER_IRQ_TWEAK;
+					nSliceEnd = SekCurrentScanline() - 5;
 
 					if (nSliceEnd > 240) {
 						nSliceEnd = 240;

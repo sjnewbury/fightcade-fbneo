@@ -46,10 +46,10 @@ static UINT8 DrvReset;
 static UINT8 DrvInputs[1];
 static UINT8 DrvDips[1];
 
-static INT16 LethalGun0 = 0;
-static INT16 LethalGun1 = 0;
-static INT16 LethalGun2 = 0;
-static INT16 LethalGun3 = 0;
+static INT32 LethalGun0 = 0;
+static INT32 LethalGun1 = 0;
+static INT32 LethalGun2 = 0;
+static INT32 LethalGun3 = 0;
 static UINT8 ReloadGun0 = 0;
 static UINT8 ReloadGun1 = 0;
 
@@ -582,7 +582,7 @@ static void DrvPaletteRecalc()
 
 	for (INT32 i = 0; i < 0x3802/2; i++)
 	{
-		UINT16 p = (BURN_ENDIAN_SWAP_INT16(pal[i]) >> 8) | (BURN_ENDIAN_SWAP_INT16(pal[i]) << 8);
+		UINT16 p = (pal[i] >> 8) | (pal[i] << 8);
 
 		INT32 r = (p & 0x1f);
 		INT32 g = (p >> 5) & 0x1f;

@@ -1,19 +1,19 @@
-// Audio Output
+#// Audio Output
 #include "burner.h"
 
 INT32 nAudSampleRate[8] = { 44100, 44100, 22050, 22050, 22050, 22050, 22050, 22050 };			// sample rate
-INT32 nAudVolume = 10000;				// Sound volume (% * 100)
-INT32 nAudSegCount = 6;				// Segs in the pdsbLoop buffer
+INT32 nAudVolume = 10000;			// Sound volume (% * 100)
+INT32 nAudSegCount = 3;				// Segs in the pdsbLoop buffer
 INT32 nAudSegLen = 0;					// Seg length in samples (calculated from Rate/Fps)
-INT32 nAudAllocSegLen = 0;
-UINT8 bAudOkay = 0;			// True if DSound was initted okay
-UINT8 bAudPlaying = 0;		// True if the Loop buffer is playing
+INT32 nAudAllocSegLen = 0;		// Seg length in bytes
+UINT8 bAudOkay = 0;						// True if was initted okay
+UINT8 bAudPlaying = 0;				// True if the Loop buffer is playing
 
-INT32 nAudDSPModule[8] = { 0, };				// DSP module to use: 0 = none, 1 = low-pass filter
+INT32 nAudDSPModule[8] = { 0, };	// DSP module to use: 0 = none, 1 = low-pass filter
 
-INT16* nAudNextSound = NULL;		// The next sound seg we will add to the sample loop
+INT16* nAudNextSound = NULL;	// The next sound seg we will add to the sample loop
 
-UINT32 nAudSelect = 0;		// Which audio plugin is selected
+UINT32 nAudSelect = 1;				// Which audio plugin is selected
 static UINT32 nAudActive = 0;
 
 #if defined (BUILD_WIN32)
@@ -67,21 +67,13 @@ static struct AudOut *pAudOut[]=
 
 static InterfaceInfo AudInfo = { NULL, NULL, NULL };
 
+
 INT32 AudBlankSound()
 {
 	if (!bAudOkay || nAudActive >= AUD_LEN) {
 		return 1;
 	}
 	return pAudOut[nAudActive]->BlankSound();
-}
-
-// This function checks the Sound loop, and if necessary gets some more sound
-INT32 AudSoundCheck()
-{
-	if (!bAudOkay || nAudActive >= AUD_LEN) {
-		return 1;
-	}
-	return pAudOut[nAudActive]->SoundCheck();
 }
 
 INT32 AudSoundInit()
@@ -101,12 +93,36 @@ INT32 AudSoundInit()
 	return nRet;
 }
 
-INT32 AudSetCallback(INT32 (*pCallback)(INT32))
+INT32 AudSoundExit()
+{
+	IntInfoFree(&AudInfo);
+
+	if (!bAudOkay || nAudActive >= AUD_LEN) {
+		return 1;
+	}
+	bAudOkay = false;
+
+	INT32 nRet = pAudOut[nAudActive]->SoundExit();
+
+	nAudActive = 0;
+
+	return nRet;
+}
+
+INT32 AudSoundCheck()
 {
 	if (!bAudOkay || nAudActive >= AUD_LEN) {
 		return 1;
 	}
-	return pAudOut[nAudActive]->SetCallback(pCallback);
+	return pAudOut[nAudActive]->SoundCheck();
+}
+
+INT32 AudSoundFrame()
+{
+	if (!bAudOkay || nAudActive >= AUD_LEN) {
+		return 1;
+	}
+	return pAudOut[nAudActive]->SoundFrame();
 }
 
 INT32 AudSoundPlay()
@@ -115,6 +131,7 @@ INT32 AudSoundPlay()
 		return 1;
 	}
 
+	AudBlankSound();
 	INT32 nRet = pAudOut[nAudActive]->SoundPlay();
 	if (!nRet) {
 		bAudPlaying = true;
@@ -132,22 +149,6 @@ INT32 AudSoundStop()
 	bAudPlaying = false;
 
 	return pAudOut[nAudActive]->SoundStop();
-}
-
-INT32 AudSoundExit()
-{
-	IntInfoFree(&AudInfo);
-
-	if (!bAudOkay || nAudActive >= AUD_LEN) {
-		return 1;
-	}
-	bAudOkay = false;
-
-	INT32 nRet = pAudOut[nAudActive]->SoundExit();
-
-	nAudActive = 0;
-
-	return nRet;
 }
 
 INT32 AudSoundSetVolume()
@@ -199,7 +200,7 @@ INT32 AudSelect(UINT32 nPlugIn)
 
 void AudWriteSilence()
 {
-	if (nAudNextSound) {
+	if (nAudNextSound && nAudAllocSegLen) {
 		memset(nAudNextSound, 0, nAudAllocSegLen);
 	}
 }

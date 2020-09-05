@@ -888,7 +888,7 @@ void nesapuUpdate(INT32 chip, INT16 *buffer, INT32 samples)
 }
 
 /* READ VALUES FROM REGISTERS */
-UINT8 nesapuRead(INT32 chip, INT32 address, UINT8 open_bus)
+UINT8 nesapuRead(INT32 chip, INT32 address)
 {
 #if defined FBNEO_DEBUG
 	if (!DebugSnd_NESAPUSndInitted) bprintf(PRINT_ERROR, _T("nesapuRead called without init\n"));
@@ -910,7 +910,7 @@ UINT8 nesapuRead(INT32 chip, INT32 address, UINT8 open_bus)
 
 	if (address == 0x15)
 	{
-		INT32 readval = open_bus & 0x20; // 0x20 open_bus -dink
+		INT32 readval = 0x20; // 0x20 open_bus bit.. not important for now. -dink
 		if (info->APU.squ[0].vbl_length > 0)
 			readval |= 0x01;
 
@@ -1035,20 +1035,17 @@ void nesapuInit(INT32 chip, INT32 clock, INT32 is_pal, UINT32 (*pSyncCallback)(I
 
 	info->samples_per_frame = ((info->real_rate * 100) / nBurnFPS) + 1;
 
-	info->nSampleSize = (UINT64)info->real_rate * (1 << 16) / ((nBurnSoundRate == 0) ? 44100 : nBurnSoundRate);
+	info->nSampleSize = (UINT64)info->real_rate * (1 << 16) / nBurnSoundRate;
 
 	info->nFractionalPosition = 0;
 
 	info->pSyncCallback = pSyncCallback;
 
 	info->bAdd = bAdd;
-
-	if (chip == 0) {
-		// cycles per frame: 29781 ntsc, 33248 pal
-		dmc_buffer = (UINT8*)BurnMalloc((cycles_per_frame + 5) * 2);
-		nes_ext_buffer = (INT16*)BurnMalloc((cycles_per_frame + 5) * 2 * 2);
-		nes_ext_sound_cb = NULL;
-	}
+	// cycles per frame: 29781 ntsc, 33248 pal
+	dmc_buffer = (UINT8*)BurnMalloc((cycles_per_frame + 5) * 2);
+	nes_ext_buffer = (INT16*)BurnMalloc((cycles_per_frame + 5) * 2 * 2);
+	nes_ext_sound_cb = NULL;
 	nesapu_mixermode = 0xff; // enable all
 
 	info->stream = NULL;

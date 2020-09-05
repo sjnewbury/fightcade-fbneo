@@ -127,10 +127,10 @@ static struct BurnInputInfo SdungeonInputList[] = {
 	{"P1 Left Stick Down",	BIT_DIGITAL,	DrvJoy1 + 2,	"p1 down"	},
 	{"P1 Left Stick Left",	BIT_DIGITAL,	DrvJoy1 + 3,	"p1 left"	},
 	{"P1 Left Stick Right",	BIT_DIGITAL,	DrvJoy1 + 1,	"p1 right"	},
-	{"P1 Right Stick Up",	BIT_DIGITAL,	DrvJoy1 + 4,	"p1 up 2"	},
-	{"P1 Right Stick Down",	BIT_DIGITAL,	DrvJoy1 + 6,	"p1 down 2"	},
-	{"P1 Right Stick Left",	BIT_DIGITAL,	DrvJoy1 + 7,	"p1 left 2"	},
-	{"P1 Right Stick Right",BIT_DIGITAL,	DrvJoy1 + 5,	"p1 right 2"},
+	{"P1 Right Stick Up",	BIT_DIGITAL,	DrvJoy1 + 4,	"p3 up"		},
+	{"P1 Right Stick Down",	BIT_DIGITAL,	DrvJoy1 + 6,	"p3 down"	},
+	{"P1 Right Stick Left",	BIT_DIGITAL,	DrvJoy1 + 7,	"p3 left"	},
+	{"P1 Right Stick Right",BIT_DIGITAL,	DrvJoy1 + 5,	"p3 right"	},
 
 	{"P2 Coin",				BIT_DIGITAL,	DrvJoy2 + 5,	"p2 coin"	},
 	{"P2 Left Stick Start",	BIT_DIGITAL,	DrvJoy4 + 1,	"p2 start"	},
@@ -138,10 +138,10 @@ static struct BurnInputInfo SdungeonInputList[] = {
 	{"P2 Left Stick Down",	BIT_DIGITAL,	DrvJoy5 + 2,	"p2 down"	},
 	{"P2 Left Stick Left",	BIT_DIGITAL,	DrvJoy5 + 3,	"p2 left"	},
 	{"P2 Left Stick Right",	BIT_DIGITAL,	DrvJoy5 + 1,	"p2 right"	},
-	{"P2 Right Stick Up",	BIT_DIGITAL,	DrvJoy5 + 4,	"p2 up 2"	},
-	{"P2 Right Stick Down",	BIT_DIGITAL,	DrvJoy5 + 6,	"p2 down 2"	},
-	{"P2 Right Stick Left",	BIT_DIGITAL,	DrvJoy5 + 7,	"p2 left 2"	},
-	{"P2 Right Stick Right",BIT_DIGITAL,	DrvJoy5 + 5,	"p2 right 2"},
+	{"P2 Right Stick Up",	BIT_DIGITAL,	DrvJoy5 + 4,	"p4 up"		},
+	{"P2 Right Stick Down",	BIT_DIGITAL,	DrvJoy5 + 6,	"p4 down"	},
+	{"P2 Right Stick Left",	BIT_DIGITAL,	DrvJoy5 + 7,	"p4 left"	},
+	{"P2 Right Stick Right",BIT_DIGITAL,	DrvJoy5 + 5,	"p4 right"	},
 
 	{"P3 Coin",				BIT_DIGITAL,	DrvJoy2 + 6,	"p3 coin"	},
 
@@ -220,10 +220,10 @@ static struct BurnInputInfo ComplexxInputList[] = {
 	{"P1 Left Stick Down",	BIT_DIGITAL,	DrvJoy1 + 2,	"p1 down"	},
 	{"P1 Left Stick Left",	BIT_DIGITAL,	DrvJoy1 + 3,	"p1 left"	},
 	{"P1 Left Stick Right",	BIT_DIGITAL,	DrvJoy1 + 1,	"p1 right"	},
-	{"P1 Right Stick Up",	BIT_DIGITAL,	DrvJoy5 + 4,	"p1 up 2"	},
-	{"P1 Right Stick Down",	BIT_DIGITAL,	DrvJoy5 + 6,	"p1 down 2"	},
-	{"P1 Right Stick Left",	BIT_DIGITAL,	DrvJoy5 + 7,	"p1 left 2"	},
-	{"P1 Right Stick Right",BIT_DIGITAL,	DrvJoy5 + 5,	"p1 right 2"},
+	{"P2 Right Stick Up",	BIT_DIGITAL,	DrvJoy5 + 4,	"p2 up"		},
+	{"P2 Right Stick Down",	BIT_DIGITAL,	DrvJoy5 + 6,	"p2 down"	},
+	{"P2 Right Stick Left",	BIT_DIGITAL,	DrvJoy5 + 7,	"p2 left"	},
+	{"P2 Right Stick Right",BIT_DIGITAL,	DrvJoy5 + 5,	"p2 right"	},
 	{"P1 Button 1",			BIT_DIGITAL,	DrvJoy1 + 4,	"p1 fire 1"	},
 
 	{"P2 Coin",				BIT_DIGITAL,	DrvJoy2 + 5,	"p2 coin"	},
@@ -306,7 +306,11 @@ static UINT8 qix_main_read(UINT16 address)
 	switch (address)
 	{
 		case 0x8c00:
-			M6809SetIRQLine(1, 1, CPU_IRQSTATUS_ACK);
+			M6809Close();
+			M6809Open(1);
+			M6809SetIRQLine(1, CPU_IRQSTATUS_ACK);
+			M6809Close();
+			M6809Open(0);
 			return 0xff;
 
 		case 0x8c01:
@@ -352,7 +356,11 @@ static void qix_main_write(UINT16 address, UINT8 data)
 	switch (address)
 	{
 		case 0x8c00:
-			M6809SetIRQLine(1, 1, CPU_IRQSTATUS_ACK);
+			M6809Close();
+			M6809Open(1);
+			M6809SetIRQLine(1, CPU_IRQSTATUS_ACK);
+			M6809Close();
+			M6809Open(0);
 		return;
 
 		case 0x8c01:
@@ -391,7 +399,11 @@ static UINT8 qix_video_read(UINT16 address)
 			return 0; // ??
 
 		case 0x8c00:
-			M6809SetIRQLine(0, 1, CPU_IRQSTATUS_ACK);
+			M6809Close();
+			M6809Open(0);
+			M6809SetIRQLine(1, CPU_IRQSTATUS_ACK);
+			M6809Close();
+			M6809Open(1);
 			return 0xff;
 
 		case 0x8c01:
@@ -450,7 +462,11 @@ static void qix_video_write(UINT16 address, UINT8 data)
 	switch (address)
 	{
 		case 0x8c00:
-			M6809SetIRQLine(0, 1, CPU_IRQSTATUS_ACK);
+			M6809Close();
+			M6809Open(0);
+			M6809SetIRQLine(1, CPU_IRQSTATUS_ACK);
+			M6809Close();
+			M6809Open(1);
 		return;
 
 		case 0x8c01:

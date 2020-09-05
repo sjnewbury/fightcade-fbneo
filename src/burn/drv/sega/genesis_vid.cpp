@@ -3,7 +3,6 @@
 
 INT32 GenesisScreenNumber;
 UINT32 *GenesisPalette = NULL;
-UINT16 *GenesisPaletteRaw = NULL;
 UINT16 GenesisPaletteBase;
 UINT8 VdpBgColour;
 
@@ -241,15 +240,6 @@ inline static UINT8 pal3bit(UINT8 bits)
 	return (bits << 5) | (bits << 2) | (bits >> 1);
 }
 
-void GenesisPaletteRecalc()
-{
-	for (INT32 i = 0; i < CRAM_SIZE; i++) {
-		UINT16 data = GenesisPaletteRaw[i];
-
-		GenesisPalette[i + GenesisPaletteBase] = BurnHighCol(pal3bit(data >> 1), pal3bit(data >> 5), pal3bit(data >> 9), 0);
-	}
-}
-
 static void VDPDataWrite(UINT16 data)
 {
 	VdpCmdPart = 0;
@@ -269,7 +259,6 @@ static void VDPDataWrite(UINT16 data)
 			//palette_set_color(Machine, offset + genesis_palette_base, pal3bit(data >> 1), pal3bit(data >> 5), pal3bit(data >> 9));
 			//System16Palette[offset + 0x1800 /*GenesisPaletteBase*/] = BurnHighCol(pal3bit(data >> 1), pal3bit(data >> 5), pal3bit(data >> 9), 0);
 			GenesisPalette[offset + GenesisPaletteBase] = BurnHighCol(pal3bit(data >> 1), pal3bit(data >> 5), pal3bit(data >> 9), 0);
-			GenesisPaletteRaw[offset] = data;
 			break;
 		}
 		
@@ -310,6 +299,12 @@ void GenesisVDPWrite(UINT32 offset, UINT16 data)
 INT32 StartGenesisVDP(INT32 ScreenNum, UINT32* pal)
 {
 	INT32 i;
+	static const UINT8 VdpInit[24] =
+	{
+		0x04, 0x44, 0x30, 0x3C, 0x07, 0x6C, 0x00, 0x00,
+		0x00, 0x00, 0xFF, 0x00, 0x01, 0x37, 0x00, 0x02,
+		0x01, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x80,
+	};
 	
 	GenesisScreenNumber = ScreenNum;
 	
@@ -318,8 +313,10 @@ INT32 StartGenesisVDP(INT32 ScreenNum, UINT32* pal)
 	VdpVRAM = (UINT8*)BurnMalloc(VRAM_SIZE);
 	VdpVSRAM = (UINT8*)BurnMalloc(VSRAM_SIZE);
 	VdpTransLookup = (UINT16*)BurnMalloc(0x1000 * sizeof(UINT16));
-	GenesisPaletteRaw = (UINT16*)BurnMalloc(CRAM_SIZE * sizeof(UINT16));
-
+	
+	memset(VdpVRAM, 0, VRAM_SIZE);
+	memset(VdpVSRAM, 0, VSRAM_SIZE);
+	
 	// Init the transparency lookup table
 	for (i = 0; i < 0x1000; i++) {
 		INT32 OriginalColour = i & 0x7ff;
@@ -341,32 +338,14 @@ INT32 StartGenesisVDP(INT32 ScreenNum, UINT32* pal)
 	GenesisBgPalLookup[3] = GenesisSpPalLookup[3] = 0x30;
 	
 	// Reset VDP
-	GenesisVDPReset();
-
-	return 0;
-}
-
-void GenesisVDPReset()
-{
-	static const UINT8 VdpInit[24] =
-	{
-		0x04, 0x44, 0x30, 0x3C, 0x07, 0x6C, 0x00, 0x00,
-		0x00, 0x00, 0xFF, 0x00, 0x01, 0x37, 0x00, 0x02,
-		0x01, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x80,
-	};
-
-	memset(VdpVRAM, 0, VRAM_SIZE);
-	memset(VdpVSRAM, 0, VSRAM_SIZE);
-	memset(GenesisPaletteRaw, 0, CRAM_SIZE * sizeof(UINT16));
-
-	// Reset VDP
-	for (INT32 i = 0; i < 24; i++) {
+	for (i = 0; i < 24; i++) {
 		VdpRegisterWrite(0x8000 | (i << 8) | VdpInit[i], 1);
 	}
-
 	VdpCmdPart = 0;
 	VdpCode = 0;
 	VdpAddress = 0;
+	
+	return 0;
 }
 
 void GenesisVDPExit()
@@ -374,8 +353,7 @@ void GenesisVDPExit()
 	BurnFree(VdpVRAM);
 	BurnFree(VdpVSRAM);
 	BurnFree(VdpTransLookup);
-	BurnFree(GenesisPaletteRaw);
-
+	
 	memset(GenesisVdpRegs, 0, sizeof(GenesisVdpRegs));
 	memset(GenesisBgPalLookup, 0, sizeof(GenesisBgPalLookup));
 	memset(GenesisSpPalLookup, 0, sizeof(GenesisSpPalLookup));
@@ -407,12 +385,22 @@ void GenesisVDPExit()
 
 void GenesisVDPScan()
 {
-	ScanVar(VdpVRAM, VRAM_SIZE, "GenVDP VRAM");
-	ScanVar(VdpVSRAM, VSRAM_SIZE, "GenVDP VSRAM");
-	ScanVar(GenesisPaletteRaw, CRAM_SIZE * sizeof(UINT16), "GenVDPPalette");
+	struct BurnArea ba;
+	
+	memset(&ba, 0, sizeof(ba));
+	ba.Data = VdpVRAM;
+	ba.nLen = VRAM_SIZE;
+	ba.szName = "GenVDP VRAM";
+	BurnAcb(&ba);
+	
+	memset(&ba, 0, sizeof(ba));
+	ba.Data = VdpVSRAM;
+	ba.nLen = VSRAM_SIZE;
+	ba.szName = "GenVDP VSRAM";
+	BurnAcb(&ba);
 
-	SCAN_VAR(GenesisVdpRegs);
-
+	ScanVar(GenesisVdpRegs, 32, "GenVDP Regs");
+	
 	SCAN_VAR(VdpBgColour);
 	SCAN_VAR(VdpScrollABase);
 	SCAN_VAR(VdpScrollBBase);
@@ -843,9 +831,8 @@ void vdp_drawline(UINT16 *bitmap, UINT32 line, INT32 bgfill)
 		bitmap[column] = bgcolor;
 
 	/* if display is disabled, stop */
-	if (!(GenesisVdpRegs[1] & 0x40)) {
+	if (!(GenesisVdpRegs[1] & 0x40))
 		return;
-	}
 
 	/* Sprites need to be Drawn in Reverse order .. may as well sort them here */
 	link = lowsprites = highsprites = 0;

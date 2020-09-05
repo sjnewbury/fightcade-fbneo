@@ -223,7 +223,7 @@ BEGIN
     CONTROL         BMP_ABOUT,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE | SS_SUNKEN,3,3,100,50
     CONTROL         "version",IDC_FBA_VER,"Static",SS_OWNERDRAW | WS_GROUP,83,65,269,10
     CONTROL         "specialbuild",IDC_SPECIALSTRING,"Static",SS_OWNERDRAW | WS_GROUP,83,73,269,10
-    LTEXT           "FB Neo contains parts of MAME && Final Burn.\n© 2004-2020, Team FBNeo.",IDC_STATIC,6,88,235,16,WS_DISABLED
+    LTEXT           "FightcadeFBNeo is a fork of FB Neo, based on parts of MAME && Final Burn.\n© 2004-2020, Team Fightcade.",IDC_STATIC,6,88,235,16,WS_DISABLED
     DEFPUSHBUTTON   "OK",IDOK,305,90,50,14
     PUSHBUTTON      "License",IDC_SHOWLICENSE,251,90,50,14
     CONTROL         "",IDC_LICENSE,"RICHEDIT20A",ES_MULTILINE | ES_READONLY | WS_VSCROLL | ES_NOIME,3,109,353,77, WS_EX_STATICEDGE | ES_EX_NOCALLOLEINIT
@@ -490,6 +490,37 @@ BEGIN
 	CONTROL			"",IDC_MESSAGE_ICON,"Static",SS_OWNERDRAW,7,7,30,30
     CONTROL         "",IDC_MESSAGE_EDIT_LOCAL,"RICHEDIT20A",ES_MULTILINE | ES_READONLY | ES_WANTRETURN | ES_NOIME | WS_TABSTOP | NOT WS_VISIBLE,38,7,4,2 | ES_EX_NOCALLOLEINIT
     CONTROL         "",IDC_MESSAGE_EDIT_ENG,"RICHEDIT20A",ES_MULTILINE | ES_READONLY | ES_WANTRETURN | ES_NOIME | WS_TABSTOP,38,7,4,2 | ES_EX_NOCALLOLEINIT
+END
+
+IDD_PERFMON DIALOGEX 0, 0, 326, 257
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION
+EXSTYLE WS_EX_PALETTEWINDOW
+CAPTION "Performance Monitor"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Close",IDC_CLOSE,269,233,50,14
+    GROUPBOX        "Quark Engine",IDC_STATIC,7,109,312,118
+    LTEXT           "0 frames",IDC_FRAME_LAG,90,89,52,8
+    LTEXT           "Local Status:",IDC_STATIC,17,201,68,8
+    LTEXT           "0 frames",IDC_LOCAL_AHEAD,75,201,40,8
+    LTEXT           "Remote Status:",IDC_STATIC,17,211,68,8
+    LTEXT           "0 frames",IDC_REMOTE_AHEAD,75,211,39,8
+    GROUPBOX        "Network",IDC_STATIC,7,7,312,96
+    CONTROL         "",IDC_NETWORK_GRAPH,"Static",SS_OWNERDRAW | WS_BORDER,13,18,301,55,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_FAIRNESS_GRAPH,"Static",SS_OWNERDRAW | WS_BORDER,13,122,302,73,WS_EX_CLIENTEDGE
+    LTEXT           "Process Id:",IDC_STATIC,7,242,38,8
+    LTEXT           "",IDC_PID,46,242,39,8
+    LTEXT           "Local CPU Usage:",IDC_STATIC,160,201,68,8
+    LTEXT           "0 %",IDC_LOCAL_CPU,240,201,40,8
+    LTEXT           "Remote CPU Usage:",IDC_STATIC,160,211,68,8
+    LTEXT           "0 %",IDC_REMOTE_CPU,240,211,39,8
+    LTEXT           "Network Latency:",IDC_STATIC,15,79,68,8
+    LTEXT           "Frame Latency:",IDC_STATIC,16,89,51,8
+    LTEXT           "0 ms",IDC_NETWORK_LAG,90,79,40,8
+    LTEXT           "Network Bandwidth:",IDC_STATIC,160,78,66,8
+    LTEXT           "0 kbps",IDC_BANDWIDTH,240,78,40,8
+    LTEXT           "Packet Loss Rate:",IDC_STATIC,160,89,58,8
+    LTEXT           "0 %",IDC_PACKET_LOSS,240,89,52,8
 END
 
 IDD_SUPPORTDIR DIALOGEX 0, 0, 242, 81
@@ -822,6 +853,22 @@ BEGIN
     CONTROL         "OK",IDOK,"Button",WS_TABSTOP,180,59,58,14
 END
 
+IDD_LUA DIALOGEX 0, 0, 270, 150
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Lua Script"
+MENU LUAWINDOW_MENU
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Browse...",IDC_BUTTON_LUABROWSE,7,31,48,16
+    PUSHBUTTON      "Run",IDC_BUTTON_LUARUN,213,31,50,16
+    PUSHBUTTON      "Stop",IDC_BUTTON_LUASTOP,160,31,50,16
+    EDITTEXT        IDC_EDIT_LUAPATH,7,16,256,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_LUACONSOLE,7,61,256,81,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL
+    LTEXT           "Output Console",IDC_STATIC,7,51,51,8
+    LTEXT           "Script File",IDC_STATIC,7,7,32,8
+    PUSHBUTTON      "Edit",IDC_BUTTON_LUAEDIT,58,31,46,16
+END
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Menu
@@ -832,9 +879,9 @@ BEGIN
     POPUP "Game"
     BEGIN
         MENUITEM "Load game...\tF6",					MENU_LOAD
-        MENUITEM "Play via Kaillera...",				MENU_STARTNET
+        /* @FC
         POPUP "Most recent games..."
-	BEGIN
+		BEGIN
             MENUITEM "no game selected",				MENU_PREVIOUSGAMES1, GRAYED
             MENUITEM "no game selected",				MENU_PREVIOUSGAMES2, GRAYED
             MENUITEM "no game selected",				MENU_PREVIOUSGAMES3, GRAYED
@@ -866,6 +913,7 @@ BEGIN
 	        MENUITEM "Insert memory card\tF7",				MENU_MEMCARD_INSERT
         	MENUITEM "Eject memory card\tF7",				MENU_MEMCARD_EJECT
         END
+        */
         MENUITEM SEPARATOR
         POPUP "Replay..."
         BEGIN
@@ -888,16 +936,17 @@ BEGIN
         	END
         	MENUITEM "Restore full state on load",				MENU_ALLRAM
         END
-#ifdef INCLUDE_AVI_RECORDING
+//#ifdef INCLUDE_AVI_RECORDING
         MENUITEM SEPARATOR
         MENUITEM "Record AVI",                  			MENU_AVISTART, GRAYED
         MENUITEM "Stop recording",              			MENU_AVISTOP, GRAYED
-#endif
+//#endif
         MENUITEM SEPARATOR
         MENUITEM "Exit emulator\tAlt+F4",				MENU_EXIT
     END
     POPUP "Video"
     BEGIN
+        /* @FC */
         POPUP "&Select blitter"
         BEGIN
             MENUITEM "Basic\t(DirectDraw 7)",				MENU_BLITTER_1
@@ -906,6 +955,7 @@ BEGIN
             MENUITEM "Experimental\t(DirectX Graphics 9)",	MENU_BLITTER_4
 			MENUITEM "DirectX9 Alt\t(DirectX Graphics 9)",	MENU_BLITTER_5
         END
+        /* */
         MENUITEM "&Blitter options",					MENU_BLITTEROPTIONS, GRAYED
         POPUP "&Stretch"
         BEGIN
@@ -913,6 +963,7 @@ BEGIN
             MENUITEM "&Full stretch",					MENU_STRETCH
             MENUITEM "Correct &aspect ratio",				MENU_ASPECT
         END
+        /* @FC
         MENUITEM SEPARATOR
         MENUITEM "&Enable gamma correction",				MENU_GAMMA_DO
         POPUP "&Gamma correction settings"
@@ -925,16 +976,32 @@ BEGIN
             MENUITEM "Use video hardware &exclusively",			MENU_GAMMA_HARDWARE_ONLY
             MENUITEM "Use &software exclusively",			MENU_GAMMA_SOFTWARE_ONLY
         END
+        */
         MENUITEM SEPARATOR
-        POPUP "&Window size"
+				POPUP "Fightcade"
+				BEGIN
+						MENUITEM "Display overlay",										MENU_OVERLAY
+						MENUITEM "Display bigger overlay",						MENU_BIG_OVERLAY
+						MENUITEM "Show scores in unranked matches",		MENU_UNRANKED_SCORES
+						MENUITEM "Save overlay data to files",					MENU_SAVE_OVERLAY_FILES
+				END
+				POPUP "Runahead"
+					BEGIN
+					MENUITEM "Disabled",														MENU_RUNAHEAD_DISABLED
+					MENUITEM "1 frame (CPU intensive)",							MENU_RUNAHEAD_1F
+					MENUITEM "2 frames (more CPU intensive)",				MENU_RUNAHEAD_2F
+					END
+				MENUITEM SEPARATOR
+				POPUP "&Window size"
         BEGIN
-             MENUITEM "&Auto",						MENU_AUTOSIZE
-             MENUITEM SEPARATOR
-             MENUITEM "&Single size",					MENU_SINGLESIZEWINDOW
-             MENUITEM "&Double size",					MENU_DOUBLESIZEWINDOW
-             MENUITEM "&Triple size",					MENU_TRIPLESIZEWINDOW
-             MENUITEM "&Quadruple size",				MENU_QUADSIZEWINDOW
-             MENUITEM "&Maximum size",					MENU_MAXIMUMSIZEWINDOW
+						MENUITEM "&Auto",							MENU_AUTOSIZE
+						MENUITEM SEPARATOR
+						MENUITEM "&1x size",					MENU_1XSIZEWINDOW
+						MENUITEM "&2x size",					MENU_2XSIZEWINDOW
+						MENUITEM "&3x size",					MENU_3XSIZEWINDOW
+						MENUITEM "&4x size",					MENU_4XSIZEWINDOW
+						MENUITEM "&5x size",					MENU_5XSIZEWINDOW
+						MENUITEM "&Maximum size",			MENU_MAXIMUMSIZEWINDOW
         END
         MENUITEM SEPARATOR
         MENUITEM "Toggle &fullscreen mode\tAlt+Enter",			MENU_FULL
@@ -943,10 +1010,10 @@ BEGIN
 	BEGIN
 		MENUITEM "MENU_RES_ARCADE",					MENU_RES_ARCADE
 		MENUITEM SEPARATOR
-		MENUITEM "&Single size",					MENU_SINGLESIZESCREEN
-		MENUITEM "&Double size",					MENU_DOUBLESIZESCREEN
-		MENUITEM "&Triple size",					MENU_TRIPLESIZESCREEN
-		MENUITEM "&Quadruple size",					MENU_QUADSIZESCREEN
+		MENUITEM "&1x size",						MENU_1XSIZESCREEN
+		MENUITEM "&2x size",						MENU_2XSIZESCREEN
+		MENUITEM "&3x size",						MENU_3XSIZESCREEN
+		MENUITEM "&4x size",						MENU_4XSIZESCREEN
 		MENUITEM SEPARATOR
 		MENUITEM "MENU_RES_1",						MENU_RES_1
 		MENUITEM "MENU_RES_2",						MENU_RES_2
@@ -959,10 +1026,10 @@ BEGIN
 	BEGIN
 		MENUITEM "MENU_RES_ARCADE_VERTICAL",		MENU_RES_ARCADE_VERTICAL
 		MENUITEM SEPARATOR
-		MENUITEM "&Single size",					MENU_SINGLESIZESCREEN_VERTICAL
-		MENUITEM "&Double size",					MENU_DOUBLESIZESCREEN_VERTICAL
-		MENUITEM "&Triple size",					MENU_TRIPLESIZESCREEN_VERTICAL
-		MENUITEM "&Quadruple size",					MENU_QUADSIZESCREEN_VERTICAL
+		MENUITEM "&1x size",						MENU_1XSIZESCREEN_VERTICAL
+		MENUITEM "&2x size",						MENU_2XSIZESCREEN_VERTICAL
+		MENUITEM "&3x size",						MENU_3XSIZESCREEN_VERTICAL
+		MENUITEM "&4x size",						MENU_4XSIZESCREEN_VERTICAL
 		MENUITEM SEPARATOR
 		MENUITEM "MENU_RES_1_VERTICAL",				MENU_RES_1_VERTICAL
 		MENUITEM "MENU_RES_2_VERTICAL",				MENU_RES_2_VERTICAL
@@ -971,46 +1038,49 @@ BEGIN
 		MENUITEM SEPARATOR
 		MENUITEM "MENU_RES_OTHER_VERTICAL",			MENU_RES_OTHER_VERTICAL
 	END
-        POPUP "Fullscreen bit&depth"
-        BEGIN
-            MENUITEM "&16bit",						MENU_16
-            MENUITEM "&24bit",						MENU_24
-            MENUITEM "&32bit",						MENU_32
-        END
+    POPUP "Fullscreen bit&depth"
+    BEGIN
+        MENUITEM "&16bit",						MENU_16
+        MENUITEM "&24bit",						MENU_24
+        MENUITEM "&32bit",						MENU_32
+    END
 		MENUITEM "Choose Fullscreen Monitor",		MENU_FULLSCREEN_MONITOR
         MENUITEM SEPARATOR
-        POPUP "&Monitor properties"
+        POPUP "My &Monitor properties"
         BEGIN
             MENUITEM "Automatically detect fullscreen resolution and aspect ratio",		MENU_MONITORAUTOCHECK
             MENUITEM SEPARATOR
-            POPUP "Select aspect ratio (Horizontal)"
+            POPUP "Select my monitor aspect ratio (Horizontal)"
             BEGIN
-                MENUITEM "Normal CRT aspect ratio\t(4:3)",		MENU_ASPECTNORMAL
-                MENUITEM "Normal LCD aspect ratio\t(5:4)",		MENU_ASPECTLCD
-                MENUITEM "Widescreen CRT aspect ratio\t(16:9)",	MENU_ASPECTWIDE
-                MENUITEM "Widescreen LCD aspect ratio\t(16:10)",MENU_ASPECTWIDELCD
+								MENUITEM "My monitor aspect ratio is\t16:10",MENU_ASPECTWIDELCD
+								MENUITEM "My monitor aspect ratio is\t16:9",	MENU_ASPECTWIDE
+								MENUITEM "My monitor aspect ratio is\t5:4",	MENU_ASPECTLCD
+								MENUITEM "My monitor aspect ratio is\t4:3",	MENU_ASPECTNORMAL
             END
-            POPUP "Select aspect ratio (Vertical)"
+            POPUP "Select my monitor aspect ratio (Vertical)"
             BEGIN
-                MENUITEM "Normal CRT aspect ratio (landscape)\t(4:3)",		MENU_ASPECTNORMALVERL
-                MENUITEM "Normal LCD aspect ratio (landscape)\t(5:4)",		MENU_ASPECTLCDVERL
-                MENUITEM "Widescreen CRT aspect ratio (landscape)\t(16:9)",	MENU_ASPECTWIDEVERL
-                MENUITEM "Widescreen LCD aspect ratio (landscape)\t(16:10)",MENU_ASPECTWIDELCDVERL
-                MENUITEM "Normal CRT aspect ratio (portrait)\t(3:4)",		MENU_ASPECTNORMALVERP
-                MENUITEM "Normal LCD aspect ratio (portrait)\t(4:5)",		MENU_ASPECTLCDVERP
-                MENUITEM "Widescreen CRT aspect ratio (portrait)\t(9:16)",	MENU_ASPECTWIDEVERP
-                MENUITEM "Widescreen LCD aspect ratio (portrait)\t(10:16)", MENU_ASPECTWIDELCDVERP
+								MENUITEM "My monitor aspect ratio (landscape) is\t16:10",	MENU_ASPECTWIDELCDVERL
+								MENUITEM "My monitor aspect ratio (landscape) is\t16:9",	MENU_ASPECTWIDEVERL
+								MENUITEM "My monitor aspect ratio (landscape) is\t5:4",		MENU_ASPECTLCDVERL
+								MENUITEM "My monitor aspect ratio (landscape) is\t4:3",		MENU_ASPECTNORMALVERL
+
+								MENUITEM "My monitor aspect ratio (portrait) is\t10:16",	MENU_ASPECTWIDELCDVERP
+								MENUITEM "My monitor aspect ratio (portrait) is\t9:16",		MENU_ASPECTWIDEVERP
+								MENUITEM "My monitor aspect ratio (portrait) is\t4:5",		MENU_ASPECTLCDVERP
+                MENUITEM "My monitor aspect ratio (portrait) is\t3:4",		MENU_ASPECTNORMALVERP
             END
             MENUITEM SEPARATOR
             MENUITEM "Mirrored vertical alignment",				MENU_MONITORMIRRORVERT
         END
         MENUITEM SEPARATOR
         MENUITEM "&Rotate vertically aligned games",			MENU_ROTATEVERTICAL
+		MENUITEM "Enable VSync",													MENU_VIDEOVSYNC
+		MENUITEM "Auto Frameskip",												MENU_AUTOFRAMESKIP
+		/* @FC
         MENUITEM "Force 60Hz refresh rate",						MENU_FORCE60HZ
-        MENUITEM "Enable &Triple Buffering (Fullscreen)",			MENU_TRIPLE
-		MENUITEM "Enable VSync (Windowed)",						MENU_VIDEOVSYNC
-		MENUITEM "Enable DWM Sync (Windowed)",				MENU_DWMFIX
-		MENUITEM "Auto Frameskip",								MENU_AUTOFRAMESKIP
+        MENUITEM "Enable &Triple Buffering (Fullscreen)",		MENU_TRIPLE
+        MENUITEM "Enable DWM Sync (Windowed)",                  MENU_DWMFIX
+        */
     END
     POPUP "Audio"
     BEGIN
@@ -1026,16 +1096,19 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Disable FM interpolation",				MENU_INTERPOLATE_FM_0
         MENUITEM "4-point 3rd order FM interpolation",			MENU_INTERPOLATE_FM_3
+        /* @FC
         MENUITEM SEPARATOR
         POPUP "&Sound logging"
         BEGIN
-	   MENUITEM "Log to file...",					MENU_WLOGSTART, GRAYED
-	   MENUITEM "Stop logging",					MENU_WLOGEND, GRAYED
-	END
+           MENUITEM "Log to file...",					MENU_WLOGSTART, GRAYED
+           MENUITEM "Stop logging",					MENU_WLOGEND, GRAYED
+        END
         MENUITEM "Buffer size...",					MENU_FRAMES
+        */
     END
     POPUP "Input"
     BEGIN
+        /* @FC
     	POPUP "Select &plugin"
     	BEGIN
     	    MENUITEM "DirectInput",					MENU_INP_PLUGIN_1, GRAYED
@@ -1048,6 +1121,7 @@ BEGIN
     	    MENUITEM "Fast",						MENU_INPUT_AUTOFIRE_RATE_3
     	    MENUITEM "Very Fast",					MENU_INPUT_AUTOFIRE_RATE_4
     	END
+        */
     	MENUITEM SEPARATOR
         MENUITEM "Map game inputs...\tF5",				MENU_INPUT, GRAYED
         MENUITEM "Set dipswitches...\tCtrl+F5",				MENU_DIPSW, GRAYED
@@ -1056,16 +1130,16 @@ BEGIN
     BEGIN
         POPUP "Options"
         BEGIN
-           MENUITEM "Auto pause",					MENU_AUTOPAUSE
+           MENUITEM "Auto pause",																	MENU_AUTOPAUSE
            MENUITEM "Always process keyboard input",			MENU_PROCESSINPUT, GRAYED
            MENUITEM "Display mode indicator",				MENU_DISPLAYINDICATOR
            MENUITEM "Modeless menu",					MENU_MODELESS
            MENUITEM "Don't change Num Lock status",			MENU_NOCHANGENUMLOCK
-	   MENUITEM "Create support folders at runtime",		MENU_CREATEDIRS
+					 MENUITEM "Create support folders at runtime",		MENU_CREATEDIRS
            MENUITEM "Show Game List at start-up",			MENU_AUTOLOADGAMELIST
            MENUITEM "Scan ROMs at start-up (if needed)",	MENU_AUTOSCANGAMELIST
            MENUITEM SEPARATOR
-           POPUP "Set application process priority"
+           POPUP "Set application thread priority"
            BEGIN
 //              MENUITEM "Realtime",					MENU_PRIORITY_REALTIME
               MENUITEM "High",						MENU_PRIORITY_HIGH
@@ -1094,21 +1168,20 @@ BEGIN
         BEGIN
 	        MENUITEM "Generate dat (Arcade only)...",			MENU_CLRMAME_PRO_XML
 	        MENUITEM "Generate dat (Megadrive only)...",		MENU_CLRMAME_PRO_XML_MD_ONLY
-			MENUITEM "Generate dat (PC-Engine only)...",		MENU_CLRMAME_PRO_XML_PCE_ONLY
-			MENUITEM "Generate dat (TurboGrafx16 only)...",		MENU_CLRMAME_PRO_XML_TG16_ONLY
-			MENUITEM "Generate dat (SuprGrafx only)...",		MENU_CLRMAME_PRO_XML_SGX_ONLY
-			MENUITEM "Generate dat (Sega SG-1000 only)...",		MENU_CLRMAME_PRO_XML_SG1000_ONLY
-			MENUITEM "Generate dat (ColecoVision only)...",		MENU_CLRMAME_PRO_XML_COLECO_ONLY
-			MENUITEM "Generate dat (Master System only)...",	MENU_CLRMAME_PRO_XML_SMS_ONLY
-			MENUITEM "Generate dat (Game Gear only)...",		MENU_CLRMAME_PRO_XML_GG_ONLY
-			MENUITEM "Generate dat (MSX 1 Games only)...",		MENU_CLRMAME_PRO_XML_MSX_ONLY
-			MENUITEM "Generate dat (ZX Spectrum Games only)...",MENU_CLRMAME_PRO_XML_SPECTRUM_ONLY
-			MENUITEM "Generate dat (NES Games only)...",		MENU_CLRMAME_PRO_XML_NES_ONLY
-			MENUITEM "Generate dat (FDS Games only)...",		MENU_CLRMAME_PRO_XML_FDS_ONLY
-			MENUITEM "Generate dat (Neo Geo Pocket Games only)...",	MENU_CLRMAME_PRO_XML_NGP_ONLY
-			MENUITEM SEPARATOR
-			MENUITEM "Generate all dats...",					MENU_CLRMAME_PRO_ALL_DATS
-	END
+					MENUITEM "Generate dat (PC-Engine only)...",		MENU_CLRMAME_PRO_XML_PCE_ONLY
+					MENUITEM "Generate dat (TurboGrafx16 only)...",		MENU_CLRMAME_PRO_XML_TG16_ONLY
+					MENUITEM "Generate dat (SuprGrafx only)...",		MENU_CLRMAME_PRO_XML_SGX_ONLY
+					MENUITEM "Generate dat (Sega SG-1000 only)...",		MENU_CLRMAME_PRO_XML_SG1000_ONLY
+					MENUITEM "Generate dat (ColecoVision only)...",		MENU_CLRMAME_PRO_XML_COLECO_ONLY
+					MENUITEM "Generate dat (Master System only)...",	MENU_CLRMAME_PRO_XML_SMS_ONLY
+					MENUITEM "Generate dat (Game Gear only)...",		MENU_CLRMAME_PRO_XML_GG_ONLY
+					MENUITEM "Generate dat (MSX 1 Games only)...",		MENU_CLRMAME_PRO_XML_MSX_ONLY
+					MENUITEM "Generate dat (ZX Spectrum Games only)...",MENU_CLRMAME_PRO_XML_SPECTRUM_ONLY
+					MENUITEM "Generate dat (NES Games only)...",		MENU_CLRMAME_PRO_XML_NES_ONLY
+					MENUITEM "Generate dat (FDS Games only)...",		MENU_CLRMAME_PRO_XML_FDS_ONLY
+					MENUITEM SEPARATOR
+					MENUITEM "Generate all dats...",					MENU_CLRMAME_PRO_ALL_DATS
+				END
         MENUITEM SEPARATOR
         MENUITEM "Configure ROM paths...",				MENU_ROMDIRS
         MENUITEM "Configure support file paths...",			MENU_SUPPORTDIRS
@@ -1131,6 +1204,7 @@ BEGIN
        		MENUITEM "Export gamelist translation template...",			MENU_LANGUAGE_GL_EXPORT
        		MENUITEM "Reset gamelist default language",				MENU_LANGUAGE_GL_RESET
         END
+        /* @FC
 		MENUITEM SEPARATOR
         POPUP    "Icons"
         BEGIN
@@ -1143,9 +1217,11 @@ BEGIN
 				MENUITEM "32 x 32 pixels",							MENU_ICONS_SIZE_32
 			END
         END
+        */
        	MENUITEM SEPARATOR
         MENUITEM "Save snapshot\tF12",					MENU_SAVESNAP
         MENUITEM "Shot factory..\tCtrl+F12",				MENU_SNAPFACT
+        /* @FC
         MENUITEM SEPARATOR
         MENUITEM "Enable cheats...\tCtrl+F1",				MENU_ENABLECHEAT, GRAYED
         POPUP "Cheat search"
@@ -1171,22 +1247,25 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Save input mapping now",				MENU_SAVEGAMEINPUTNOW
         MENUITEM "Auto-save input mapping",				MENU_SAVEGAMEINPUT
+        */
         MENUITEM SEPARATOR
         MENUITEM "Save settings to .ini now",				MENU_SAVESET
         MENUITEM "Reload settings from .ini",				MENU_LOADSET
     END
     POPUP "Help"
     BEGIN
+        /* @FC
         MENUITEM "&Help",					MENU_CONTENTS
         MENUITEM SEPARATOR
         MENUITEM "&What's New",					MENU_WHATSNEW
         MENUITEM SEPARATOR
-        MENUITEM "&FB Neo homepage",					MENU_WWW_HOME
-        MENUITEM "&Neo-Source forums",					MENU_WWW_NSFORUM
-		MENUITEM "FB Neo &Github",					MENU_WWW_GITHUB
+        */
+			  MENUITEM "&Fightcade Homepage",				MENU_WWW_FIGHTCADE
+				MENUITEM "FB Neo Homepage",					  MENU_WWW_HOME
+				MENUITEM "FB Neo &Github",						MENU_WWW_GITHUB
         MENUITEM SEPARATOR
         MENUITEM "&System information",				MENU_SYSINFO
-        MENUITEM "&About FB Neo",					MENU_ABOUT
+        MENUITEM "&About",										MENU_ABOUT
     END
 END
 
@@ -1303,51 +1382,51 @@ IDR_MENU_BLITTER_3 MENU
 BEGIN
         POPUP "SoftFX\t(DirectDraw 7)"
         BEGIN
-                MENUITEM "&Double pixels (Software)",                   MENU_SOFTFX_SOFT_STRETCH
-                MENUITEM "AdvanceMAME Scale2x\t(16/32-bit only)",       MENU_SOFTFX_SOFT_SCALE2X
-                MENUITEM "AdvanceMAME Scale3x\t(16/32-bit only)",       MENU_SOFTFX_SOFT_SCALE3X
-				MENUITEM "2xPM LQ\t(15/16-bit only)",					MENU_SOFTFX_SOFT_2XPM_LQ
-				MENUITEM "2xPM HQ\t(15/16-bit only)",					MENU_SOFTFX_SOFT_2XPM_HQ
-                MENUITEM "Eagle Graphics\t(16-bit only)",               MENU_SOFTFX_SOFT_EAGLE
-                MENUITEM "Super Eagle\t(15/16-bit only)",               MENU_SOFTFX_SOFT_SUPEREAGLE
-                MENUITEM "2xSaI\t(15/16-bit only)",                     MENU_SOFTFX_SOFT_2XSAI
-                MENUITEM "Super 2xSaI\t(15/16-bit only)",	       		MENU_SOFTFX_SOFT_SUPER2XSAI
-                MENUITEM "Super Eagle (VBA)\t(15/16/32-bit only)",      MENU_SOFTFX_SOFT_SUPEREAGLE_VBA
-                MENUITEM "2xSaI (VBA)\t(15/16/32-bit only)",            MENU_SOFTFX_SOFT_2XSAI_VBA
-                MENUITEM "Super 2xSaI (VBA)\t(15/16/32-bit only)",      MENU_SOFTFX_SOFT_SUPER2XSAI_VBA
-                MENUITEM "SuperScale\t(15/16-bit only)",				MENU_SOFTFX_SOFT_SUPERSCALE
-                MENUITEM "SuperScale (75% Scanlines)\t(15/16-bit only)",MENU_SOFTFX_SOFT_SUPERSCALE75
-                MENUITEM "hq2x filter\t(32-bit only)",                  MENU_SOFTFX_SOFT_HQ2X
-                MENUITEM "hq3x filter\t(32-bit only)",                  MENU_SOFTFX_SOFT_HQ3X
-                MENUITEM "hq4x filter\t(32-bit only)",                  MENU_SOFTFX_SOFT_HQ4X
-                MENUITEM "hq2xS (VBA) filter\t(16/32-bit only)",        MENU_SOFTFX_SOFT_HQ2XS_VBA
-                MENUITEM "hq3xS (VBA) filter\t(16/32-bit only)",        MENU_SOFTFX_SOFT_HQ3XS_VBA, GRAYED
-                MENUITEM "hq2xS (SNES9X) Filter\t(16-bit only)",		MENU_SOFTFX_SOFT_HQ2XS_SNES9X
-				MENUITEM "hq3xS (SNEX9X) Filter\t(16-bit only)",		MENU_SOFTFX_SOFT_HQ3XS_SNES9X
-				MENUITEM "hq2xBold Filter\t(16-bit only)",				MENU_SOFTFX_SOFT_HQ2XBOLD
-				MENUITEM "hq3xBold Filter\t(16-bit only)",				MENU_SOFTFX_SOFT_HQ3XBOLD
-				MENUITEM "EPXB Filter\t(16-bit only)",					MENU_SOFTFX_SOFT_EPXB
-				MENUITEM "EPXC Filter\t(16-bit only)",					MENU_SOFTFX_SOFT_EPXC
-				MENUITEM "2xBR Squared\t(16-bit only)",					MENU_SOFTFX_SOFT_2XBR_A
-				MENUITEM "2xBR Semi-Rounded\t(16-bit only)",			MENU_SOFTFX_SOFT_2XBR_B
-				MENUITEM "2xBR Rounded\t(16-bit only)",					MENU_SOFTFX_SOFT_2XBR_C
-				MENUITEM "3xBR Squared\t(16-bit only)",					MENU_SOFTFX_SOFT_3XBR_A
-				MENUITEM "3xBR Semi-Rounded\t(16-bit only)",			MENU_SOFTFX_SOFT_3XBR_B
-				MENUITEM "3xBR Rounded\t(16-bit only)",					MENU_SOFTFX_SOFT_3XBR_C
-				MENUITEM "4xBR Squared\t(16-bit only)",					MENU_SOFTFX_SOFT_4XBR_A
-				MENUITEM "4xBR Semi-Rounded\t(16-bit only)",			MENU_SOFTFX_SOFT_4XBR_B
-				MENUITEM "4xBR Rounded\t(16-bit only)",					MENU_SOFTFX_SOFT_4XBR_C
-				MENUITEM "DDT3x\t(16-bit only)",            	        MENU_SOFTFX_SOFT_DDT3X
-                MENUITEM SEPARATOR
-                MENUITEM "&Force image to SoftFX size",                 MENU_SOFTFX_SOFT_AUTOSIZE
-                POPUP "Buffering &method"
-                BEGIN
-                        MENUITEM "&Autodetect",                         MENU_SOFTFX_MEMAUTO
-                        MENUITEM "&Video memory",                       MENU_SOFTFX_VIDEOMEM
-                        MENUITEM "&System memory",                      MENU_SOFTFX_SYSMEM
-                        MENUITEM SEPARATOR
-                        MENUITEM "Directly access video memory",        MENU_SOFT_DIRECTACCESS
-                END
+								MENUITEM "&Double pixels (Software)",                   MENU_SOFTFX_SOFT_STRETCH
+								MENUITEM "AdvanceMAME Scale2x\t(16/32-bit only)",       MENU_SOFTFX_SOFT_SCALE2X
+								MENUITEM "AdvanceMAME Scale3x\t(16/32-bit only)",       MENU_SOFTFX_SOFT_SCALE3X
+								MENUITEM "2xPM LQ\t(15/16-bit only)",					MENU_SOFTFX_SOFT_2XPM_LQ
+								MENUITEM "2xPM HQ\t(15/16-bit only)",					MENU_SOFTFX_SOFT_2XPM_HQ
+								MENUITEM "Eagle Graphics\t(16-bit only)",               MENU_SOFTFX_SOFT_EAGLE
+								MENUITEM "Super Eagle\t(15/16-bit only)",               MENU_SOFTFX_SOFT_SUPEREAGLE
+								MENUITEM "2xSaI\t(15/16-bit only)",                     MENU_SOFTFX_SOFT_2XSAI
+								MENUITEM "Super 2xSaI\t(15/16-bit only)",	       		MENU_SOFTFX_SOFT_SUPER2XSAI
+								MENUITEM "Super Eagle (VBA)\t(15/16/32-bit only)",      MENU_SOFTFX_SOFT_SUPEREAGLE_VBA
+								MENUITEM "2xSaI (VBA)\t(15/16/32-bit only)",            MENU_SOFTFX_SOFT_2XSAI_VBA
+								MENUITEM "Super 2xSaI (VBA)\t(15/16/32-bit only)",      MENU_SOFTFX_SOFT_SUPER2XSAI_VBA
+								MENUITEM "SuperScale\t(15/16-bit only)",				MENU_SOFTFX_SOFT_SUPERSCALE
+								MENUITEM "SuperScale (75% Scanlines)\t(15/16-bit only)",MENU_SOFTFX_SOFT_SUPERSCALE75
+								MENUITEM "hq2x filter\t(32-bit only)",                  MENU_SOFTFX_SOFT_HQ2X
+								MENUITEM "hq3x filter\t(32-bit only)",                  MENU_SOFTFX_SOFT_HQ3X
+								MENUITEM "hq4x filter\t(32-bit only)",                  MENU_SOFTFX_SOFT_HQ4X
+								MENUITEM "hq2xS (VBA) filter\t(16/32-bit only)",        MENU_SOFTFX_SOFT_HQ2XS_VBA
+								MENUITEM "hq3xS (VBA) filter\t(16/32-bit only)",        MENU_SOFTFX_SOFT_HQ3XS_VBA, GRAYED
+								MENUITEM "hq2xS (SNES9X) Filter\t(16-bit only)",		MENU_SOFTFX_SOFT_HQ2XS_SNES9X
+								MENUITEM "hq3xS (SNEX9X) Filter\t(16-bit only)",		MENU_SOFTFX_SOFT_HQ3XS_SNES9X
+								MENUITEM "hq2xBold Filter\t(16-bit only)",				MENU_SOFTFX_SOFT_HQ2XBOLD
+								MENUITEM "hq3xBold Filter\t(16-bit only)",				MENU_SOFTFX_SOFT_HQ3XBOLD
+								MENUITEM "EPXB Filter\t(16-bit only)",					MENU_SOFTFX_SOFT_EPXB
+								MENUITEM "EPXC Filter\t(16-bit only)",					MENU_SOFTFX_SOFT_EPXC
+								MENUITEM "2xBR Squared\t(16-bit only)",					MENU_SOFTFX_SOFT_2XBR_A
+								MENUITEM "2xBR Semi-Rounded\t(16-bit only)",			MENU_SOFTFX_SOFT_2XBR_B
+								MENUITEM "2xBR Rounded\t(16-bit only)",					MENU_SOFTFX_SOFT_2XBR_C
+								MENUITEM "3xBR Squared\t(16-bit only)",					MENU_SOFTFX_SOFT_3XBR_A
+								MENUITEM "3xBR Semi-Rounded\t(16-bit only)",			MENU_SOFTFX_SOFT_3XBR_B
+								MENUITEM "3xBR Rounded\t(16-bit only)",					MENU_SOFTFX_SOFT_3XBR_C
+								MENUITEM "4xBR Squared\t(16-bit only)",					MENU_SOFTFX_SOFT_4XBR_A
+								MENUITEM "4xBR Semi-Rounded\t(16-bit only)",			MENU_SOFTFX_SOFT_4XBR_B
+								MENUITEM "4xBR Rounded\t(16-bit only)",					MENU_SOFTFX_SOFT_4XBR_C
+								MENUITEM "DDT3x\t(16-bit only)",            	        MENU_SOFTFX_SOFT_DDT3X
+								MENUITEM SEPARATOR
+								MENUITEM "&Force image to SoftFX size",                 MENU_SOFTFX_SOFT_AUTOSIZE
+								POPUP "Buffering &method"
+								BEGIN
+												MENUITEM "&Autodetect",                         MENU_SOFTFX_MEMAUTO
+												MENUITEM "&Video memory",                       MENU_SOFTFX_VIDEOMEM
+												MENUITEM "&System memory",                      MENU_SOFTFX_SYSMEM
+												MENUITEM SEPARATOR
+												MENUITEM "Directly access video memory",        MENU_SOFT_DIRECTACCESS
+								END
         END
 END
 IDR_MENU_BLITTER_4 MENU
@@ -1373,8 +1452,11 @@ BEGIN
 		            MENUITEM "Mitchell-Netravali free...",				MENU_DX9_CUBIC_CUSTOM, GRAYED
                 END
                 MENUITEM SEPARATOR
-                MENUITEM "Enable &Scanlines",                           MENU_EXP_SCAN
+                MENUITEM "Enable &Scanlines",                           MENU_DX9_SCANLINES
                 MENUITEM "Set scanline &intensity...",                  MENU_EXP_SCANINTENSITY
+                MENUITEM SEPARATOR
+                MENUITEM "Windowed Fullscreen",                         MENU_DX9_WIN_FULLSCREEN
+                MENUITEM "Legacy Renderer",                             MENU_DX9_LEGACY_RENDERER
                 MENUITEM SEPARATOR
                 POPUP "Advanced settings"
                 BEGIN
@@ -1395,10 +1477,16 @@ END
 
 IDR_MENU_BLITTER_5 MENU
 BEGIN
-	POPUP "DirectX9 Alt\t(DirectX 9)"
+	POPUP "Stable \t(DirectX 9)"
 	BEGIN
+		// @FC
+		MENUITEM "Scanlines",                                   MENU_DX9_SCANLINES
+		MENUITEM "Set scanline &intensity...",                  MENU_EXP_SCANINTENSITY
 		MENUITEM "Point filtering",                             MENU_DX9_ALT_POINT
 		MENUITEM "Linear filtering",                            MENU_DX9_ALT_LINEAR
+        MENUITEM SEPARATOR
+        MENUITEM "Windowed Fullscreen",                         MENU_DX9_WIN_FULLSCREEN
+        MENUITEM "Legacy Renderer",                             MENU_DX9_LEGACY_RENDERER
 		MENUITEM SEPARATOR
 		POPUP "SoftFX algorithm"
 		BEGIN
@@ -1440,6 +1528,18 @@ BEGIN
 			MENUITEM SEPARATOR
 			MENUITEM "Force image to SoftFX size",          	MENU_DX9_ALT_SOFT_AUTOSIZE
         END
+        // @FC
+        POPUP "HardFX"
+        BEGIN
+            MENUITEM "None",                    MENU_DX9_ALT_HARD_FX_NONE
+            MENUITEM "CRT Aperture",            MENU_DX9_ALT_HARD_FX_CRT_APERTURE
+            MENUITEM "CRT Caligari",            MENU_DX9_ALT_HARD_FX_CRT_CALIGARI
+            MENUITEM "CRT CGWG Fast",           MENU_DX9_ALT_HARD_FX_CRT_CGWG_FAST
+            MENUITEM "CRT Easy Mode",           MENU_DX9_ALT_HARD_FX_CRT_EASY_MODE
+						MENUITEM "CRT Standard",            MENU_DX9_ALT_HARD_FX_CRT_STANDARD
+						MENUITEM "CRT Bicubic",							MENU_DX9_ALT_HARD_FX_CRT_BICUBIC
+        END        
+        /* @FC
 		MENUITEM SEPARATOR
 		POPUP "Advanced settings"
 		BEGIN
@@ -1447,6 +1547,7 @@ BEGIN
 			MENUITEM "Hardware vertex processing",              MENU_DX9_ALT_HARDWAREVERTEX
 			MENUITEM "Motion blur",                             MENU_DX9_ALT_MOTIONBLUR
 		END
+        */
 	END
 END
 
@@ -1539,7 +1640,7 @@ BEGIN
     VK_MULTIPLY, MENU_CHEATSEARCH_CHANGE, CONTROL, VIRTKEY, NOINVERT
     VK_SUBTRACT, MENU_CHEATSEARCH_DECREASE, CONTROL, VIRTKEY, NOINVERT
     VK_ADD,     MENU_CHEATSEARCH_INCREASE, CONTROL, VIRTKEY, NOINVERT
-	"W",	MENU_QUIT, CONTROL, VIRTKEY, NOINVERT
+	//"W",	MENU_QUIT, CONTROL, VIRTKEY, NOINVERT
 END
 
 /////////////////////////////////////////////////////////////////////////////

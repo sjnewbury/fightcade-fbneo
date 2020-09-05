@@ -40,7 +40,6 @@
 INT32 DSCore_Init();
 INT32 DICore_Init();
 INT32 DDCore_Init();
-INT32 Dx9Core_Init();
 
 // Additions to the Cygwin/MinGW win32 headers
 #ifdef __GNUC__
@@ -49,7 +48,7 @@ INT32 Dx9Core_Init();
 
 #include "resource.h"
 #include "resource_string.h"
-#include "net.h"
+
 // ---------------------------------------------------------------------------
 
 // Macro for releasing a COM object
@@ -97,7 +96,7 @@ extern bool bDisableDebugConsole;                   // Disable debug console?
 extern HINSTANCE hAppInst;							// Application Instance
 extern HANDLE hMainThread;							// Handle to the main thread
 extern long int nMainThreadID;						// ID of the main thread
-extern int nAppProcessPriority;
+extern int nAppThreadPriority;
 extern int nAppShowCmd;
 
 extern HACCEL hAccel;
@@ -106,7 +105,7 @@ extern int nAppVirtualFps;							// virtual fps
 
 #define EXE_NAME_SIZE (32)
 extern TCHAR szAppExeName[EXE_NAME_SIZE + 1];
-extern TCHAR szAppBurnVer[16];
+extern TCHAR szAppBurnVer[EXE_NAME_SIZE];
 
 extern int  nCmdOptUsed;
 extern bool bAlwaysProcessKeyboardInput;
@@ -205,7 +204,7 @@ int FirstUsageCreate();
 
 // media.cpp
 int MediaInit();
-int MediaExit();
+int MediaExit(bool scrn_exit);
 
 // misc_win32.cpp
 extern bool bEnableHighResTimer;
@@ -233,10 +232,13 @@ void NeoCDZRateChangeback();
 extern INT32 BurnShiftEnabled;
 
 // run.cpp
+extern int bRunFrame;
 extern int bRunPause;
 extern int bAltPause;
 extern int bAlwaysDrawFrames;
 extern int kNetGame;
+extern int kNetSpectator;
+
 int RunIdle();
 int RunFrame(int bDraw, int bPause);
 int RunMessageLoop();
@@ -244,13 +246,12 @@ int RunReset();
 void ToggleLayer(unsigned char thisLayer);
 
 // scrn.cpp
-extern HWND hScrnWnd;								// Handle to the screen window
-extern HWND hRebar;									// Handle to the Rebar control containing the menu
+extern HWND hScrnWnd;									// Handle to the screen window
 extern HWND hwndChat;
 extern bool bRescanRoms;
 extern bool bMenuEnabled;
 
-extern RECT SystemWorkArea;							// The full screen area
+extern RECT SystemWorkArea;						// The full screen area
 extern int nWindowPosX, nWindowPosY;
 
 extern int nSavestateSlot;
@@ -279,7 +280,6 @@ extern bool bMenuDisplayed;
 extern int nLastMenu;
 extern HMENU hMenu;									// Handle to the menu
 extern HMENU hMenuPopup;							// Handle to a popup version of the menu
-extern int nMenuHeight;
 extern int bAutoPause;
 extern int nScreenSize;
 extern int nScreenSizeHor;	// For horizontal orientation
@@ -301,7 +301,7 @@ bool MenuHandleKeyboard(MSG*);
 void MenuRemoveTheme();
 
 // sel.cpp
-extern UINT64 nLoadMenuShowX;
+extern int nLoadMenuShowX;
 extern int nLoadMenuShowY;
 extern int nLoadMenuExpand;
 extern int nLoadMenuBoardTypeFilter;
@@ -427,9 +427,23 @@ int SupportDirCreateTab(int nTab, HWND hParentWND);
 // res.cpp
 int ResCreate(int);
 
-// fba_kaillera.cpp
-int KailleraInitInput();
-int KailleraGetInput();
+// fba_network.cpp
+int NetworkInitInput();
+int NetworkGetInputSize();
+int NetworkGetInput();
+
+// fba_quark.cpp
+void QuarkInit(TCHAR *connect);
+void QuarkEnd();
+void QuarkTogglePerfMon();
+void QuarkRunIdle(int ms);
+bool QuarkGetInput(void *values, int size, int players);
+bool QuarkIncrementFrame();
+void QuarkSendChatText(char *text);
+void QuarkSendChatCmd(char *text, char cmd);
+void QuarkUpdateStats(double fps);
+void QuarkRecordReplay();
+void QuarkFinishReplay();
 
 // replay.cpp
 extern int nReplayStatus;
@@ -464,6 +478,10 @@ int GameInfoDialogCreate(HWND hParentWND, int nDrvSel);
 void LoadFavorites();
 void AddFavorite_Ext(UINT8 addf);
 INT32 CheckFavorites(char *name);
+
+// luaconsole.cpp
+extern HWND LuaConsoleHWnd;
+void UpdateLuaConsole(const wchar_t* fname);
 
 // ---------------------------------------------------------------------------
 // Debugger
@@ -504,7 +522,7 @@ void ResetPlaceHolder();
 // AVI recording
 
 // avi.cpp
-INT32 AviStart();
+INT32 AviStart(const char *filename = NULL);
 INT32 AviRecordFrame(INT32 bDraw);
 void AviStop();
 extern INT32 nAviStatus;

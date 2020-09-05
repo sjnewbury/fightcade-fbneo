@@ -3,7 +3,6 @@
 
 #include "toaplan.h"
 #include "nmk112.h"
-
 // Battle Garegga
 
 static UINT8 DrvButton[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -12,6 +11,8 @@ static UINT8 DrvJoy2[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 static UINT8 DrvInput[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 static UINT8 DrvReset = 0;
+static UINT8 bDrawScreen;
+static bool bVBlank;
 
 static UINT8 nIRQPending;
 
@@ -20,9 +21,8 @@ static INT32 nSoundCommand;
 // Z80 ROM bank
 static INT32 nCurrentBank;
 
-INT32 Bgareggabl = 0; // used by toa_extratext.cpp
+INT32 Bgareggabl = 0;
 static INT32 Bgareggabla = 0;
-static INT32 location_test = 0;
 
 // Rom information
 static struct BurnRomInfo bgareggaRomDesc[] = {
@@ -44,26 +44,6 @@ static struct BurnRomInfo bgareggaRomDesc[] = {
 
 STD_ROM_PICK(bgaregga)
 STD_ROM_FN(bgaregga)
-
-// Battle Garegga (location test) (Wed Jan 17 1996)
-static struct BurnRomInfo bgareggatRomDesc[] = {
-	{ "battlegaregga-prg0-8-1-17.bin",	0x080000, 0xc032176f, BRF_PRG | BRF_ESS }, //  0 CPU #0 code (even)
-	{ "battlegaregga-prg1-8-1-17.bin",	0x080000, 0x3822f375, BRF_PRG | BRF_ESS }, //  1			 (odd)
-
-	{ "rom4.bin",		0x200000, 0xb333d81f, BRF_GRA },		   //  2 GP9001 Tile data
-	{ "rom3.bin",		0x200000, 0x51b9ebfb, BRF_GRA },           //  3
-	{ "rom2.bin",		0x200000, 0xb330e5e2, BRF_GRA },           //  4
-	{ "rom1.bin",		0x200000, 0x7eafdd70, BRF_GRA },           //  5
-
-	{ "text.u81",		0x008000, 0xe67fd534, BRF_GRA },           //  6 Extra text layer tile data
-
-	{ "battlegaregga-snd-8-1-18-loke-ver.bin",	0x020000, 0xf5ea56f7, BRF_ESS | BRF_PRG }, //  7 Z80 program
-
-	{ "rom5.bin",		0x100000, 0xf6d49863, BRF_SND },           //  8 MSM6295 ADPCM data
-};
-
-STD_ROM_PICK(bgareggat)
-STD_ROM_FN(bgareggat)
 
 static struct BurnRomInfo bgareggazRomDesc[] = {
 	{ "garegga-prg0.bin",     0x080000, 0x6F4AF466, BRF_ESS | BRF_PRG }, //  0 CPU #0 code (even)
@@ -228,33 +208,33 @@ STD_ROM_PICK(bgareggabla)
 STD_ROM_FN(bgareggabla)
 
 static struct BurnInputInfo battlegInputList[] = {
-	{"P1 Coin",		BIT_DIGITAL,	DrvButton + 3,	"p1 coin"	},
-	{"P1 Start",	BIT_DIGITAL,	DrvButton + 5,	"p1 start"	},
+	{"P1 Coin",		BIT_DIGITAL,	DrvButton + 3,	"p1 coin"},
+	{"P1 Start",	BIT_DIGITAL,	DrvButton + 5,	"p1 start"},
 
-	{"P1 Up",		BIT_DIGITAL,	DrvJoy1 + 0,	"p1 up"		},
-	{"P1 Down",		BIT_DIGITAL,	DrvJoy1 + 1,	"p1 down"	},
-	{"P1 Left",		BIT_DIGITAL,	DrvJoy1 + 2,	"p1 left"	},
-	{"P1 Right",	BIT_DIGITAL,	DrvJoy1 + 3,	"p1 right"	},
-	{"P1 Button 1",	BIT_DIGITAL,	DrvJoy1 + 4,	"p1 fire 1"	},
-	{"P1 Button 2",	BIT_DIGITAL,	DrvJoy1 + 5,	"p1 fire 2"	},
-	{"P1 Button 3",	BIT_DIGITAL,	DrvJoy1 + 6,	"p1 fire 3"	},
+	{"P1 Up",		BIT_DIGITAL,	DrvJoy1 + 0,	"p1 up"},
+	{"P1 Down",		BIT_DIGITAL,	DrvJoy1 + 1,	"p1 down"},
+	{"P1 Left",		BIT_DIGITAL,	DrvJoy1 + 2,	"p1 left"},
+	{"P1 Right",	BIT_DIGITAL,	DrvJoy1 + 3,	"p1 right"},
+	{"P1 Button 1",	BIT_DIGITAL,	DrvJoy1 + 4,	"p1 fire 1"},
+	{"P1 Button 2",	BIT_DIGITAL,	DrvJoy1 + 5,	"p1 fire 2"},
+	{"P1 Button 3",	BIT_DIGITAL,	DrvJoy1 + 6,	"p1 fire 3"},
 
-	{"P2 Coin",		BIT_DIGITAL,	DrvButton + 4,	"p2 coin"	},
-	{"P2 Start",	BIT_DIGITAL,	DrvButton + 6,	"p2 start"	},
+	{"P2 Coin",		BIT_DIGITAL,	DrvButton + 4,	"p2 coin"},
+	{"P2 Start",	BIT_DIGITAL,	DrvButton + 6,	"p2 start"},
 
-	{"P2 Up",		BIT_DIGITAL,	DrvJoy2 + 0,	"p2 up"		},
-	{"P2 Down",		BIT_DIGITAL,	DrvJoy2 + 1,	"p2 down"	},
-	{"P2 Left",		BIT_DIGITAL,	DrvJoy2 + 2,	"p2 left"	},
-	{"P2 Right",	BIT_DIGITAL,	DrvJoy2 + 3,	"p2 right"	},
-	{"P2 Button 1",	BIT_DIGITAL,	DrvJoy2 + 4,	"p2 fire 1"	},
-	{"P2 Button 2",	BIT_DIGITAL,	DrvJoy2 + 5,	"p2 fire 2"	},
-	{"P2 Button 3",	BIT_DIGITAL,	DrvJoy2 + 6,	"p2 fire 3"	},
+	{"P2 Up",		BIT_DIGITAL,	DrvJoy2 + 0,	"p2 up"},
+	{"P2 Down",		BIT_DIGITAL,	DrvJoy2 + 1,	"p2 down"},
+	{"P2 Left",		BIT_DIGITAL,	DrvJoy2 + 2,	"p2 left"},
+	{"P2 Right",	BIT_DIGITAL,	DrvJoy2 + 3,	"p2 right"},
+	{"P2 Button 1",	BIT_DIGITAL,	DrvJoy2 + 4,	"p2 fire 1"},
+	{"P2 Button 2",	BIT_DIGITAL,	DrvJoy2 + 5,	"p2 fire 2"},
+	{"P2 Button 3",	BIT_DIGITAL,	DrvJoy2 + 6,	"p2 fire 3"},
 
-	{"Reset",		BIT_DIGITAL,	&DrvReset,		"reset"		},
-	{"Diagnostics",	BIT_DIGITAL,	DrvButton + 0,	"diag"		},
-	{"Dip A",		BIT_DIPSWITCH,	DrvInput + 3,	"dip"		},
-	{"Dip B",		BIT_DIPSWITCH,	DrvInput + 4,	"dip"		},
-	{"Dip C",		BIT_DIPSWITCH,	DrvInput + 5,	"dip"		},
+	{"Reset",		BIT_DIGITAL,	&DrvReset,		"reset"},
+	{"Diagnostics",	BIT_DIGITAL,	DrvButton + 0,	"diag"},
+	{"Dip A",		BIT_DIPSWITCH,	DrvInput + 3,	"dip"},
+	{"Dip B",		BIT_DIPSWITCH,	DrvInput + 4,	"dip"},
+	{"Dip C",		BIT_DIPSWITCH,	DrvInput + 5,	"dip"},
 };
 
 STDINPUTINFO(battleg)
@@ -487,14 +467,14 @@ static INT32 DrvScan(INT32 nAction, INT32 *pnMin)
 
 		SekScan(nAction);				// scan 68000 states
 		ZetScan(nAction);				// Scan Z80
+		SCAN_VAR(nCurrentBank);
 
 		MSM6295Scan(nAction, pnMin);
 		BurnYM2151Scan(nAction, pnMin);
-		NMK112_Scan(nAction);
 
 		ToaScanGP9001(nAction, pnMin);
 
-		SCAN_VAR(nCurrentBank);
+		SCAN_VAR(DrvInput);
 		SCAN_VAR(nSoundCommand);
 		SCAN_VAR(nIRQPending);
 
@@ -576,7 +556,7 @@ static INT32 LoadRomsBla()
 	return 0;
 }
 
-static UINT8 __fastcall battlegZ80Read(UINT16 nAddress)
+UINT8 __fastcall battlegZ80Read(UINT16 nAddress)
 {
 //	bprintf(0, _T("z80 read %4X\n"), nAddress);
 	switch (nAddress) {
@@ -596,7 +576,7 @@ static UINT8 __fastcall battlegZ80Read(UINT16 nAddress)
 	return 0;
 }
 
-static void __fastcall battlegZ80Write(UINT16 nAddress, UINT8 nValue)
+void __fastcall battlegZ80Write(UINT16 nAddress, UINT8 nValue)
 {
 //	bprintf(0, _T("z80 wrote %4X with %2X\n"), nAddress, nValue);
 	switch (nAddress) {
@@ -659,7 +639,7 @@ static INT32 DrvZ80Init()
 	return 0;
 }
 
-static UINT8 __fastcall battlegReadByte(UINT32 sekAddress)
+UINT8 __fastcall battlegReadByte(UINT32 sekAddress)
 {
 	switch (sekAddress) {
 
@@ -687,12 +667,12 @@ static UINT8 __fastcall battlegReadByte(UINT32 sekAddress)
 	return 0;
 }
 
-static UINT16 __fastcall battlegReadWord(UINT32 sekAddress)
+UINT16 __fastcall battlegReadWord(UINT32 sekAddress)
 {
 	switch (sekAddress) {
 
 		case 0x21C03C:
-			return (location_test) ? ToaScanlineRegisterLoctest() : ToaScanlineRegister();
+			return ToaScanlineRegister();
 
 		case 0x300004:
 			return ToaGP9001ReadRAM_Hi(0);
@@ -705,7 +685,7 @@ static UINT16 __fastcall battlegReadWord(UINT32 sekAddress)
 	return 0;
 }
 
-static void __fastcall battlegWriteByte(UINT32 sekAddress, UINT8 byteValue)
+void __fastcall battlegWriteByte(UINT32 sekAddress, UINT8 byteValue)
 {
 	switch (sekAddress) {
 
@@ -729,7 +709,7 @@ static void __fastcall battlegWriteByte(UINT32 sekAddress, UINT8 byteValue)
 	}
 }
 
-static void __fastcall battlegWriteWord(UINT32 sekAddress, UINT16 wordValue)
+void __fastcall battlegWriteWord(UINT32 sekAddress, UINT16 wordValue)
 {
 	switch (sekAddress) {
 
@@ -862,19 +842,14 @@ static INT32 battlegInit()
 	ToaPalSrc = RamPal;
 	ToaPalInit();
 
+	bDrawScreen = true;
+
 	// mar 2 1996 & apr 2 1996 ver:	0x0009AC - 0x0009B8 & 0x001F5E - 0x001F64 & 0x003A1C - 0x003A22
 	// feb 2 1996 ver:				0x0009AC - 0x0009B8 & 0x001F2E - 0x001F34 & 0x0039EC - 0x0039F2
 
 	DrvDoReset();												// Reset machine
 
 	return 0;
-}
-
-static INT32 BgareggatInit()
-{
-	location_test = 1;
-
-	return battlegInit();
 }
 
 static INT32 BgareggablInit()
@@ -907,7 +882,6 @@ static INT32 DrvExit()
 	
 	Bgareggabl = 0;
 	Bgareggabla = 0;
-	location_test = 0;
 
 	return 0;
 }
@@ -916,9 +890,11 @@ static INT32 DrvDraw()
 {
 	ToaClearScreen(0);
 
-	ToaGetBitmap();
-	ToaRenderGP9001();						// Render GP9001 graphics
-	ToaExtraTextLayer();					// Render extra text layer
+	if (bDrawScreen) {
+		ToaGetBitmap();
+		ToaRenderGP9001();					// Render GP9001 graphics
+		ToaExtraTextLayer();				// Render extra text layer
+	}
 
 	ToaPalUpdate();							// Update the palette
 
@@ -952,12 +928,11 @@ static INT32 DrvFrame()
 	nCyclesDone[0] = nCyclesDone[1] = 0;
 
 	SekOpen(0);
-
+	
 	SekSetCyclesScanline(nCyclesTotal[0] / 262);
-
 	nToaCyclesDisplayStart = nCyclesTotal[0] - ((nCyclesTotal[0] * (TOA_VBLANK_LINES + 240)) / 262); // 0
 	nToaCyclesVBlankStart = nCyclesTotal[0] - ((nCyclesTotal[0] * TOA_VBLANK_LINES) / 262);
-	bool bVBlank = false;
+	bVBlank = false;
 
 	INT32 nSoundBufferPos = 0;
 
@@ -1032,16 +1007,6 @@ struct BurnDriver BurnDrvBgaregga = {
 	BDF_GAME_WORKING | TOA_ROTATE_GRAPHICS_CCW | BDF_HISCORE_SUPPORTED, 2, HARDWARE_TOAPLAN_RAIZING, GBF_VERSHOOT, 0,
 	NULL, bgareggaRomInfo, bgareggaRomName, NULL, NULL, NULL, NULL, battlegInputInfo, bgareggaDIPInfo,
 	battlegInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &ToaRecalcPalette, 0x800,
-	240, 320, 3, 4
-};
-
-struct BurnDriver BurnDrvBgareggat = {
-	"bgareggat", "bgaregga", NULL, NULL, "1996",
-	"Battle Garegga (location test) (Wed Jan 17 1996)\0", NULL, "Raizing / 8ing", "Toaplan GP9001 based",
-	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | TOA_ROTATE_GRAPHICS_CCW | BDF_HISCORE_SUPPORTED, 2, HARDWARE_TOAPLAN_RAIZING, GBF_VERSHOOT, 0,
-	NULL, bgareggatRomInfo, bgareggatRomName, NULL, NULL, NULL, NULL, battlegInputInfo, bgareggaDIPInfo,
-	BgareggatInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &ToaRecalcPalette, 0x800,
 	240, 320, 3, 4
 };
 

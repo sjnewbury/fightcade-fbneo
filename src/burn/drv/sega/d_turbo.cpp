@@ -3,8 +3,11 @@
 // Alex Pasadyn, Howie Cohen, Frank Palazzolo, Ernesto Corvi, and Aaron Giles
 
 // to do:
-//	add 9-seg support (i8279) (not really needed)
-//  buck rogers sound fixups
+//	add 9-seg support (i8279)
+//	bug testing
+//	fixing sounds (subroc3d is bad)
+//	sound disabling
+//	clean up
 
 #include "tiles_generic.h"
 #include "z80_intf.h"
@@ -32,7 +35,6 @@ static UINT8 *DrvSprPOS;
 static UINT8 *DrvScrRAM;
 static UINT8 *DrvBmpRAM;
 static UINT8 *DrvSubRAM;
-static UINT8 *sound_data_cache;
 static UINT16 *DrvBitmap;
 
 static UINT32 *DrvPalette;
@@ -48,13 +50,10 @@ static UINT8 turbo_bsel;
 static UINT8 turbo_accel;
 
 static UINT8 sound_data[3];
-static UINT8 ppi_data[3];
 
 static UINT8 subroc3d_ply;
 static UINT8 subroc3d_flip;
 static UINT8 subroc3d_col;
-
-static UINT8 sound_mute;
 
 static UINT8 buckrog_status;
 static UINT8 buckrog_command;
@@ -70,9 +69,6 @@ static UINT8 DrvJoy4[8]; //fake
 static UINT8 DrvDips[3];
 static UINT8 DrvInputs[2];
 static UINT8 DrvReset;
-
-static INT32 is_turbo = 0;
-static INT32 is_subroc3d = 0;
 
 static struct BurnInputInfo TurboInputList[] = {
 	{"P1 Coin",			BIT_DIGITAL,	DrvJoy1 + 7,	"p1 coin"	},
@@ -98,8 +94,8 @@ static struct BurnInputInfo Subroc3dInputList[] = {
 	{"P1 Start",		BIT_DIGITAL,	DrvJoy2 + 3,	"p1 start"	},
 	{"P1 Up",			BIT_DIGITAL,	DrvJoy1 + 3,	"p1 up"		},
 	{"P1 Down",			BIT_DIGITAL,	DrvJoy1 + 2,	"p1 down"	},
-	{"P1 Left",			BIT_DIGITAL,	DrvJoy2 + 1,	"p1 left"	},
-	{"P1 Right",		BIT_DIGITAL,	DrvJoy2 + 0,	"p1 right"	},
+	{"P1 Left",			BIT_DIGITAL,	DrvJoy2 + 0,	"p1 left"	},
+	{"P1 Right",		BIT_DIGITAL,	DrvJoy2 + 1,	"p1 right"	},
 	{"P1 Button 1",		BIT_DIGITAL,	DrvJoy2 + 2,	"p1 fire 1"	},
 
 	{"Reset",			BIT_DIGITAL,	&DrvReset,		"reset"		},
@@ -472,10 +468,10 @@ static UINT8 __fastcall subroc3d_read(UINT16 address)
 			return DrvInputs[1];
 
 		case 0xa802:
-			return DrvDips[0];
+			return DrvDips[1];
 
 		case 0xa803:
-			return DrvDips[1];
+			return DrvDips[2];
 
 		case 0xe800:
 		case 0xe801:
@@ -490,7 +486,7 @@ static UINT8 __fastcall subroc3d_read(UINT16 address)
 			return ppi8255_r(1, address & 3);
 
 		case 0xf800: // should use i8279 device
-			return 0x00; //DrvDips[0];
+			return DrvDips[0];
 
 		case 0xf801:// i8279 read
 			return 0x10;
@@ -728,18 +724,10 @@ static void subroc3d_ppi0a_write(UINT8 data)
 
 static void subroc3d_ppi0b_write(UINT8 data)
 {
-	// lamp = data & 4;
+	// coin counter = data & 3
+	// lame = data & 4;
 
 	subroc3d_flip = (data >> 4) & 1;
-	if ((data & 3) == 0 && ppi_data[1] & 3)
-	{
-		// coin-up!
-		BurnSamplePlay(5);
-		BurnSamplePlay(9);
-		BurnSamplePlay(10);
-		sound_mute = 0;
-	}
-	ppi_data[1] = data;
 }
 
 static void subroc3d_ppi0c_write(UINT8 data)
@@ -747,18 +735,9 @@ static void subroc3d_ppi0c_write(UINT8 data)
 	subroc3d_col = data & 0x0f;
 }
 
-static void subroc3d_vol(INT32 samplenum, INT32 fromcache)
+#if 0
+static void subroc3d_update_volume(INT32 leftchan, UINT8 dis, UINT8 dir)
 {
-	UINT8 dis = 0;
-	UINT8 dir = 0;
-
-	if (!fromcache)	{
-		sound_data_cache[samplenum] = sound_data[0];
-	}
-
-	dis = sound_data_cache[samplenum] & 0x0f;
-	dir = (sound_data_cache[samplenum] >> 4) & 0x07;
-
 	float volume = (float)(15 - dis) / 16.0f;
 	float lvol, rvol;
 
@@ -772,9 +751,10 @@ static void subroc3d_vol(INT32 samplenum, INT32 fromcache)
 		lvol = rvol = 0;
 
 	/* if the sample is playing, adjust it */
-	BurnSampleSetRouteFade(samplenum, BURN_SND_SAMPLE_ROUTE_1, lvol, BURN_SND_ROUTE_LEFT);	\
-	BurnSampleSetRouteFade(samplenum, BURN_SND_SAMPLE_ROUTE_2, rvol, BURN_SND_ROUTE_RIGHT);	\
+	sample_set_volume(leftchan + 0, lvol);
+	sample_set_volume(leftchan + 1, rvol);
 }
+#endif
 
 static void subroc3d_ppi1a_write(UINT8 data)
 {
@@ -788,34 +768,43 @@ static void subroc3d_ppi1b_write(UINT8 data)
 
 	if ((diff & 0x01) && (data & 0x01))
 	{
+	//	subroc3d_mdis = sound_data[0] & 0x0f;
+	//	subroc3d_mdir = (sound_data[0] >> 4) & 0x07;
+		
 		if (!BurnSampleGetStatus(0))
 		{
 			BurnSamplePlay(0);
 		}
-		subroc3d_vol(0, 0);
+	//	subroc3d_update_volume(0, subroc3d_mdis, subroc3d_mdir);
 	}
 
 	if ((diff & 0x02) && (data & 0x02))
 	{
+	//	subroc3d_tdis = sound_data[0] & 0x0f;
+	//	subroc3d_tdir = (sound_data[0] >> 4) & 0x07;
 		if (!BurnSampleGetStatus(1))
 		{
 			BurnSamplePlay(1);
 		}
-		subroc3d_vol(1, 0);
+	//	subroc3d_update_volume(2, subroc3d_tdis, subroc3d_tdir);
 	}
 
 	if ((diff & 0x04) && (data & 0x04))
 	{
+	//	subroc3d_fdis = sound_data[0] & 0x0f;
+	//	subroc3d_fdir = (sound_data[0] >> 4) & 0x07;
 		if (!BurnSampleGetStatus(2))
 		{
 			BurnSamplePlay(2);
 		}
-		subroc3d_vol(2, 0);
+	//	subroc3d_update_volume(4, subroc3d_fdis, subroc3d_fdir);
 	}
 
 	if ((diff & 0x08) && (data & 0x08))
 	{
-		subroc3d_vol(3, 0);
+	//	subroc3d_hdis = sound_data[0] & 0x0f;
+	//	subroc3d_hdir = (sound_data[0] >> 4) & 0x07;
+	//	subroc3d_update_volume(6, subroc3d_hdis, subroc3d_hdir);
 	}
 }
 
@@ -827,11 +816,8 @@ static void subroc3d_ppi1c_write(UINT8 data)
 	if ((diff & 0x01) && (data & 0x01))
 		BurnSamplePlay((data & 0x02) ? 6 : 5);
 
-	if ((diff & 0x04) && (data & 0x04)) {
-		BurnSamplePlay(3);
-		BurnSamplePlay(4);
+	if ((diff & 0x04) && (data & 0x04))
 		BurnSamplePlay(7);
-	}
 
 	if ((diff & 0x08) && (data & 0x08))
 	{
@@ -844,9 +830,9 @@ static void subroc3d_ppi1c_write(UINT8 data)
 	if (!BurnSampleGetStatus(8))
 		BurnSamplePlay(8);
 
-	BurnSampleSetAllRoutes(8, (data & 0x40) ? 0 : 0.20, BURN_SND_ROUTE_BOTH);
+//	sample_set_volume(11, (data & 0x40) ? 0 : 1.0);
 
-	sound_mute = data & 0x80;
+//	sound_global_enable(!(data & 0x80));
 }
 
 static void buckrog_ppi0a_write(UINT8 data)
@@ -966,8 +952,6 @@ static INT32 DrvDoReset()
 	turbo_bsel = 3;
 	turbo_accel = 0;
 	memset (sound_data, 0, 3);
-	memset (ppi_data, 0, 3);
-	sound_mute = 0;
 
 	subroc3d_ply = 0;
 	subroc3d_flip = 0;
@@ -1012,7 +996,7 @@ static INT32 MemIndex()
 	DrvScrRAM		= Next; Next += 0x000800;
 	DrvSubRAM		= Next; Next += 0x000800;
 	DrvBmpRAM		= Next; Next += 0x00e000;
-	sound_data_cache= Next; Next += 0x000010;
+
 	RamEnd			= Next;
 
 	MemEnd			= Next;
@@ -1206,8 +1190,6 @@ static INT32 TurboInit(INT32 encrypted)
 
 	DrvDoReset();
 
-	is_turbo = 1;
-
 	return 0;
 }
 
@@ -1293,8 +1275,6 @@ static INT32 Subroc3dInit()
 	GenericTilesInit();
 	GenericTilemapInit(0, TILEMAP_SCAN_ROWS, fg_map_callback, 8, 8, 32, 32);
 	GenericTilemapSetGfx(0, DrvFgROM, 2, 8, 8, 0x4000, 0, 0x3f);
-
-	is_subroc3d = 1;
 
 	DrvDoReset();
 
@@ -1468,9 +1448,6 @@ static INT32 DrvExit()
 	BurnShiftExit();
 
 	BurnFree(AllMem);
-
-	is_turbo = 0;
-	is_subroc3d = 0;
 
 	return 0;
 }
@@ -2324,7 +2301,7 @@ static INT32 TurboFrame()
 		if (DrvDial > 0xff) DrvDial = 0;
 		if (DrvDial < 0x00) DrvDial = 0xff;
 
-		if (is_turbo) { // gear shifter stuff
+		{ // gear shifter stuff
 			BurnShiftInputCheckToggle(DrvJoy1[2]);
 
 			DrvInputs[0] &= ~4;
@@ -2332,7 +2309,7 @@ static INT32 TurboFrame()
 		}
 	}
 
-	INT32 nInterleave = 256;
+	INT32 nInterleave = 128; // 256/2
 	INT32 nCyclesTotal[1] = { 4992000 / 60 };
 	INT32 nCyclesDone[1] = { 0 };
 	INT32 nSoundBufferPos = 0;
@@ -2342,9 +2319,9 @@ static INT32 TurboFrame()
 	for (INT32 i = 0; i < nInterleave; i++)
 	{
 		CPU_RUN(0, Zet);
-		if (i == 224) ZetSetIRQLine(0, CPU_IRQSTATUS_HOLD);
+		if (i == 224/2) ZetSetIRQLine(0, CPU_IRQSTATUS_HOLD);
 
-		if (pBurnSoundOut && (i&3) == 3) { // samplizer needs less update-latency for the speed changes.
+		if (pBurnSoundOut && i&1) { // samplizer needs less update-latency for the speed changes.
 			INT32 nSegmentLength = nBurnSoundLen / (nInterleave/2);
 			INT16* pSoundBuf = pBurnSoundOut + (nSoundBufferPos << 1);
 			BurnSampleRender(pSoundBuf, nSegmentLength);
@@ -2360,9 +2337,6 @@ static INT32 TurboFrame()
 		if (nSegmentLength) {
 			BurnSampleRender(pSoundBuf, nSegmentLength);
 		}
-
-		if (sound_mute) BurnSoundClear();
-		BurnSoundDCFilter();
 	}
 
 	if (pBurnDraw) {
@@ -2450,7 +2424,6 @@ static INT32 DrvScan(INT32 nAction, INT32 *pnMin)
 		SCAN_VAR(turbo_bsel);
 		SCAN_VAR(turbo_accel);
 		SCAN_VAR(sound_data);
-		SCAN_VAR(ppi_data);
 		
 		SCAN_VAR(subroc3d_ply);
 		SCAN_VAR(subroc3d_flip);
@@ -2461,12 +2434,6 @@ static INT32 DrvScan(INT32 nAction, INT32 *pnMin)
 		SCAN_VAR(buckrog_mov);
 		SCAN_VAR(buckrog_fchg);
 		SCAN_VAR(buckrog_obch);
-	}
-
-	if (nAction & ACB_VOLATILE && is_subroc3d) {
-		for (INT32 i = 0; i < 4; i++) {
-			subroc3d_vol(i, 1);
-		}
 	}
 
 	return 0;

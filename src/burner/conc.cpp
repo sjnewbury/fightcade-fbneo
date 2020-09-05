@@ -65,9 +65,8 @@ static INT32 ConfigParseFile(TCHAR* pszFilename)
 		nLine++;
 
 		nLen = _tcslen(szLine);
-
 		// Get rid of the linefeed at the end
-		while ((nLen > 0) && (szLine[nLen - 1] == 0x0A || szLine[nLen - 1] == 0x0D)) {
+		while (szLine[nLen - 1] == 0x0A || szLine[nLen - 1] == 0x0D) {
 			szLine[nLen - 1] = 0;
 			nLen--;
 		}
@@ -495,7 +494,7 @@ static INT32 ConfigParseMAMEFile()
 				   //was x7f00
 		if (flags & 0x80007c00) continue;			// skip various cheats (unhandled methods at this time)
 
-		if ( flags & 0x00008000 || (flags & 0x00010000 && !menu)) { // Linked cheat "(2/2) etc.."
+		if ( flags & 0x00008000 || (flags & 0x0001000 && !menu)) {
 			if (nCurrentAddress < CHEAT_MAX_ADDRESS) {
 				AddressInfo();
 			}
@@ -552,7 +551,7 @@ static INT32 ConfigParseMAMEFile()
 				}
 				if (flags & 0x100) { // add options
 					INT32 nTotal = nValue + 1;
-					INT32 nPlus1 = (flags & 0x200) ? 1 : 0; // displayed value +1?
+					INT32 nPlus1 = (flags & 0x300) ? 1 : 0; // displayed value +1?
 
 					//bprintf(0, _T("adding .. %X. options\n"), nTotal);
 					if (nTotal > 0xff) continue; // bad entry (roughrac has this)

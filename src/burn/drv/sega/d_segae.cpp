@@ -1,5 +1,7 @@
 // based on MESS/MAME driver by David Haywood
 
+// Note: opaopa doesn't fully boot.  ideas?
+
 #include "tiles_generic.h"
 #include "z80_intf.h"
 #include "sn76496.h"
@@ -17,8 +19,8 @@ static UINT8 DrvDip[2];
 static UINT8 DrvReset;
 static UINT8 DrvRecalc;
 
-static INT16 DrvWheel = 0;
-static INT16 DrvAccel = 0;
+static INT32 DrvWheel = 0;
+static INT32 DrvAccel = 0;
 static INT32 Paddle = 0;
 
 static INT32 nCyclesDone, nCyclesTotal;
@@ -526,8 +528,6 @@ static UINT8 segae_vdp_reg_r ( UINT8 chip )
 {
 	UINT8 temp;
 
-	if (chip == 0) return 0; // slave vdp (chip==0) doesn't get to clear hint/vint status.
-
 	temp = 0;
 
 	temp |= (vintpending << 7);
@@ -841,7 +841,7 @@ static inline void DrvMakeInputs()
 static void segae_draw8pix_solid16(UINT8 *dest, UINT8 chip, UINT16 tile, UINT8 line, UINT8 flipx, UINT8 col)
 {
 
-	UINT32 pix8 = BURN_ENDIAN_SWAP_INT32(*(UINT32 *)&segae_vdp_vram[chip][(32)*tile + (4)*line + (0x4000) * segae_vdp_vrambank[chip]]);
+	UINT32 pix8 = *(UINT32 *)&segae_vdp_vram[chip][(32)*tile + (4)*line + (0x4000) * segae_vdp_vrambank[chip]];
 	UINT8  pix, coladd;
 
 	if (!pix8 && !col) return; /*note only the colour 0 of each vdp is transparent NOT colour 16???, fixes sky in HangonJr */
@@ -872,7 +872,7 @@ static void segae_draw8pix_solid16(UINT8 *dest, UINT8 chip, UINT16 tile, UINT8 l
 static void segae_draw8pix(UINT8 *dest, UINT8 chip, UINT16 tile, UINT8 line, UINT8 flipx, UINT8 col)
 {
 
-	UINT32 pix8 = BURN_ENDIAN_SWAP_INT32(*(UINT32 *)&segae_vdp_vram[chip][(32)*tile + (4)*line + (0x4000) * segae_vdp_vrambank[chip]]);
+	UINT32 pix8 = *(UINT32 *)&segae_vdp_vram[chip][(32)*tile + (4)*line + (0x4000) * segae_vdp_vrambank[chip]];
 	UINT8  pix, coladd;
 
 	if (!pix8) return;
@@ -902,7 +902,7 @@ static void segae_draw8pix(UINT8 *dest, UINT8 chip, UINT16 tile, UINT8 line, UIN
 
 static void segae_draw8pixsprite(UINT8 *dest, UINT8 chip, UINT16 tile, UINT8 line)
 {
-	UINT32 pix8 = BURN_ENDIAN_SWAP_INT32(*(UINT32 *)&segae_vdp_vram[chip][(((32)*tile + (4)*line)&0x3fff) + (0x4000) * segae_vdp_vrambank[chip]]);
+	UINT32 pix8 = *(UINT32 *)&segae_vdp_vram[chip][(((32)*tile + (4)*line)&0x3fff) + (0x4000) * segae_vdp_vrambank[chip]];
 	UINT8  pix;
 
 	if (!pix8) return; /*note only the colour 0 of each vdp is transparent NOT colour 16, fixes sky in HangonJr */
@@ -1209,7 +1209,8 @@ static INT32 DrvInit(UINT8 game)
 			mc8123 = 1;
 
 			break;
-		case 4: // opaopa
+		case 4: // opaopap
+			bprintf(0, _T("opaopap.\n"));
 			if (BurnLoadRom(DrvMainROM + 0x00000,  0, 1)) return 1;
 			if (BurnLoadRom(DrvMainROM + 0x10000,  1, 1)) return 1;
 			if (BurnLoadRom(DrvMainROM + 0x18000,  2, 1)) return 1;
@@ -1221,6 +1222,7 @@ static INT32 DrvInit(UINT8 game)
 			mc8123_banked = 1;
 			break;
 		case 5: // astrofl
+			bprintf(0, _T("astrofl.\n"));
 			if (BurnLoadRom(DrvMainROM + 0x00000,  0, 1)) return 1;	// ( "rom5.ic7",   0x00000, 0x08000, CRC(d63925a7) SHA1(699f222d9712fa42651c753fe75d7b60e016d3ad) ) /* Fixed Code */
 			if (BurnLoadRom(DrvMainROM + 0x10000,  1, 1)) return 1;	// ( "rom4.ic5",   0x10000, 0x08000, CRC(ee3caab3) SHA1(f583cf92c579d1ca235e8b300e256ba58a04dc90) )
 			if (BurnLoadRom(DrvMainROM + 0x18000,  2, 1)) return 1;	// ( "rom3.ic4",   0x18000, 0x08000, CRC(d2ba9bc9) SHA1(85cf2a801883bf69f78134fc4d5075134f47dc03) )
@@ -1361,17 +1363,8 @@ static INT32 DrvFantzn2Init()
 static INT32 DrvOpaopapInit()
 {
 	leftcolumnblank = 1;
-	leftcolumnblank_special = 1;
 
 	return DrvInit(4);
-}
-
-static INT32 DrvOpaopaInit()
-{
-	leftcolumnblank = 1;
-	leftcolumnblank_special = 1;
-
-	return DrvInit(2);
 }
 
 static INT32 DrvTransfrmInit()
@@ -1516,6 +1509,30 @@ struct BurnDriver BurnDrvFantzn2 = {
 
 // Opa Opa (MC-8123, 317-0042)
 
+static struct BurnRomInfo opaopanRomDesc[] = {
+	{ "epr-11023a.ic7",	0x8000, 0x101c5c6a, 1 | BRF_PRG | BRF_ESS }, //  0 maincpu  
+	{ "epr-11022.ic5",	0x8000, 0x15203a42, 1 | BRF_PRG | BRF_ESS }, //  1          
+	{ "epr-11021.ic4",	0x8000, 0xb4e83340, 1 | BRF_PRG | BRF_ESS }, //  2          
+	{ "epr-11020.ic3",	0x8000, 0xc51aad27, 1 | BRF_PRG | BRF_ESS }, //  3          
+	{ "epr-11019.ic2",	0x8000, 0xbd0a6248, 1 | BRF_PRG | BRF_ESS }, //  4          
+};
+
+STD_ROM_PICK(opaopan)
+STD_ROM_FN(opaopan)
+
+struct BurnDriver BurnDrvOpaopan = {
+	"opaopan", "opaopa", NULL, NULL, "1987",
+	"Opa Opa (MC-8123, 317-0042)\0", NULL, "Sega", "System E",
+	NULL, NULL, NULL, NULL,
+	BDF_GAME_NOT_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_MISC, GBF_MISC, 0,
+	NULL, opaopanRomInfo, opaopanRomName, NULL, NULL, NULL, NULL, Segae2pInputInfo, OpaopaDIPInfo,
+	DrvTransfrmInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 64,
+	240, 192, 4, 3
+};
+
+
+// Opa Opa (Rev A, unprotected)
+
 static struct BurnRomInfo opaopaRomDesc[] = {
 	{ "epr-11054.ic7",	0x8000, 0x024b1244, 1 | BRF_PRG | BRF_ESS }, //  0 maincpu  (encr)
 	{ "epr-11053.ic5",	0x8000, 0x6bc41d6e, 1 | BRF_PRG | BRF_ESS }, //  1          ""
@@ -1531,36 +1548,12 @@ STD_ROM_FN(opaopa)
 
 struct BurnDriver BurnDrvOpaopa = {
 	"opaopa", NULL, NULL, NULL, "1987",
-	"Opa Opa (MC-8123, 317-0042)\0", NULL, "Sega", "System E",
-	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_MISC, GBF_MISC, 0,
-	NULL, opaopaRomInfo, opaopaRomName, NULL, NULL, NULL, NULL, Segae2pInputInfo, OpaopaDIPInfo,
-	DrvOpaopapInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 64,
-	248, 192, 4, 3
-};
-
-
-// Opa Opa (Rev A, unprotected)
-
-static struct BurnRomInfo opaopanRomDesc[] = {
-	{ "epr-11023a.ic7",	0x8000, 0x101c5c6a, 1 | BRF_PRG | BRF_ESS }, //  0 maincpu
-	{ "epr-11022.ic5",	0x8000, 0x15203a42, 1 | BRF_PRG | BRF_ESS }, //  1          
-	{ "epr-11021.ic4",	0x8000, 0xb4e83340, 1 | BRF_PRG | BRF_ESS }, //  2          
-	{ "epr-11020.ic3",	0x8000, 0xc51aad27, 1 | BRF_PRG | BRF_ESS }, //  3          
-	{ "epr-11019.ic2",	0x8000, 0xbd0a6248, 1 | BRF_PRG | BRF_ESS }, //  4          
-};
-
-STD_ROM_PICK(opaopan)
-STD_ROM_FN(opaopan)
-
-struct BurnDriver BurnDrvOpaopan = {
-	"opaopan", "opaopa", NULL, NULL, "1987",
 	"Opa Opa (Rev A, unprotected)\0", NULL, "Sega", "System E",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_MISC, GBF_MISC, 0,
-	NULL, opaopanRomInfo, opaopanRomName, NULL, NULL, NULL, NULL, Segae2pInputInfo, OpaopaDIPInfo,
-	DrvOpaopaInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 64,
-	248, 192, 4, 3
+	BDF_GAME_NOT_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_MISC, GBF_MISC, 0,
+	NULL, opaopaRomInfo, opaopaRomName, NULL, NULL, NULL, NULL, Segae2pInputInfo, OpaopaDIPInfo,
+	DrvOpaopapInit, DrvExit, DrvFrame, DrvDraw, DrvScan, &DrvRecalc, 64,
+	240, 192, 4, 3
 };
 
 

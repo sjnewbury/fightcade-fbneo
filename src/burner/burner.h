@@ -9,6 +9,9 @@
 #include <math.h>
 #include <assert.h>
 #include <ctype.h>
+#include <vector>
+#include <map>
+#include <string>
 
 #include "tchar.h"
 
@@ -61,6 +64,7 @@ typedef struct tagIMAGE {
 
 #ifndef __LIBRETRO__
 #include "interface.h"
+#include "luaengine.h"
 #endif
 
 #define IMG_FREE		(1 << 0)
@@ -112,14 +116,6 @@ INT32 GameInpWrite(FILE* h);
 INT32 GameInpRead(TCHAR* szVal, bool bOverWrite);
 INT32 GameInpMacroRead(TCHAR* szVal, bool bOverWrite);
 INT32 GameInpCustomRead(TCHAR* szVal, bool bOverWrite);
-
-struct tIniStruct {
-	TCHAR system[80];
-	TCHAR ini[MAX_PATH];
-	INT32 hw[8];
-};
-
-extern tIniStruct gamehw_cfg[];
 
 // inp_interface.cpp
 extern INT32 nAutoFireRate;
@@ -192,7 +188,6 @@ void ComputeGammaLUT();
 #define DAT_NEOGEO_ONLY		11
 #define DAT_NES_ONLY        12
 #define DAT_FDS_ONLY        13
-#define DAT_NGP_ONLY        14
 
 INT32 write_datfile(INT32 bType, FILE* fDat);
 INT32 create_datfile(TCHAR* szFilename, INT32 bType);

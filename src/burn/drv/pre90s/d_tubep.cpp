@@ -166,6 +166,10 @@ static struct BurnDIPInfo TubepDIPList[]=
 	{0   , 0xfe, 0   ,    2, "Demo Sounds"			},
 	{0x11, 0x01, 0x01, 0x01, "Off"					},
 	{0x11, 0x01, 0x01, 0x00, "On"					},
+
+	{0   , 0xfe, 0   ,    2, "In Game Sounds"		},
+	{0x11, 0x01, 0x20, 0x00, "Off"					},
+	{0x11, 0x01, 0x20, 0x20, "On"					},
 };
 
 STDDIPINFO(Tubep)
@@ -215,6 +219,10 @@ static struct BurnDIPInfo TubepbDIPList[]=
 	{0   , 0xfe, 0   ,    2, "Demo Sounds"			},
 	{0x11, 0x01, 0x01, 0x01, "Off"					},
 	{0x11, 0x01, 0x01, 0x00, "On"					},
+
+	{0   , 0xfe, 0   ,    2, "In Game Sounds"		},
+	{0x11, 0x01, 0x20, 0x00, "Off"					},
+	{0x11, 0x01, 0x20, 0x20, "On"					},
 };
 
 STDDIPINFO(Tubepb)
@@ -316,7 +324,7 @@ static UINT8 __fastcall tubep_main_read_port(UINT16 port)
 			return DrvDips[1];
 
 		case 0xa0:
-			return (DrvDips[2] & ~0x20) | ((soundlatch & 0x80) ? 0x00 : 0x20);
+			return DrvDips[2];
 
 		case 0xb0:
 			return DrvInputs[2]; // sy
@@ -384,8 +392,7 @@ static void __fastcall tubep_sound_write_port(UINT16 port, UINT8 data)
 		return;
 
 		case 0x07:
-			soundlatch &= 0x7f;
-		return;
+		return; // nop?
 	}
 }
 
@@ -395,7 +402,9 @@ static UINT8 __fastcall tubep_sound_read_port(UINT16 port)
 	{
 		case 0x06:
 		{
-			return soundlatch;
+			INT32 ret = soundlatch;
+			soundlatch &= 0x7f;
+			return ret;
 		}
 	}
 
@@ -594,7 +603,6 @@ static void __fastcall rjammer_sub_write_port(UINT16 port, UINT8 data)
 
 static void __fastcall rjammer_sound_write_port(UINT16 port, UINT8 data)
 {
-	ZetSetIRQLine(0, CPU_IRQSTATUS_NONE);
 	switch (port & 0xff)
 	{
 		case 0x10:
@@ -602,12 +610,12 @@ static void __fastcall rjammer_sound_write_port(UINT16 port, UINT8 data)
 		return;
 
 		case 0x18:
-			MSM5205PlaymodeWrite(0, (data & 1) ? MSM5205_S48_4B : MSM5205_S64_4B);
+			MSM5205PlaymodeWrite(0, (data & 1) ? MSM5205_S48_4B : MSM5205_S96_4B);
 		return;
 
 		case 0x80:
 			ls377 = data;
-			ls74 = 0;
+			ZetSetIRQLine(0, CPU_IRQSTATUS_NONE);
 		return;
 
 		case 0x90:
@@ -639,16 +647,17 @@ static UINT8 __fastcall rjammer_sound_read_port(UINT16 port)
 
 static void rjammer_adpcm_vck()
 {
-	if (ls74 == 0)
+	ls74 = (ls74 + 1) & 1;
+
+	if (ls74 == 1)
 	{
 		MSM5205DataWrite(0, ls377 & 0x0f);
+		ZetSetIRQLine(0, CPU_IRQSTATUS_ACK);
 	}
 	else
 	{
 		MSM5205DataWrite(0, (ls377 >> 4) & 0x0f);
-		ZetSetIRQLine(0, CPU_IRQSTATUS_ACK);
 	}
-	ls74 ^= 1;
 }
 
 inline static INT32 DrvMSM5205SynchroniseStream(INT32 nSoundRate)
@@ -953,13 +962,13 @@ static INT32 TubepbInit()
 	ZetSetInHandler(tubep_sound_read_port);
 	ZetClose();
 
-	M6800Init(0);
-	M6800Open(0);
-	M6800MapMemory(DrvSprColRAM,			0x0000, 0x03ff, MAP_RAM);
-	M6800MapMemory(DrvShareRAM[1],			0x0800, 0x0fff, MAP_RAM);
-	M6800MapMemory(DrvMCUROM + 0xc000,		0xc000, 0xffff, MAP_ROM);
-	M6800SetWriteHandler(tubep_mcu_write);
-	M6800Close(); // from now on, this cpu will be accessed via NSC8105* function aliases.
+	NSC8105Init(0); // actually m6802, but works with this...
+	NSC8105Open(0);
+	NSC8105MapMemory(DrvSprColRAM,			0x0000, 0x03ff, MAP_RAM);
+	NSC8105MapMemory(DrvShareRAM[1],		0x0800, 0x0fff, MAP_RAM);
+	NSC8105MapMemory(DrvMCUROM + 0xc000,	0xc000, 0xffff, MAP_ROM);
+	NSC8105SetWriteHandler(tubep_mcu_write);
+	NSC8105Close();
 
 	AY8910Init(0, 1248000, 0);
 	AY8910Init(1, 1248000, 0);
@@ -1071,16 +1080,16 @@ static INT32 RjammerInit()
 	NSC8105SetWriteHandler(tubep_mcu_write);
 	NSC8105Close();
 
-	AY8910Init(0, 1248000, 1);
-	AY8910Init(1, 1248000, 1);
-	AY8910Init(2, 1248000, 1);
-	AY8910SetAllRoutes(0, 0.10, BURN_SND_ROUTE_BOTH);
-	AY8910SetAllRoutes(1, 0.10, BURN_SND_ROUTE_BOTH);
-	AY8910SetAllRoutes(2, 0.10, BURN_SND_ROUTE_BOTH);
+	AY8910Init(0, 1248000, 0);
+	AY8910Init(1, 1248000, 0);
+	AY8910Init(2, 1248000, 0);
+	AY8910SetAllRoutes(0, 0.15, BURN_SND_ROUTE_BOTH);
+	AY8910SetAllRoutes(1, 0.15, BURN_SND_ROUTE_BOTH);
+	AY8910SetAllRoutes(2, 0.15, BURN_SND_ROUTE_BOTH);
 	AY8910SetBuffered(ZetTotalCycles, 2496000);
 
-	MSM5205Init(0, DrvMSM5205SynchroniseStream, 384000, rjammer_adpcm_vck, MSM5205_S48_4B, 0);
-	MSM5205SetRoute(0, 1.10, BURN_SND_ROUTE_BOTH);
+	MSM5205Init(0, DrvMSM5205SynchroniseStream, 384000, rjammer_adpcm_vck, MSM5205_S48_4B, 1);
+	MSM5205SetRoute(0, 1.00, BURN_SND_ROUTE_BOTH);
 
 	GenericTilesInit();
 
@@ -1221,17 +1230,8 @@ static void screen_update_tubep(UINT32 scanline)
 	{
 		UINT8 *active_fb = DrvFrameBuffers + v*256 + (DISP_*256*256);
 		UINT32 sp_data0=0,sp_data1=0,sp_data2=0;
-
-
-		// It appears there is a 1 pixel delay when renderer switches from background to sprite/text,
-		// this causes text and sprite layers to draw a drop shadow with 1 dot width to the left.
-		// See the gameplay video on the PCB. https://www.youtube.com/watch?v=xxONzbUOOsw
-		bool prev_text_or_sprite_pixel = true;
-
 		for (UINT32 h = 0*8; h < 32*8; h++)
 		{
-			bool draw_text_or_sprite_pixel = false;
-
 			sp_data2 = sp_data1;
 			sp_data1 = sp_data0;
 			sp_data0 = active_fb[h];
@@ -1240,10 +1240,8 @@ static void screen_update_tubep(UINT32 scanline)
 			UINT8 text_code = DrvTxtRAM[text_offs];
 			UINT8 text_gfx_data = text_gfx_base[(text_code << 3) | (v & 0x07)];
 
-			if (text_gfx_data & (0x80 >> (h & 0x07))) {
+			if (text_gfx_data & (0x80 >> (h & 0x07)))
 				dest[h] = (DrvTxtRAM[text_offs + 1] & 0x0f) | color_A4;
-				draw_text_or_sprite_pixel = true;
-			}
 			else
 			{
 				UINT32 bg_data;
@@ -1276,17 +1274,10 @@ static void screen_update_tubep(UINT32 scanline)
 				else
 					sp_data = sp_data1;
 
-				if (sp_data != 0x0f) {
+				if (sp_data != 0x0f)
 					bg_data = DrvColPROM[(0x20 + sp_data) | color_A4];
-					draw_text_or_sprite_pixel = true;
-				}
 				dest[h] = pen_base + bg_data*64 + romB_data_h;
 			}
-
-			// text and sprite drop shadow
-			if (draw_text_or_sprite_pixel && !prev_text_or_sprite_pixel && h > 0)
-				dest[h - 1] = 0x00;
-			prev_text_or_sprite_pixel = draw_text_or_sprite_pixel;
 		}
 	}
 }
@@ -1456,7 +1447,7 @@ static INT32 DrvFrame()
 
 		ZetOpen(2);
 		CPU_RUN(2, Zet);
-		if ((i == 63 || i == 191) && !rjammer) ZetSetIRQLine(0, CPU_IRQSTATUS_ACK);
+		if (i == 63 || i == 191) ZetSetIRQLine(0, CPU_IRQSTATUS_ACK);
 		if (rjammer) MSM5205UpdateScanline(i);
 		ZetClose();
 
@@ -1478,13 +1469,12 @@ static INT32 DrvFrame()
 	NSC8105Close();
 
 	if (pBurnSoundOut) {
+		AY8910Render(pBurnSoundOut, nBurnSoundLen);
 		if (rjammer) {
 			ZetOpen(2);
 			MSM5205Render(0, pBurnSoundOut, nBurnSoundLen);
 			ZetClose();
-			BurnSoundDCFilter(); // deal with rjammer's ugly msm5205 waveform
 		}
-		AY8910Render(pBurnSoundOut, nBurnSoundLen);
 	}
 
 	if (pBurnDraw) {

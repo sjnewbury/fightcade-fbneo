@@ -42,8 +42,6 @@ static UINT8 soundlatch;
 
 static INT32 nExtraCycles;
 
-static INT32 is_game = 0; // 0 gng+etc, 1 diamond
-
 static struct BurnInputInfo GngInputList[] =
 {
 	{"P1 Coin",			BIT_DIGITAL,	DrvJoy1 + 6,	"p1 coin"	},
@@ -354,7 +352,7 @@ static void main_write(UINT16 address, UINT8 data)
 			return;
 
 		case 0x3d01:
-			if (data & 1 && is_game == 0) {
+			if (data & 1) {
 				BurnYM2203Reset();
 				ZetReset();
 			}
@@ -408,7 +406,7 @@ static tilemap_callback( bg )
 	INT32 Code = DrvBgVideoRAM[offs] + ((Attr & 0xc0) << 2);
 
 	TILE_SET_INFO(0, Code, Attr/*&7*/, TILE_FLIPYX(Attr >> 4));
-	sTile->category = (Attr >> 3) & 1;
+	*category = (Attr >> 3) & 1;
 }
 
 static tilemap_callback( fg )
@@ -631,7 +629,6 @@ static INT32 GngaInit()
 
 static INT32 DiamondInit()
 {
-	is_game = 1;
 	return DrvCommonInit(2);
 }
 
@@ -650,8 +647,6 @@ static INT32 DrvExit()
 	scrolly[0] = scrolly[1] = 0;
 	rom_bank = 0;
 	soundlatch = 0;
-
-	is_game = 0;
 
 	return 0;
 }

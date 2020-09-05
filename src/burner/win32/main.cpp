@@ -4,8 +4,7 @@
 // Main module
 
 // #define USE_SDL					// define if SDL is used
-// #define DONT_DISPLAY_SPLASH		// Prevent Splash screen from being displayed
-#define APP_DEBUG_LOG			// log debug messages to zzBurnDebug.html
+//#define APP_DEBUG_LOG			// log debug messages to zzBurnDebug.html
 
 #ifdef USE_SDL
  #include "SDL.h"
@@ -20,8 +19,11 @@
  #endif
 #endif
 
+#include <wininet.h>
+#include <winsock.h>
+
 #if defined (FBNEO_DEBUG)
-bool bDisableDebugConsole = true;
+ bool bDisableDebugConsole = true;
 #endif
 
 #include "version.h"
@@ -29,7 +31,7 @@ bool bDisableDebugConsole = true;
 HINSTANCE hAppInst = NULL;			// Application Instance
 HANDLE hMainThread;
 long int nMainThreadID;
-int nAppProcessPriority = NORMAL_PRIORITY_CLASS;
+int nAppThreadPriority = THREAD_PRIORITY_NORMAL;
 int nAppShowCmd;
 
 static TCHAR szCmdLine[1024] = _T("");
@@ -38,7 +40,7 @@ HACCEL hAccel = NULL;
 
 int nAppVirtualFps = 6000;			// App fps * 100
 
-TCHAR szAppBurnVer[16] = _T("");
+TCHAR szAppBurnVer[EXE_NAME_SIZE] = _T("");
 TCHAR szAppExeName[EXE_NAME_SIZE + 1];
 
 int  nCmdOptUsed = 0; // 1 fullscreen, 2 windowed (-w)
@@ -79,7 +81,7 @@ TCHAR* ANSIToTCHAR(const char* pszInString, TCHAR* pszOutString, int nOutSize)
 	static TCHAR szStringBuffer[1024];
 
 	TCHAR* pszBuffer = pszOutString ? pszOutString : szStringBuffer;
-	int nBufferSize  = pszOutString ? nOutSize * 2 : sizeof(szStringBuffer);
+	int nBufferSize = pszOutString ? nOutSize * 2 : sizeof(szStringBuffer);
 
 	if (MultiByteToWideChar(CP_ACP, 0, pszInString, -1, pszBuffer, nBufferSize)) {
 		return pszBuffer;
@@ -203,7 +205,7 @@ void tcharstrreplace(TCHAR *pszSRBuffer, const TCHAR *pszFind, const TCHAR *pszR
 	int lenReplace = _tcslen(pszReplace);
 	int lenSRBuffer = _tcslen(pszSRBuffer)+1;
 
-	for(int i = 0; (lenSRBuffer > lenFind) && (i < lenSRBuffer - lenFind); i++) {
+	for (int i = 0; (lenSRBuffer > lenFind) && (i < lenSRBuffer - lenFind); i++) {
 		if (!memcmp(pszFind, &pszSRBuffer[i], lenFind * sizeof(TCHAR))) {
 			if (lenFind == lenReplace) {
 				memcpy(&pszSRBuffer[i], pszReplace, lenReplace * sizeof(TCHAR));
@@ -289,7 +291,7 @@ static int __cdecl AppDebugPrintf(int nStatus, TCHAR* pszFormat, ...)
 		if (nStatus != nPrevConsoleStatus) {
 			switch (nStatus) {
 				case PRINT_UI:
-					SetConsoleTextAttribute(DebugBuffer,                                                       FOREGROUND_INTENSITY);
+					SetConsoleTextAttribute(DebugBuffer, FOREGROUND_INTENSITY);
 					break;
 				case PRINT_IMPORTANT:
 				case PRINT_LEVEL1:
@@ -305,10 +307,10 @@ static int __cdecl AppDebugPrintf(int nStatus, TCHAR* pszFormat, ...)
 					SetConsoleTextAttribute(DebugBuffer, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
 					break;
 				case PRINT_ERROR:
-					SetConsoleTextAttribute(DebugBuffer, FOREGROUND_RED | FOREGROUND_GREEN |                   FOREGROUND_INTENSITY);
+					SetConsoleTextAttribute(DebugBuffer, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
 					break;
 				default:
-					SetConsoleTextAttribute(DebugBuffer,                  FOREGROUND_GREEN |                   FOREGROUND_INTENSITY);
+					SetConsoleTextAttribute(DebugBuffer, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
 			}
 		}
 
@@ -386,7 +388,7 @@ int OpenDebugLog()
 #if defined (FBNEO_DEBUG)
  #if defined (APP_DEBUG_LOG)
 
-    time_t nTime;
+	time_t nTime;
 	tm* tmTime;
 
 	time(&nTime);
@@ -454,7 +456,7 @@ int OpenDebugLog()
 #else
 
 #ifdef ATTACH_PARENT_PROCESS
-#undef ATTACH_PARENT_PROCESS
+ #undef ATTACH_PARENT_PROCESS
 #endif
 #define ATTACH_PARENT_PROCESS ((DWORD)-1)
 
@@ -510,126 +512,81 @@ int OpenDebugLog()
 	return 0;
 }
 
-void GetAspectRatio (int x, int y, int *AspectX, int *AspectY)
+void GetAspectRatio(int x, int y, int *AspectX, int *AspectY)
 {
-	TCHAR szResXY[256] = _T("");
-	_stprintf(szResXY, _T("%dx%d"), x, y);
+	float aspect_ratio = (float)x / (float)y;
 
-	// Normal CRT (4:3) ( Verified at Wikipedia.Org )
-	if( !_tcscmp(szResXY, _T("320x240"))	||
-		!_tcscmp(szResXY, _T("512x384"))	||
-		!_tcscmp(szResXY, _T("640x480"))	||
-		!_tcscmp(szResXY, _T("800x600"))	||
-		!_tcscmp(szResXY, _T("832x624"))	||
-		!_tcscmp(szResXY, _T("1024x768"))	||
-		!_tcscmp(szResXY, _T("1120x832"))	||
-		!_tcscmp(szResXY, _T("1152x864"))	||
-		!_tcscmp(szResXY, _T("1280x960"))	||
-		!_tcscmp(szResXY, _T("1400x1050"))	||
-		!_tcscmp(szResXY, _T("1600x1200"))	||
-		!_tcscmp(szResXY, _T("2048x1536"))	||
-		!_tcscmp(szResXY, _T("2800x2100"))	||
-		!_tcscmp(szResXY, _T("3200x2400"))	||
-		!_tcscmp(szResXY, _T("4096x3072"))	||
-		!_tcscmp(szResXY, _T("6400x4800")) ){
+	// Horizontal
+
+	// 4:3
+	if (fabs(aspect_ratio - 4.f/3.f) < 0.01f) {
 		*AspectX = 4;
 		*AspectY = 3;
 		return;
 	}
 
-	// Normal LCD (5:4) ( Verified at Wikipedia.Org )
-	if( !_tcscmp(szResXY, _T("320x256"))	||
-		!_tcscmp(szResXY, _T("640x512"))	||
-		!_tcscmp(szResXY, _T("1280x1024"))	||
-		!_tcscmp(szResXY, _T("2560x2048"))	||
-		!_tcscmp(szResXY, _T("5120x4096")) ){
+	// 5:4
+	if (fabs(aspect_ratio - 5.f/4.f) < 0.01f) {
 		*AspectX = 5;
 		*AspectY = 4;
 		return;
 	}
 
-	// CRT Widescreen (16:9) ( Verified at Wikipedia.Org )
-	if( !_tcscmp(szResXY, _T("480x270"))  ||
-		!_tcscmp(szResXY, _T("1280x720")) ||
-		!_tcscmp(szResXY, _T("1360x768")) ||
-		!_tcscmp(szResXY, _T("1366x768")) ||
-		!_tcscmp(szResXY, _T("1920x1080"))) {
+	// 16:9
+	if (fabs(aspect_ratio - 16.f/9.f) < 0.1f) {
 		*AspectX = 16;
 		*AspectY = 9;
 		return;
 	}
 
-	// LCD Widescreen (16:10) ( Verified at Wikipedia.Org )
-	if(	!_tcscmp(szResXY, _T("320x200"))	||
-		!_tcscmp(szResXY, _T("1280x800"))	||
-		!_tcscmp(szResXY, _T("1440x900"))	||
-		!_tcscmp(szResXY, _T("1680x1050"))	||
-		!_tcscmp(szResXY, _T("1920x1200"))	||
-		!_tcscmp(szResXY, _T("2560x1600"))	||
-		!_tcscmp(szResXY, _T("3840x2400"))	||
-		!_tcscmp(szResXY, _T("5120x3200"))	||
-		!_tcscmp(szResXY, _T("7680x4800")) ){
+	// 16:10
+	if (fabs(aspect_ratio - 16.f/10.f) < 0.1f) {
 		*AspectX = 16;
 		*AspectY = 10;
 		return;
 	}
 
-	// Vertically orientated Normal CRT (4:3) ( Verified at Wikipedia.Org )
-	if( !_tcscmp(szResXY, _T("240x320"))	||
-		!_tcscmp(szResXY, _T("384x512"))	||
-		!_tcscmp(szResXY, _T("480x640"))	||
-		!_tcscmp(szResXY, _T("600x800"))	||
-		!_tcscmp(szResXY, _T("624x832"))	||
-		!_tcscmp(szResXY, _T("768x1024"))	||
-		!_tcscmp(szResXY, _T("832x1120"))	||
-		!_tcscmp(szResXY, _T("864x1152"))	||
-		!_tcscmp(szResXY, _T("960x1280"))	||
-		!_tcscmp(szResXY, _T("1050x1400"))	||
-		!_tcscmp(szResXY, _T("1200x1600"))	||
-		!_tcscmp(szResXY, _T("1536x2048"))	||
-		!_tcscmp(szResXY, _T("2100x2800"))	||
-		!_tcscmp(szResXY, _T("2400x3200"))	||
-		!_tcscmp(szResXY, _T("3072x4096"))	||
-		!_tcscmp(szResXY, _T("4800x6400")) ){
+	// 21:9
+	if (fabs(aspect_ratio - 21.f/9.f) < 0.1f) {
+		*AspectX = 21;
+		*AspectY = 9;
+		return;
+	}
+
+	// Vertical
+
+	// 3:4
+	if (fabs(aspect_ratio - 3.f/4.f) < 0.01f) {
 		*AspectX = 3;
 		*AspectY = 4;
 		return;
 	}
 
-	// Vertically orientated Normal LCD (5:4) ( Verified at Wikipedia.Org )
-	if( !_tcscmp(szResXY, _T("256x320"))	||
-		!_tcscmp(szResXY, _T("512x640"))	||
-		!_tcscmp(szResXY, _T("1024x1280"))	||
-		!_tcscmp(szResXY, _T("2048x2560"))	||
-		!_tcscmp(szResXY, _T("4096x5120")) ){
+	// 4:5
+	if (fabs(aspect_ratio - 4.f/5.f) < 0.01f) {
 		*AspectX = 4;
 		*AspectY = 5;
 		return;
 	}
 
-	// Vertically orientated CRT Widescreen (16:9) ( Verified at Wikipedia.Org )
-	if( !_tcscmp(szResXY, _T("270x480"))  ||
-		!_tcscmp(szResXY, _T("720x1280")) ||
-		!_tcscmp(szResXY, _T("768x1360")) ||
-		!_tcscmp(szResXY, _T("768x1366")) ||
-		!_tcscmp(szResXY, _T("1080x1920"))) {
+	// 9:16
+	if (fabs(aspect_ratio - 9.f/16.f) < 0.1f) {
 		*AspectX = 9;
 		*AspectY = 16;
 		return;
 	}
 
-	// Vertically orientated LCD Widescreen (10:16) ( Verified at Wikipedia.Org )
-	if(	!_tcscmp(szResXY, _T("200x320"))	||
-		!_tcscmp(szResXY, _T("800x1280"))	||
-		!_tcscmp(szResXY, _T("900x1440"))	||
-		!_tcscmp(szResXY, _T("1050x1680"))	||
-		!_tcscmp(szResXY, _T("1200x1920"))	||
-		!_tcscmp(szResXY, _T("1600x2560"))	||
-		!_tcscmp(szResXY, _T("2400x3840"))	||
-		!_tcscmp(szResXY, _T("3200x5120"))	||
-		!_tcscmp(szResXY, _T("4800x7680")) ){
+	// 10:16
+	if (fabs(aspect_ratio - 9.f/16.f) < 0.1f) {
 		*AspectX = 10;
 		*AspectY = 16;
+		return;
+	}
+
+	// 9:21
+	if (fabs(aspect_ratio - 9.f/21.f) < 0.1f) {
+		*AspectX = 9;
+		*AspectY = 21;
 		return;
 	}
 }
@@ -642,15 +599,8 @@ static BOOL CALLBACK MonInfoProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcM
 	iMonitor.cbSize = sizeof(MONITORINFOEX);
 	GetMonitorInfo(hMonitor, &iMonitor);
 
-    width = iMonitor.rcMonitor.right - iMonitor.rcMonitor.left;
-    height = iMonitor.rcMonitor.bottom - iMonitor.rcMonitor.top;
-
-	if (width == 1536 && height == 864) {
-		// Workaround: (1/2)
-		// Win8-10 sets Desktop Zoom to 125% by default, creating this bad/weird resolution.
-		width = 1920;
-		height = 1080;
-	}
+	width = iMonitor.rcMonitor.right - iMonitor.rcMonitor.left;
+	height = iMonitor.rcMonitor.bottom - iMonitor.rcMonitor.top;
 
 	if ((HorScreen[0] && !_wcsicmp(HorScreen, iMonitor.szDevice)) ||
 		(!HorScreen[0] && iMonitor.dwFlags & MONITORINFOF_PRIMARY)) {
@@ -692,19 +642,12 @@ void MonitorAutoCheck()
 
 	numScreens = GetSystemMetrics(SM_CMONITORS);
 
-    // If only one monitor or not using a DirectX9 blitter, only use primary monitor
+	// If only one monitor or not using a DirectX9 blitter, only use primary monitor
 	if (numScreens == 1 || nVidSelect < 3) {
 		int x, y;
 
 		x = GetSystemMetrics(SM_CXSCREEN);
 		y = GetSystemMetrics(SM_CYSCREEN);
-
-		if (x == 1536 && y == 864) {
-			// Workaround: (2/2)
-			// Win8-10 sets Desktop Zoom to 125% by default, creating this bad/weird resolution.
-			x = 1920;
-			y = 1080;
-		}
 
 		// default full-screen resolution to this size
 		nVidHorWidth = x;
@@ -734,15 +677,13 @@ bool SetNumLock(bool bState)
 
 	GetKeyboardState(keyState);
 	if ((bState && !(keyState[VK_NUMLOCK] & 1)) || (!bState && (keyState[VK_NUMLOCK] & 1))) {
-		keybd_event(VK_NUMLOCK, 0, KEYEVENTF_EXTENDEDKEY, 0 );
+		keybd_event(VK_NUMLOCK, 0, KEYEVENTF_EXTENDEDKEY, 0);
 
 		keybd_event(VK_NUMLOCK, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
 	}
 
 	return keyState[VK_NUMLOCK] & 1;
 }
-
-#include <wininet.h>
 
 static int AppInit()
 {
@@ -761,6 +702,25 @@ static int AppInit()
 	// Load config for the application
 	ConfigAppLoad();
 
+	// @FC force fightcade application settings
+	bSkipStartupCheck = 1; // skip startup check
+	bVidHardwareVertex = 1; // use hardware vertex
+	bVidMotionBlur = 0; // no motion blur please
+	nVidSDisplayStatus = 0; // no display status for old kaillera (custom overlay)
+	bVidTripleBuffer = 0; // no triple buffer
+	bVidScanlines = 0; // no ddraw scanlines
+	bVidDWMSync = 0; // no dwm sync
+	bDoGamma = 0; // no gamma
+	bForce60Hz = 1;
+	nGamma = 1; // default gamma
+	bHardwareGammaOnly = 0; // hardware gamma only
+	bSaveInputs = 1; // save inputs for each game
+	nSplashTime = 0; // no splash time please
+	bAlwaysCreateSupportFolders = 1; // always create support folders
+	EnableHiscores = 1; // no hiscores
+	bEnableIcons = 0; // no driver icons (faster load)
+	bCheatsAllowed = 0; // no cheats
+
 #if defined (FBNEO_DEBUG)
 	OpenDebugLog();
 #endif
@@ -768,9 +728,11 @@ static int AppInit()
 	FBALocaliseInit(szLocalisationTemplate);
 	BurnerDoGameListLocalisation();
 
-	if (bMonitorAutoCheck) MonitorAutoCheck();
+	if (bMonitorAutoCheck)
+		MonitorAutoCheck();
 
-#if 1 || !defined (FBNEO_DEBUG)
+//#if 1 || !defined (FBNEO_DEBUG)
+#if 0
 	// print a warning if we're running for the 1st time
 	if (nIniVersion < nBurnVer) {
 		ScrnInit();
@@ -781,24 +743,8 @@ static int AppInit()
 	}
 #endif
 
-	switch (nAppProcessPriority) {
-		case HIGH_PRIORITY_CLASS:
-		case ABOVE_NORMAL_PRIORITY_CLASS:
-		case NORMAL_PRIORITY_CLASS:
-		case BELOW_NORMAL_PRIORITY_CLASS:
-		case IDLE_PRIORITY_CLASS:
-			// nothing to change, we're good.
-			break;
-		default:
-			// invalid priority class, set to normal.
-			nAppProcessPriority = NORMAL_PRIORITY_CLASS;
-			break;
-	}
-
-	// Set the process priority
-	SetPriorityClass(GetCurrentProcess(), nAppProcessPriority);
-
-	bCheatsAllowed = true;
+	// Set the thread priority for the main thread
+	SetThreadPriority(GetCurrentThread(), nAppThreadPriority);
 
 #ifdef USE_SDL
 	SDL_Init(0);
@@ -807,7 +753,7 @@ static int AppInit()
 	ComputeGammaLUT();
 
 	if (VidSelect(nVidSelect)) {
-		nVidSelect = 0;
+		nVidSelect = 4;
 		VidSelect(nVidSelect);
 	}
 
@@ -823,7 +769,7 @@ static int AppInit()
 
 	bNumlockStatus = SetNumLock(false);
 
-	if(bEnableIcons && !bIconsLoaded) {
+	if (bEnableIcons && !bIconsLoaded) {
 		// load driver icons
 		LoadDrvIcons();
 		bIconsLoaded = 1;
@@ -834,7 +780,7 @@ static int AppInit()
 
 static int AppExit()
 {
-	if(bIconsLoaded) {
+	if (bIconsLoaded) {
 		// unload driver icons
 		UnloadDrvIcons();
 		bIconsLoaded = 0;
@@ -844,7 +790,7 @@ static int AppExit()
 
 	DrvExit();						// Make sure any game driver is exitted
 	FreeROMInfo();
-	MediaExit();
+	MediaExit(true);
 	BurnLibExit();					// Exit the Burn library
 
 	DisableHighResolutionTiming();
@@ -884,6 +830,7 @@ int AppMessage(MSG *pMsg)
 	if (IsDialogMessage(hInpCheatDlg, pMsg)) return 0;
 	if (IsDialogMessage(hInpDIPSWDlg, pMsg)) return 0;
 	if (IsDialogMessage(hDbgDlg, pMsg))		 return 0;
+	if (IsDialogMessage(LuaConsoleHWnd, pMsg)) return 0;
 
 	if (IsDialogMessage(hInpsDlg, pMsg))	 return 0;
 	if (IsDialogMessage(hInpcDlg, pMsg))	 return 0;
@@ -893,7 +840,7 @@ int AppMessage(MSG *pMsg)
 
 bool AppProcessKeyboardInput()
 {
-	if (hwndChat) {
+	if (bEditActive) {
 		return false;
 	}
 
@@ -997,11 +944,6 @@ int ProcessCmdLine()
 			return 1;
 		}
 
-		if (_tcscmp(szName, _T("-listinfongponly")) == 0) {
-			write_datfile(DAT_NGP_ONLY, stdout);
-			return 1;
-		}
-
 		if (_tcscmp(szName, _T("-listextrainfo")) == 0) {
 			int nWidth;
 			int nHeight;
@@ -1031,15 +973,18 @@ int ProcessCmdLine()
 			if (nOptD) {
 				nVidDepth = nOptD;
 			}
-		} else {
-			if (_tcscmp(szOpt2, _T("-a")) == 0) {
-				bVidArcaderes = 1;
-			} else {
-				if (_tcscmp(szOpt2, _T("-w")) == 0) {
-					nCmdOptUsed = 2;
-					bFullscreen = 0;
-				}
-			}
+		}
+		else if (_tcscmp(szOpt2, _T("-a")) == 0) {
+			bVidArcaderes = 1;
+		}
+		else if (_tcscmp(szOpt2, _T("-w")) == 0) {
+			nCmdOptUsed = 2;
+			bFullscreen = 0;
+		}
+		else if (_tcscmp(szOpt2, _T("-q")) == 0) {
+			nCmdOptUsed = 2;
+			bFullscreen = 0;
+			QuarkRecordReplay();
 		}
 
 		if (bFullscreen) {
@@ -1050,19 +995,27 @@ int ProcessCmdLine()
 			if (BurnStateLoad(szName, 1, &DrvInitCallback)) {
 				return 1;
 			} else {
-//				bRunPause = 1;
+				//bRunPause = 1;
 			}
 		} else {
 			if (_tcscmp(&szName[_tcslen(szName) - 3], _T(".fr")) == 0) {
 				if (StartReplay(szName)) {
 					return 1;
 				}
+			} else if (_tcscmp(&szName[_tcslen(szName) - 4], _T(".lua")) == 0) {
+				FBA_LoadLuaCode(TCHARToANSI(szName, NULL, NULL));
+				UpdateLuaConsole(szName);
+			} else if (_tcsncmp(szName, _T("quark:"), 6) == 0) {
+				QuarkInit(szName);
 			} else {
 				bQuietLoading = true;
 
+				//FBA_LoadLuaCode("scrolling-input-display.lua");
+				//UpdateLuaConsole(L"scrolling-input-display.lua");
+
 				for (i = 0; i < nBurnDrvCount; i++) {
 					nBurnDrvActive = i;
-					if ((_tcscmp(BurnDrvGetText(DRV_NAME), szName) == 0) && (!(BurnDrvGetFlags() & BDF_BOARDROM))){
+					if ((_tcscmp(BurnDrvGetText(DRV_NAME), szName) == 0) && (!(BurnDrvGetFlags() & BDF_BOARDROM))) {
 						if (DrvInit(i, true)) { // failed (bad romset, etc.)
 							nVidFullscreen = 0; // Don't get stuck in fullscreen mode
 						}
@@ -1118,7 +1071,6 @@ static void CreateSupportFolders()
 		{_T("support/history/")},
 		{_T("neocdiso/")},
 		// rom directories
-		{_T("roms/arcade/")},
 		{_T("roms/megadrive/")},
 		{_T("roms/pce/")},
 		{_T("roms/sgx/")},
@@ -1130,8 +1082,8 @@ static void CreateSupportFolders()
 		{_T("roms/msx/")},
 		{_T("roms/spectrum/")},
 		{_T("roms/nes/")},
-		{_T("roms/fds/")},
-		{_T("roms/ngp/")},
+		{_T("roms/nes_fds/")},
+		{_T("roms/nes_hb/")},
 		{_T("\0")} // END of list
 	};
 
@@ -1143,28 +1095,26 @@ static void CreateSupportFolders()
 // Main program entry point
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nShowCmd)
 {
+	WSADATA wsaData;
+	WSAStartup(MAKEWORD(2, 2), &wsaData);
+
 	DSCore_Init();
 	DICore_Init();
 	DDCore_Init();
-	Dx9Core_Init();
 
 	// Provide a custom exception handler
 	SetUnhandledExceptionFilter(ExceptionFilter);
 
 	hAppInst = hInstance;
 
-	// Make version string
+	// Make version string (@FC version at the end)
 	if (nBurnVer & 0xFF) {
 		// private version (alpha)
-		_stprintf(szAppBurnVer, _T("%x.%x.%x.%02x"), nBurnVer >> 20, (nBurnVer >> 16) & 0x0F, (nBurnVer >> 8) & 0xFF, nBurnVer & 0xFF);
+		_stprintf(szAppBurnVer, _T("%x.%x.%x.%02x-%d"), nBurnVer >> 20, (nBurnVer >> 16) & 0x0F, (nBurnVer >> 8) & 0xFF, nBurnVer & 0xFF, FIGHTCADE_VERSION);
 	} else {
 		// public version
-		_stprintf(szAppBurnVer, _T("%x.%x.%x"), nBurnVer >> 20, (nBurnVer >> 16) & 0x0F, (nBurnVer >> 8) & 0xFF);
+		_stprintf(szAppBurnVer, _T("%x.%x.%x-%d"), nBurnVer >> 20, (nBurnVer >> 16) & 0x0F, (nBurnVer >> 8) & 0xFF, FIGHTCADE_VERSION);
 	}
-
-#if !defined (DONT_DISPLAY_SPLASH)
-//	if (lpCmdLine[0] == 0) SplashCreate();
-#endif
 
 	nAppShowCmd = nShowCmd;
 
@@ -1181,6 +1131,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nShowCmd
 		{_T("roms")},
 		{_T("savestates")},
 		{_T("screenshots")},
+		{_T("fightcade")},
 #ifdef INCLUDE_AVI_RECORDING
 		{_T("avi")},
 #endif

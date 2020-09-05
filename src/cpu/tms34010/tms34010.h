@@ -20,14 +20,14 @@ namespace tms
 // Convert bit-address to byte-address
 #define TOBYTE(a)   ((a) >> 3)
 
-typedef uint8_t byte;
-typedef uint16_t word;
-typedef uint32_t dword;
-typedef int8_t sbyte;
-typedef int16_t sword;
-typedef int32_t sdword;
-typedef uint64_t u64;
-typedef int64_t i64;
+typedef UINT8 byte;
+typedef UINT16 word;
+typedef UINT32 dword;
+typedef UINT64 u64;
+typedef INT8 sbyte;
+typedef INT16 sword;
+typedef INT32 sdword;
+typedef INT64 i64;
 
 const int fw_lut[32] = {
     32,  1,  2,  3,  4,  5,  6,  7,  8,  9,

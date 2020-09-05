@@ -82,21 +82,6 @@ Hitachi HD647180 series:
 #include "z180_intf.h"
 #include <stddef.h>
 
-/* interrupt priorities */
-#define Z180_INT_TRAP   0           /* Undefined opcode */
-#define Z180_INT_NMI    1           /* NMI */
-#define Z180_INT_IRQ0   2           /* Execute IRQ1 */
-#define Z180_INT_IRQ1   3           /* Execute IRQ1 */
-#define Z180_INT_IRQ2   4           /* Execute IRQ2 */
-#define Z180_INT_PRT0   5           /* Internal PRT channel 0 */
-#define Z180_INT_PRT1   6           /* Internal PRT channel 1 */
-#define Z180_INT_DMA0   7           /* Internal DMA channel 0 */
-#define Z180_INT_DMA1   8           /* Internal DMA channel 1 */
-#define Z180_INT_CSIO   9           /* Internal CSI/O */
-#define Z180_INT_ASCI0  10          /* Internal ASCI channel 0 */
-#define Z180_INT_ASCI1  11          /* Internal ASCI channel 1 */
-#define Z180_INT_MAX    Z180_INT_ASCI1
-
 // in z180_intf.cpp
 extern void __fastcall z180_cpu_write_handler(UINT32 address, UINT8 data);
 extern UINT8 __fastcall z180_cpu_fetchop_handler(UINT32 address);
@@ -140,22 +125,10 @@ typedef struct {
 	UINT8	tmdrh[2];			/* latched TMDR0H and TMDR1H values */
 	UINT16	tmdr_value[2];		/* TMDR values used byt PRT0 and PRT1 as down counter */
 	UINT8	tif[2];				/* TIF0 and TIF1 values */
-
-	INT32   timer_cnt;
-	INT32   extra_cycles;
-
 	UINT8	nmi_state;			/* nmi line state */
 	UINT8	nmi_pending;		/* nmi pending */
-	UINT8   nmi_hold;           /* nmi hold logic */
 	UINT8	irq_state[3];		/* irq line states (INT0,INT1,INT2) */
-	UINT8	irq_hold[3];        // irq hold logic */
 	UINT8	after_EI;			/* are we in the EI shadow? */
-	UINT8   int_pending[Z180_INT_MAX + 1];
-	UINT32	total_cycles;
-	UINT32	current_cycles;
-	UINT32	EA;
-	INT32	icount;
-	INT32	end_run;
 
 	const struct z80_irq_daisy_chain *daisy;
 	int (*irq_callback)(int irqline);
@@ -246,8 +219,6 @@ typedef struct {
 #define _IFF1	Z180.IFF1
 #define _IFF2	Z180.IFF2
 #define _HALT	Z180.HALT
-
-#define EA      Z180.EA
 
 #define IO(n)		Z180.io[(n)-Z180_CNTLA0]
 #define IO_CNTLA0	IO(Z180_CNTLA0)
@@ -430,7 +401,7 @@ typedef struct {
 
 #define Z180_CNTR_RESET 		0x07
 #define Z180_CNTR_RMASK 		0xff
-#define Z180_CNTR_WMASK 		0x4f
+#define Z180_CNTR_WMASK 		0x7f
 
 /* 0b CSI/O transmit/receive register */
 #define Z180_TRDR_RESET 		0x00
@@ -747,7 +718,7 @@ typedef struct {
 
 /* 36 refresh control register */
 #define Z180_RCR_REFE			0x80
-#define Z180_RCR_REFW			0x40
+#define Z180_RCR_REFW			0x80
 #define Z180_RCR_CYC			0x03
 
 #define Z180_RCR_RESET			0xc0
@@ -806,7 +777,9 @@ typedef struct {
 #define Z180_IOCR_RMASK 		0xff
 #define Z180_IOCR_WMASK 		0xff
 
+static int z180_icount;
 static Z180_Regs Z180;
+static UINT32 EA;
 
 static UINT8 SZ[256];		/* zero and sign flags */
 static UINT8 SZ_BIT[256];	/* zero, sign and parity/overflow (=zero) flags for BIT opcode */
@@ -819,6 +792,9 @@ static UINT8 *SZHVC_add;
 static UINT8 *SZHVC_sub;
 #endif
 
+static UINT32 total_cycles;
+static UINT32 current_cycles;
+
 void z180_scan(INT32 nAction)
 {
 	if (nAction & ACB_DRIVER_DATA) {
@@ -826,20 +802,32 @@ void z180_scan(INT32 nAction)
 
 		memset(&ba, 0, sizeof(ba));
 		ba.Data	  = &Z180;
-		ba.nLen	  = STRUCT_SIZE_HELPER(Z180_Regs, end_run);
+		ba.nLen	  = STRUCT_SIZE_HELPER(Z180_Regs, after_EI);
 		ba.szName = "Z180 Registers";
 		BurnAcb(&ba);
 	}
 }
 
+/****************************************************************************
+ * Burn an odd amount of cycles, that is instructions taking something
+ * different from 4 T-states per opcode (and R increment)
+ ****************************************************************************/
+Z180_INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
+{
+	if( cycles > 0 )
+	{
+		_R += (cycles / cyclesum) * opcodes;
+		z180_icount -= (cycles / cyclesum) * cyclesum;
+	}
+}
+
 static UINT8 z180_readcontrol(UINT32 port);
 static void z180_writecontrol(UINT32 port, UINT8 data);
-static int z180_dma0(int max_cycles);
-static int z180_dma1(void);
-static void z180_handle_io_timers(int cycles);
-
+static void z180_dma0(void);
+static void z180_dma1(void);
 //static void z180_set_info(UINT32 state, cpuinfo *info);
 
+#include "z180daa.h"
 #include "z180ops.h"
 #include "z180tbl.h"
 
@@ -1293,15 +1281,7 @@ static void z180_writecontrol(UINT32 port, UINT8 data)
 		break;
 
 	case Z180_TCR:
-		{
-			UINT16 old = IO_TCR;
-			/* Force reload on state change */
-			IO_TCR = (IO_TCR & ~Z180_TCR_WMASK) | (data & Z180_TCR_WMASK);
-			if (!(old & Z180_TCR_TDE0) && (IO_TCR & Z180_TCR_TDE0))
-				Z180.tmdr_value[0] = 0; //IO_RLDR0L | (IO_RLDR0H << 8);
-			if (!(old & Z180_TCR_TDE1) && (IO_TCR & Z180_TCR_TDE1))
-				Z180.tmdr_value[1] = 0; //IO_RLDR1L | (IO_RLDR1H << 8);
-		}
+		IO_TCR = (IO_TCR & ~Z180_TCR_WMASK) | (data & Z180_TCR_WMASK);
 		break;
 
 	case Z180_IO11:
@@ -1503,28 +1483,21 @@ static void z180_writecontrol(UINT32 port, UINT8 data)
 	}
 }
 
-static int z180_dma0(int max_cycles)
+static void z180_dma0(void)
 {
 	UINT32 sar0 = 65536 * IO_SAR0B + 256 * IO_SAR0H + IO_SAR0L;
 	UINT32 dar0 = 65536 * IO_DAR0B + 256 * IO_DAR0H + IO_DAR0L;
 	int bcr0 = 256 * IO_BCR0H + IO_BCR0L;
+	int count = (IO_DMODE & Z180_DMODE_MMOD) ? bcr0 : 1;
 
 	if (bcr0 == 0)
 	{
-		bcr0 = 0x10000;
+		IO_DSTAT &= ~Z180_DSTAT_DE0;
+		return;
 	}
 
-	int count = (IO_DMODE & Z180_DMODE_MMOD) ? bcr0 : 1;
-	int cycles = 0;
-
-	if (!(IO_DSTAT & Z180_DSTAT_DE0))
+	while (count-- > 0)
 	{
-		return 0;
-	}
-
-	while (count > 0)
-	{
-		Z180.extra_cycles = 0;
 		/* last transfer happening now? */
 		if (bcr0 == 1)
 		{
@@ -1534,27 +1507,19 @@ static int z180_dma0(int max_cycles)
 		{
 		case 0x00:	/* memory SAR0+1 to memory DAR0+1 */
 			program_write_byte_8le(dar0++, program_read_byte_8le(sar0++));
-			cycles += (IO_DCNTL >> 6) * 2; // memory wait states
-			bcr0--;
 			break;
 		case 0x04:	/* memory SAR0-1 to memory DAR0+1 */
 			program_write_byte_8le(dar0++, program_read_byte_8le(sar0--));
-			cycles += (IO_DCNTL >> 6) * 2; // memory wait states
-			bcr0--;
 			break;
 		case 0x08:	/* memory SAR0 fixed to memory DAR0+1 */
 			program_write_byte_8le(dar0++, program_read_byte_8le(sar0));
-			cycles += (IO_DCNTL >> 6) * 2; // memory wait states
-			bcr0--;
 			break;
 		case 0x0c:	/* I/O SAR0 fixed to memory DAR0+1 */
 			if (Z180.iol & Z180_DREQ0)
 			{
 				program_write_byte_8le(dar0++, IN(sar0));
-				cycles += IO_DCNTL >> 6; // memory wait states
-				bcr0--;
 				/* edge sensitive DREQ0 ? */
-				if (IO_DCNTL & Z180_DCNTL_DMS0)
+				if (IO_DCNTL & Z180_DCNTL_DIM0)
 				{
 					Z180.iol &= ~Z180_DREQ0;
 					count = 0;
@@ -1563,27 +1528,19 @@ static int z180_dma0(int max_cycles)
 			break;
 		case 0x10:	/* memory SAR0+1 to memory DAR0-1 */
 			program_write_byte_8le(dar0--, program_read_byte_8le(sar0++));
-			cycles += (IO_DCNTL >> 6) * 2; // memory wait states
-			bcr0--;
 			break;
 		case 0x14:	/* memory SAR0-1 to memory DAR0-1 */
 			program_write_byte_8le(dar0--, program_read_byte_8le(sar0--));
-			cycles += (IO_DCNTL >> 6) * 2; // memory wait states
-			bcr0--;
 			break;
 		case 0x18:	/* memory SAR0 fixed to memory DAR0-1 */
 			program_write_byte_8le(dar0--, program_read_byte_8le(sar0));
-			cycles += (IO_DCNTL >> 6) * 2; // memory wait states
-			bcr0--;
 			break;
 		case 0x1c:	/* I/O SAR0 fixed to memory DAR0-1 */
 			if (Z180.iol & Z180_DREQ0)
             {
 				program_write_byte_8le(dar0--, IN(sar0));
-				cycles += IO_DCNTL >> 6; // memory wait states
-				bcr0--;
 				/* edge sensitive DREQ0 ? */
-				if (IO_DCNTL & Z180_DCNTL_DMS0)
+				if (IO_DCNTL & Z180_DCNTL_DIM0)
 				{
 					Z180.iol &= ~Z180_DREQ0;
 					count = 0;
@@ -1592,13 +1549,9 @@ static int z180_dma0(int max_cycles)
 			break;
 		case 0x20:	/* memory SAR0+1 to memory DAR0 fixed */
 			program_write_byte_8le(dar0, program_read_byte_8le(sar0++));
-			cycles += (IO_DCNTL >> 6) * 2; // memory wait states
-			bcr0--;
 			break;
 		case 0x24:	/* memory SAR0-1 to memory DAR0 fixed */
 			program_write_byte_8le(dar0, program_read_byte_8le(sar0--));
-			cycles += (IO_DCNTL >> 6) * 2; // memory wait states
-			bcr0--;
 			break;
 		case 0x28:	/* reserved */
 			break;
@@ -1608,10 +1561,8 @@ static int z180_dma0(int max_cycles)
 			if (Z180.iol & Z180_DREQ0)
             {
 				OUT(dar0, program_read_byte_8le(sar0++));
-				cycles += IO_DCNTL >> 6; // memory wait states
-				bcr0--;
 				/* edge sensitive DREQ0 ? */
-				if (IO_DCNTL & Z180_DCNTL_DMS0)
+				if (IO_DCNTL & Z180_DCNTL_DIM0)
 				{
 					Z180.iol &= ~Z180_DREQ0;
 					count = 0;
@@ -1622,10 +1573,8 @@ static int z180_dma0(int max_cycles)
 			if (Z180.iol & Z180_DREQ0)
             {
 				OUT(dar0, program_read_byte_8le(sar0--));
-				cycles += IO_DCNTL >> 6; // memory wait states
-				bcr0--;
 				/* edge sensitive DREQ0 ? */
-				if (IO_DCNTL & Z180_DCNTL_DMS0)
+				if (IO_DCNTL & Z180_DCNTL_DIM0)
 				{
 					Z180.iol &= ~Z180_DREQ0;
 					count = 0;
@@ -1637,9 +1586,9 @@ static int z180_dma0(int max_cycles)
 		case 0x3c:	/* reserved */
 			break;
 		}
+		bcr0--;
 		count--;
-		cycles += 6 + Z180.extra_cycles;
-		if (cycles > max_cycles)
+		if ((z180_icount -= 6) < 0)
 			break;
 	}
 
@@ -1658,32 +1607,25 @@ static int z180_dma0(int max_cycles)
 		Z180.iol &= ~Z180_TEND0;
 		IO_DSTAT &= ~Z180_DSTAT_DE0;
 		/* terminal count interrupt enabled? */
-		if (IO_DSTAT & Z180_DSTAT_DIE0 && _IFF1) {
-			Z180.int_pending[Z180_INT_DMA0] = 1;
-		}
+		if (IO_DSTAT & Z180_DSTAT_DIE0 && _IFF1)
+			take_interrupt(Z180_INT_DMA0);
 	}
-	return cycles;
 }
 
-static int z180_dma1(void)
+static void z180_dma1(void)
 {
 	UINT32 mar1 = 65536 * IO_MAR1B + 256 * IO_MAR1H + IO_MAR1L;
 	UINT32 iar1 = 256 * IO_IAR1H + IO_IAR1L;
 	int bcr1 = 256 * IO_BCR1H + IO_BCR1L;
 
+	if ((Z180.iol & Z180_DREQ1) == 0)
+		return;
+
+	/* counter is zero? */
 	if (bcr1 == 0)
 	{
-		bcr1 = 0x10000;
-	}
-
-	int cycles = 0;
-
-	if ((Z180.iol & Z180_DREQ1) == 0)
-		return 0;
-
-	if (!(IO_DSTAT & Z180_DSTAT_DE1))
-	{
-		return 0;
+		IO_DSTAT &= ~Z180_DSTAT_DE1;
+		return;
 	}
 
 	/* last transfer happening now? */
@@ -1691,8 +1633,6 @@ static int z180_dma1(void)
 	{
 		Z180.iol |= Z180_TEND1;
 	}
-
-	Z180.extra_cycles = 0;
 
 	switch (IO_DCNTL & (Z180_DCNTL_DIM1 | Z180_DCNTL_DIM0))
 	{
@@ -1710,9 +1650,6 @@ static int z180_dma1(void)
 		break;
 	}
 
-	cycles += IO_DCNTL >> 6; // memory wait states
-	cycles += Z180.extra_cycles; // use extra_cycles for I/O wait states
-
 	/* edge sensitive DREQ1 ? */
 	if (IO_DCNTL & Z180_DCNTL_DIM1)
 		Z180.iol &= ~Z180_DREQ1;
@@ -1728,13 +1665,12 @@ static int z180_dma1(void)
 	{
 		Z180.iol &= ~Z180_TEND1;
 		IO_DSTAT &= ~Z180_DSTAT_DE1;
-		if (IO_DSTAT & Z180_DSTAT_DIE1 && _IFF1) {
-			Z180.int_pending[Z180_INT_DMA1] = 1;
-		}
+		if (IO_DSTAT & Z180_DSTAT_DIE1 && _IFF1)
+			take_interrupt(Z180_INT_DMA1);
 	}
 
 	/* six cycles per transfer (minimum) */
-	return 6 + cycles;
+	z180_icount -= 6;
 }
 
 void z180_write_iolines(UINT32 data)
@@ -1965,18 +1901,9 @@ void z180_reset(void)
 	_F = ZF;			/* Zero flag is set */
 	Z180.nmi_state = Z180_CLEAR_LINE;
 	Z180.nmi_pending = 0;
-	Z180.nmi_hold = 0;
 	Z180.irq_state[0] = Z180_CLEAR_LINE;
 	Z180.irq_state[1] = Z180_CLEAR_LINE;
 	Z180.irq_state[2] = Z180_CLEAR_LINE;
-	Z180.irq_hold[0] = 0;
-	Z180.irq_hold[1] = 0;
-	Z180.irq_hold[2] = 0;
-	for (i=0; i <= Z180_INT_MAX; i++)
-	{
-		Z180.int_pending[i] = 0;
-	}
-	Z180.timer_cnt = 0;
 	Z180.after_EI = 0;
 	Z180.tif[0] = 0;
 	Z180.tif[1] = 0;
@@ -2055,38 +1982,37 @@ void z180_reset(void)
 		z80daisy_reset(Z180.daisy);
 	z180_mmu();
 
-	Z180.total_cycles = 0;
-	Z180.current_cycles = 0;
+	total_cycles = 0;
+	current_cycles = 0;
 }
 
 /* Handle PRT timers, decreasing them after 20 clocks and returning the new icount base that needs to be used for the next check */
-static void clock_timers()
+static int handle_timers(int current_icount, int previous_icount)
 {
-	Z180.timer_cnt++;
-	if (Z180.timer_cnt >= 20)
+	int diff = previous_icount - current_icount;
+	int new_icount_base;
+
+	if(diff >= 20)
 	{
-		Z180.timer_cnt = 0;
 		/* Programmable Reload Timer 0 */
 		if(IO_TCR & Z180_TCR_TDE0)
 		{
+			Z180.tmdr_value[0]--;
 			if(Z180.tmdr_value[0] == 0)
 			{
 				Z180.tmdr_value[0] = IO_RLDR0L | (IO_RLDR0H << 8);
 				Z180.tif[0] = 1;
-			} else {
-				Z180.tmdr_value[0]--;
 			}
 		}
 
 		/* Programmable Reload Timer 1 */
 		if(IO_TCR & Z180_TCR_TDE1)
 		{
+			Z180.tmdr_value[1]--;
 			if(Z180.tmdr_value[1] == 0)
 			{
 				Z180.tmdr_value[1] = IO_RLDR1L | (IO_RLDR1H << 8);
 				Z180.tif[1] = 1;
-			} else {
-				Z180.tmdr_value[1]--;
 			}
 		}
 
@@ -2095,7 +2021,7 @@ static void clock_timers()
 			// check if we can take the interrupt
 			if(_IFF1 && !Z180.after_EI)
 			{
-				Z180.int_pending[Z180_INT_PRT0] = 1;
+				take_interrupt(Z180_INT_PRT0);
 			}
 		}
 
@@ -2104,39 +2030,31 @@ static void clock_timers()
 			// check if we can take the interrupt
 			if(_IFF1 && !Z180.after_EI)
 			{
-				Z180.int_pending[Z180_INT_PRT1] = 1;
+				take_interrupt(Z180_INT_PRT1);
 			}
 		}
+
+		new_icount_base = current_icount + (diff - 20);
 	}
+	else
+	{
+		new_icount_base = previous_icount;
+	}
+
+	return new_icount_base;
 }
 
-static int check_interrupts(void)
+static void check_interrupts(void)
 {
 	int i;
-	int cycles = 0;
-
-	/* check for IRQs before each instruction */
-	if (_IFF1 && !Z180.after_EI)
+	for(i = 0; i <= 2; i++)
 	{
-		if (Z180.irq_state[0] != Z180_CLEAR_LINE && (IO_ITC & Z180_ITC_ITE0) == Z180_ITC_ITE0)
-			Z180.int_pending[Z180_INT_IRQ0] = 1;
-
-		if (Z180.irq_state[1] != Z180_CLEAR_LINE && (IO_ITC & Z180_ITC_ITE1) == Z180_ITC_ITE1)
-			Z180.int_pending[Z180_INT_IRQ1] = 1;
-
-		if (Z180.irq_state[2] != Z180_CLEAR_LINE && (IO_ITC & Z180_ITC_ITE2) == Z180_ITC_ITE2)
-			Z180.int_pending[Z180_INT_IRQ2] = 1;
-	}
-
-	for (i = 0; i <= Z180_INT_MAX; i++)
-		if (Z180.int_pending[i])
+		/* check for IRQs before each instruction */
+		if(Z180.irq_state[i] != Z180_CLEAR_LINE && _IFF1 && !Z180.after_EI)
 		{
-			cycles += take_interrupt(i);
-			Z180.int_pending[i] = 0;
-			break;
+			take_interrupt(Z180_INT0 + i);
 		}
-
-	return cycles;
+	}
 }
 
 void z180_write_internal_io(UINT32 port, UINT8 data)
@@ -2146,34 +2064,25 @@ void z180_write_internal_io(UINT32 port, UINT8 data)
 	}
 }
 
-/****************************************************************************
- * Handle I/O and timers
- ****************************************************************************/
-
-static void z180_handle_io_timers(int cycles)
-{
-	while (cycles-- > 0)
-	{
-		clock_timers();
-	}
-}
+static INT32 end_run;
 
 /****************************************************************************
  * Execute 'cycles' T-states. Return number of T-states really executed
  ****************************************************************************/
 int z180_execute(int cycles)
 {
-	Z180.icount = cycles;
-	Z180.current_cycles = cycles;
-	INT32 curcycles = 0;
+	int old_icount = cycles;
+	z180_icount = cycles;
+	current_cycles = cycles;
 
-	Z180.end_run = 0;
+	end_run = 0;
 
 	/* check for NMIs on the way in; they can only be set externally */
 	/* via timers, and can't be dynamically enabled, so it is safe */
 	/* to just check here */
 	if (Z180.nmi_pending)
 	{
+		_PPC = -1;			/* there isn't a valid previous program counter */
 		LEAVE_HALT; 		/* Check if processor was halted */
 
 		/* disable DMA transfers!! */
@@ -2183,14 +2092,8 @@ int z180_execute(int cycles)
 		_IFF1 = 0;
 		PUSH( PC );
 		_PCD = 0x0066;
-		Z180.icount -= 11;
+		z180_icount -= 11;
 		Z180.nmi_pending = 0;
-		z180_handle_io_timers(11);
-
-		if (Z180.nmi_hold) {
-			Z180.nmi_hold = 0;
-			Z180.nmi_state = CPU_IRQSTATUS_NONE;
-		}
 	}
 
 again:
@@ -2201,113 +2104,86 @@ again:
 		if ((IO_DSTAT & Z180_DSTAT_DE0) == Z180_DSTAT_DE0 &&
 			(IO_DMODE & Z180_DMODE_MMOD) == Z180_DMODE_MMOD)
 		{
-			/* FIXME z180_dma0 should be handled in handle_io_timers */
-			curcycles = z180_dma0(Z180.icount);
-			Z180.icount -= curcycles;
-			z180_handle_io_timers(curcycles);
+			z180_dma0();
+			old_icount = handle_timers(z180_icount, old_icount);
 		}
 		else
 		{
 			do
 			{
-				curcycles = check_interrupts();
-				Z180.icount -= curcycles;
-				z180_handle_io_timers(curcycles);
+				check_interrupts();
 				Z180.after_EI = 0;
 
 				_PPC = _PCD;
-				if (!_HALT)
-				{
-					_R++;
-					IO_FRC++;   /* Added FRC counting, not implemented yet */
-					Z180.extra_cycles = 0;
-					EXEC_Z180_INLINE(op,ROP());
-				} else {
-					Z180.extra_cycles = 3;
-				}
-				Z180.icount -= Z180.extra_cycles;
-				z180_handle_io_timers(Z180.extra_cycles);
+				_R++;
 
-				/* if channel 0 was started in burst mode, go recheck the mode */
-				if ((IO_DSTAT & Z180_DSTAT_DE0) == Z180_DSTAT_DE0 &&
-					(IO_DMODE & Z180_DMODE_MMOD) == Z180_DMODE_MMOD)
-					goto again;
+				EXEC_Z180_INLINE(op,ROP());
+				old_icount = handle_timers(z180_icount, old_icount);
 
-				curcycles = z180_dma0(6);
-				Z180.icount -= curcycles;
-				z180_handle_io_timers(curcycles);
+				z180_dma0();
+				old_icount = handle_timers(z180_icount, old_icount);
 
-				curcycles = z180_dma1();
-				Z180.icount -= curcycles;
-				z180_handle_io_timers(curcycles);
+				z180_dma1();
+				old_icount = handle_timers(z180_icount, old_icount);
 
 				/* If DMA is done break out to the faster loop */
 				if ((IO_DSTAT & Z180_DSTAT_DME) != Z180_DSTAT_DME)
 					break;
-			} while( Z180.icount > 0 && !Z180.end_run);
+			} while( z180_icount > 0 && !end_run);
 		}
     }
 
-    if (Z180.icount > 0 && !Z180.end_run)
+    if (z180_icount > 0 && !end_run)
     {
         do
 		{
+			check_interrupts();
+			Z180.after_EI = 0;
+			_PPC = _PCD;
+			_R++;
+
+			EXEC_Z180_INLINE(op,ROP());
+
+			old_icount = handle_timers(z180_icount, old_icount);
+
 			/* If DMA is started go to check the mode */
 			if ((IO_DSTAT & Z180_DSTAT_DME) == Z180_DSTAT_DME)
 				goto again;
 
-			curcycles = check_interrupts();
-			Z180.icount -= curcycles;
-			z180_handle_io_timers(curcycles);
-			Z180.after_EI = 0;
-
-			_PPC = _PCD;
-
-			if (!_HALT) {
-				_R++;
-				IO_FRC++;   /* Added FRC counting, not implemented yet */
-				Z180.extra_cycles = 0;
-				EXEC_Z180_INLINE(op,ROP());
-			} else {
-				Z180.extra_cycles = 3;
-			}
-			Z180.icount -= Z180.extra_cycles;
-			z180_handle_io_timers(Z180.extra_cycles);
-        } while( Z180.icount > 0 && !Z180.end_run );
+        } while( z180_icount > 0 && !end_run );
 	}
 
-	Z180.total_cycles += cycles - Z180.icount;
+	total_cycles += cycles - z180_icount;
 
-	INT32 ret = cycles - Z180.icount;
+	INT32 ret = cycles - z180_icount;
 
-	Z180.icount = Z180.current_cycles = 0;
+	z180_icount = current_cycles = 0;
 
 	return ret;
 }
 
 INT32 z180_idle(INT32 cyc)
 {
-	Z180.total_cycles += cyc;
+	total_cycles += cyc;
 
 	return cyc;
 }
 
 void z180_run_end()
 {
-	Z180.end_run = 1;
+	end_run = 1;
 }
 
 INT32 z180_total_cycles()
 {
-	return Z180.total_cycles + (Z180.current_cycles - Z180.icount);
+	return total_cycles + (current_cycles - z180_icount);
 }
 
 void z180_new_frame()
 {
-	Z180.total_cycles = 0;
+	total_cycles = 0;
 }
 
-#if 0
 /****************************************************************************
  * Burn 'cycles' T-states. Adjust R register for the lost time
  ****************************************************************************/
@@ -2318,32 +2194,16 @@ void z180_burn(int cycles)
 		/* NOP takes 3 cycles per instruction */
 		int n = (cycles + 2) / 3;
 		_R += n;
-		Z180.icount -= 3 * n;
+		z180_icount -= 3 * n;
 	}
 }
-#endif
 
 /****************************************************************************
  * Set IRQ line state
  ****************************************************************************/
 void z180_set_irq_line(int irqline, int state)
 {
-	if (!((irqline >= 0 && irqline <= 2) || irqline == 0x20)) {
-		bprintf(0, _T("z180_set_irq_line(%x, %x): unsupported irqline.\n"), irqline, state);
-		return;
-	}
-
-	if (state == CPU_IRQSTATUS_HOLD || state == CPU_IRQSTATUS_AUTO) {
-		// irq hold logic -dink
-		state = CPU_IRQSTATUS_ACK;
-		if (irqline == 0x20) {
-			Z180.nmi_hold = 1;
-		} else {
-			Z180.irq_hold[irqline] = 1;
-		}
-	}
-
-	if (irqline == 0x20)
+	if (irqline == Z180_INPUT_LINE_NMI)
 	{
 		/* mark an NMI pending on the rising edge */
 		if (Z180.nmi_state == Z180_CLEAR_LINE && state != Z180_CLEAR_LINE)
@@ -2352,6 +2212,7 @@ void z180_set_irq_line(int irqline, int state)
 	}
 	else
 	{
+
 		/* update the IRQ state */
 		Z180.irq_state[irqline] = state;
 		if (Z180.daisy)
@@ -2614,7 +2475,7 @@ void z180_get_info(UINT32 state, cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = z180_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = z180_burn;					break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = z180_dasm;			break;
-		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &Z180.icount;			break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &z180_icount;			break;
 		case CPUINFO_PTR_TRANSLATE:						info->translate = z180_translate;		break;
 		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_op: info->p = (void *)cc[Z180_TABLE_op];			break;
 		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_cb: info->p = (void *)cc[Z180_TABLE_cb];			break;

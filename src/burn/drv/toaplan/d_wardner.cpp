@@ -284,7 +284,7 @@ static void wardner_dsp(INT32 enable)
 	{
 		tms32010_set_irq_line(0, CPU_IRQSTATUS_ACK); /* TMS32010 INT */
 		z80_halt = 1;
-		ZetRunEnd();
+		z80_ICount = 0;
 	}
 	else
 	{
@@ -1003,11 +1003,14 @@ static INT32 DrvFrame()
 
 	for (INT32 i = 0; i < nInterleave; i++)
 	{
+		INT32 nSegment = nCyclesTotal[0] / nInterleave;
+
 		ZetOpen(0);
 		if (z80_halt) {
-			CPU_IDLE(0, Zet);
+			nCyclesDone[0] += nSegment;
+			ZetIdle(nSegment);
 		} else {
-			CPU_RUN(0, Zet);
+			nCyclesDone[0] += ZetRun(nSegment);
 
 			if (i == 240 && irq_enable) {
 				irq_enable = 0;
@@ -1015,9 +1018,8 @@ static INT32 DrvFrame()
 			}
 		}
 
-		if (dsp_on) {
-			CPU_RUN(2, tms32010);
-		}
+		nSegment = nCyclesTotal[2] / nInterleave;
+		if (dsp_on) tms32010_execute(nSegment);
 
 		ZetClose();
 
@@ -1184,10 +1186,10 @@ static struct BurnRomInfo pyrosRomDesc[] = {
 	{ "b25-14.21f",	0x08000, 0x5a2aef4f, 5 | BRF_GRA },           // 18
 	{ "b25-13.19f",	0x08000, 0xbe21db2b, 5 | BRF_GRA },           // 19
 
-	{ "b25-08.12f",	0x08000, 0x883ccaa3, 6 | BRF_GRA },           // 20 Foreground tiles
-	{ "b25-11.16f",	0x08000, 0xd6ebd510, 6 | BRF_GRA },           // 21
-	{ "b25-10.15f",	0x08000, 0xb9a61e81, 6 | BRF_GRA },           // 22
-	{ "b25-09.14f",	0x08000, 0x585411b7, 6 | BRF_GRA },           // 23
+	{ "b25-08.14c",	0x08000, 0x883ccaa3, 6 | BRF_GRA },           // 20 Foreground tiles
+	{ "b25-11.16c",	0x08000, 0xd6ebd510, 6 | BRF_GRA },           // 21
+	{ "b25-10.17c",	0x08000, 0xb9a61e81, 6 | BRF_GRA },           // 22
+	{ "b25-09.19c",	0x08000, 0x585411b7, 6 | BRF_GRA },           // 23
 
 	{ "b25-01.14c",	0x10000, 0x42ec01fb, 7 | BRF_GRA },           // 24 Sprites
 	{ "b25-02.16c",	0x10000, 0x6c0130b7, 7 | BRF_GRA },           // 25

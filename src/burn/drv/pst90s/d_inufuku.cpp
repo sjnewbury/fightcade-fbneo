@@ -246,14 +246,14 @@ static void DrvFMIRQHandler(INT32, INT32 nStatus)
 
 static tilemap_callback( bg )
 {
-	UINT16 code = BURN_ENDIAN_SWAP_INT16(*((UINT16*)(DrvBgRAM + offs * 2)));
+	UINT16 code = *((UINT16*)(DrvBgRAM + offs * 2));
 
 	TILE_SET_INFO(0, code, bg_palettebank, 0);
 }
 
 static tilemap_callback( fg )
 {
-	UINT16 code = BURN_ENDIAN_SWAP_INT16(*((UINT16*)(DrvFgRAM + offs * 2)));
+	UINT16 code = *((UINT16*)(DrvFgRAM + offs * 2));
 
 	TILE_SET_INFO(1, code, fg_palettebank, 0);
 }
@@ -446,9 +446,9 @@ static void DrvPaletteUpdate()
 
 	for (INT32 i = 0; i < 0x2000/2; i++)
 	{
-		UINT8 r = (BURN_ENDIAN_SWAP_INT16(p[i]) >>  0) & 0x1f;
-		UINT8 b = (BURN_ENDIAN_SWAP_INT16(p[i]) >>  5) & 0x1f;
-		UINT8 g = (BURN_ENDIAN_SWAP_INT16(p[i]) >> 10) & 0x1f;
+		UINT8 r = (p[i] >>  0) & 0x1f;
+		UINT8 b = (p[i] >>  5) & 0x1f;
+		UINT8 g = (p[i] >> 10) & 0x1f;
 
 		r = (r << 3) | (r >> 2);
 		g = (g << 3) | (b >> 2);
@@ -470,29 +470,29 @@ static void draw_sprites()
 
 	for (offs = 0; offs < (0x2000 / 16); offs++)
 	{
-		if (BURN_ENDIAN_SWAP_INT16(spriteram[offs]) & 0x4000) break;
+		if (spriteram[offs] & 0x4000) break;
 	}
 
 	offs--;
 	while (offs != -1)
 	{
-		if ((BURN_ENDIAN_SWAP_INT16(spriteram[offs]) & 0x8000) == 0x0000)
+		if ((spriteram[offs] & 0x8000) == 0x0000)
 		{
-			INT32 attr_start = (BURN_ENDIAN_SWAP_INT16(spriteram[offs]) & 0x03ff) * 4;
+			INT32 attr_start = (spriteram[offs] & 0x03ff) * 4;
 
 			UINT16 *ram = &spriteram[attr_start];
 
-			INT32 oy =    (BURN_ENDIAN_SWAP_INT16(ram[0]) & 0x01ff) + 1;
-			INT32 ysize = (BURN_ENDIAN_SWAP_INT16(ram[0]) & 0x0e00) >> 9;
-			INT32 zoomy = 32 - ((BURN_ENDIAN_SWAP_INT16(ram[0]) & 0xf000) >> 12);
-			INT32 ox =    (BURN_ENDIAN_SWAP_INT16(ram[1]) & 0x01ff) + 0;
-			INT32 xsize = (BURN_ENDIAN_SWAP_INT16(ram[1]) & 0x0e00) >> 9;
-			INT32 zoomx = 32 - ((BURN_ENDIAN_SWAP_INT16(ram[1]) & 0xf000) >> 12);
-			INT32 flipx = (BURN_ENDIAN_SWAP_INT16(ram[2]) & 0x4000);
-			INT32 flipy = (BURN_ENDIAN_SWAP_INT16(ram[2]) & 0x8000);
-			INT32 color =((BURN_ENDIAN_SWAP_INT16(ram[2]) & 0x3f00) >> 8) << gfx->depth;
-			INT32 pri   = (BURN_ENDIAN_SWAP_INT16(ram[2]) & 0x3000) >> 12;
-			INT32 map   = (BURN_ENDIAN_SWAP_INT16(ram[3]) & 0xffff) | (BURN_ENDIAN_SWAP_INT16(ram[2]) & 0x0001) << 16;
+			INT32 oy =    (ram[0] & 0x01ff) + 1;
+			INT32 ysize = (ram[0] & 0x0e00) >> 9;
+			INT32 zoomy = 32 - ((ram[0] & 0xf000) >> 12);
+			INT32 ox =    (ram[1] & 0x01ff) + 0;
+			INT32 xsize = (ram[1] & 0x0e00) >> 9;
+			INT32 zoomx = 32 - ((ram[1] & 0xf000) >> 12);
+			INT32 flipx = (ram[2] & 0x4000);
+			INT32 flipy = (ram[2] & 0x8000);
+			INT32 color =((ram[2] & 0x3f00) >> 8) << gfx->depth;
+			INT32 pri   = (ram[2] & 0x3000) >> 12;
+			INT32 map   = (ram[3] & 0xffff) | (ram[2] & 0x0001) << 16;
 
 			INT32 priority_mask = priority_table[pri];
 
@@ -513,7 +513,7 @@ static void draw_sprites()
 				INT32 xcnt = xstart;
 				while (xcnt != xend)
 				{
-					INT32 startno = (((BURN_ENDIAN_SWAP_INT16(spritetable[map*2]) & 0x0007) << 16) + BURN_ENDIAN_SWAP_INT16(spritetable[(map*2)+ 1])) % gfx->code_mask;
+					INT32 startno = (((spritetable[map*2] & 0x0007) << 16) + spritetable[(map*2)+ 1]) % gfx->code_mask;
 
 					RenderZoomedPrioSprite(pTransDraw, gfx->gfxbase, startno, color, 0xf, ox + xcnt * zoomx/2,        oy + ycnt * zoomy/2, 	 flipx, flipy, 16, 16, zoomx << 11, zoomy << 11, priority_mask);
 					RenderZoomedPrioSprite(pTransDraw, gfx->gfxbase, startno, color, 0xf, -0x200+ox + xcnt * zoomx/2, oy + ycnt * zoomy/2, 	 flipx, flipy, 16, 16, zoomx << 11, zoomy << 11, priority_mask);
@@ -545,7 +545,7 @@ static INT32 DrvDraw()
 
 		GenericTilemapSetScrollRows(0, 512);
 		for (INT32 i = 0; i < 256; i++) {
-			GenericTilemapSetScrollRow(0, (bg_scrolly + i) & 0x1ff, bg_scrollx + BURN_ENDIAN_SWAP_INT16(scroll[i]));
+			GenericTilemapSetScrollRow(0, (bg_scrolly + i) & 0x1ff, bg_scrollx + scroll[i]);
 		}
 	} else {
 		GenericTilemapSetScrollRows(0, 1);

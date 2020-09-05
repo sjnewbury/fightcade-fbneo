@@ -199,7 +199,11 @@ static void shootout_main_write(UINT16 address, UINT8 data)
 
 		case 0x1003:
 			soundlatch = data;
-			M6502SetIRQLine(1, 0x20, CPU_IRQSTATUS_AUTO);
+			M6502Close();
+			M6502Open(1);
+			M6502SetIRQLine(0x20, CPU_IRQSTATUS_AUTO);
+			M6502Close();
+			M6502Open(0);
 		return;
 
 	// shootouj
@@ -695,13 +699,14 @@ static INT32 ShootoutFrame()
 
 
 		if ((DrvInputs[1] & 0xc0) && (DrvInputs[1] & 0xc0) != previous_coin) {
-			M6502SetIRQLine(0, 0x20, CPU_IRQSTATUS_AUTO);
+			M6502Open(0);
+			M6502SetIRQLine(0x20, CPU_IRQSTATUS_AUTO);
+			M6502Close();
 		}
 	}
 
 	INT32 nInterleave = 262;
 	INT32 nCyclesTotal[2] =  { 2000000 / 60, 1500000 / 60 };
-	INT32 nCyclesDone[2] = { 0, 0 };
 
 	for (INT32 i = 0; i < nInterleave; i++)
 	{
@@ -709,7 +714,7 @@ static INT32 ShootoutFrame()
 		if (i == 8) vblank = 0;
 
 		M6502Open(0);
-		CPU_RUN(0, M6502);
+		M6502Run(nCyclesTotal[0] / nInterleave);
 		M6502Close();
 
 		M6502Open(1);
@@ -752,7 +757,9 @@ static INT32 ShootoujFrame()
 		}
 
 		if ((DrvInputs[1] & 0xc0) && (DrvInputs[1] & 0xc0) != previous_coin) {
-			M6502SetIRQLine(0, 0x20, CPU_IRQSTATUS_AUTO);
+			M6502Open(0);
+			M6502SetIRQLine(0x20, CPU_IRQSTATUS_AUTO);
+			M6502Close();
 		}
 	}
 

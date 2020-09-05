@@ -336,10 +336,10 @@ static struct BurnDIPInfo Dkong3DIPList[]=
 	{0x11, 0x01, 0x30, 0x30, "None"			},
 
 	{0   , 0xfe, 0   ,    4, "Difficulty"		},
-	{0x11, 0x01, 0xc0, 0x00, "(1) Easy"			},
-	{0x11, 0x01, 0xc0, 0x40, "(2)"				},
-	{0x11, 0x01, 0xc0, 0x80, "(3)"				},
-	{0x11, 0x01, 0xc0, 0xc0, "(4) Hard"			},
+	{0x11, 0x01, 0xc0, 0x00, "Easy"			},
+	{0x11, 0x01, 0xc0, 0x40, "Medium"		},
+	{0x11, 0x01, 0xc0, 0x80, "Hard"			},
+	{0x11, 0x01, 0xc0, 0xc0, "Hardest"		},
 };
 
 STDDIPINFO(Dkong3)
@@ -1743,21 +1743,21 @@ static void draw_grid()
 	counter = (radarscp1) ? 0x000 : 0x400; //flip_screen ? 0x000 : 0x400;
 
 	x = 0;
-	y = 0;
+	y = 16;
 
-	while (y < nScreenHeight)
+	while (y <= 240)
 	{
 		x = 4 * (table[counter] & 0x7f);
 
-		if (x >= 0 && x < nScreenWidth)
+		if (x >= 0 && x <= 255)
 		{
 			if (table[counter] & 0x80)	/* star */
 			{
 				if (rand() & 1)	/* noise coming from sound board */
-					pTransDraw[(y) * nScreenWidth + x] = 0x100;
+					pTransDraw[(y - 16) * nScreenWidth + x] = 0x100;
 			}
 			else if (*grid_enable)			/* radar */
-				pTransDraw[(y) * nScreenWidth + x] = 0x101;
+				pTransDraw[(y - 16) * nScreenWidth + x] = 0x101;
 		}
 
 		counter++;
@@ -1784,11 +1784,35 @@ static void draw_sprites(UINT32 code_mask, UINT32 mask_bank, UINT32 shift_bits, 
 			INT32 flipx = attr & 0x80;
 			INT32 flipy = DrvSprRAM[offs + 1] & ((swap) ? 0x40 : 0x80);
 
-			Draw16x16MaskTile(pTransDraw, code, sx, sy, flipx, flipy, color, 2, 0, 0, DrvGfxROM1);
+			if (flipy) {
+				if (flipx) {
+					Render16x16Tile_Mask_FlipXY_Clip(pTransDraw, code, sx, sy, color, 2, 0, 0, DrvGfxROM1);
+				} else {
+					Render16x16Tile_Mask_FlipY_Clip(pTransDraw, code, sx, sy, color, 2, 0, 0, DrvGfxROM1);
+				}
+			} else {
+				if (flipx) {
+					Render16x16Tile_Mask_FlipX_Clip(pTransDraw, code, sx, sy, color, 2, 0, 0, DrvGfxROM1);
+				} else {
+					Render16x16Tile_Mask_Clip(pTransDraw, code, sx, sy, color, 2, 0, 0, DrvGfxROM1);
+				}
+			}
 
 			// wraparound
 			if (sx < 0) {
-				Draw16x16MaskTile(pTransDraw, code, sx+256, sy, flipx, flipy, color, 2, 0, 0, DrvGfxROM1);
+				if (flipy) {
+					if (flipx) {
+						Render16x16Tile_Mask_FlipXY_Clip(pTransDraw, code, sx+256, sy, color, 2, 0, 0, DrvGfxROM1);
+					} else {
+						Render16x16Tile_Mask_FlipY_Clip(pTransDraw, code, sx+256, sy, color, 2, 0, 0, DrvGfxROM1);
+					}
+				} else {
+					if (flipx) {
+						Render16x16Tile_Mask_FlipX_Clip(pTransDraw, code, sx+256, sy, color, 2, 0, 0, DrvGfxROM1);
+					} else {
+						Render16x16Tile_Mask_Clip(pTransDraw, code, sx+256, sy, color, 2, 0, 0, DrvGfxROM1);
+					}
+				}
 			}
 		}
 	}
@@ -1804,7 +1828,7 @@ static void draw_layer()
 		INT32 code  = DrvVidRAM[offs] + (*gfx_bank * 256);
 		INT32 color =(DrvColPROM[0x200 + (offs & 0x1f) + ((offs / 0x80) * 0x20)] & 0x0f) + (*palette_bank * 0x10);
 
-		Draw8x8Tile(pTransDraw, code, sx, sy - 16, 0, 0, color, 2, 0, DrvGfxROM0);
+		Render8x8Tile(pTransDraw, code, sx, sy - 16, color, 2, 0, DrvGfxROM0);
 	}
 }
 

@@ -231,7 +231,7 @@ static struct BurnDIPInfo Dbz2DIPList[]=
 
 STDDIPINFO(Dbz2)
 
-static void dbz_objdma() // modified from moo mesa -dink jan 2019
+static void dbz_objdma() // modified from moo mesa
 {
 	UINT16 *dst = (UINT16*)K053247Ram;   // 0x800 words
 	UINT16 *src = (UINT16*)DrvObjDMARam; // 0x2000 words
@@ -242,7 +242,7 @@ static void dbz_objdma() // modified from moo mesa -dink jan 2019
 
 	do
 	{
-		if (BURN_ENDIAN_SWAP_INT16(*src) & 0x8000)
+		if (*src & 0x8000)
 		{
 			memcpy(dst, src, 0x10);
 			dst += 0x10/2;
@@ -503,18 +503,18 @@ static void dbz_tile_callback(INT32 layer, INT32 */*code*/, INT32 *color, INT32 
 
 static void dbz_K053936_callback1(INT32 offset, UINT16 *ram, INT32 *code, INT32 *color, INT32 *, INT32 *, INT32 *flipx, INT32 *)
 {
-	*code  =  BURN_ENDIAN_SWAP_INT16(ram[(offset * 2) + 1]) & 0x7fff;
-	*color = ((BURN_ENDIAN_SWAP_INT16(ram[(offset * 2) + 0]) & 0x000f) + (layer_colorbase[4] << 1)) << 4;
+	*code  =  ram[(offset * 2) + 1] & 0x7fff;
+	*color = ((ram[(offset * 2) + 0] & 0x000f) + (layer_colorbase[4] << 1)) << 4;
 	*color &= 0x1ff0;
-	*flipx =  BURN_ENDIAN_SWAP_INT16(ram[(offset * 2) + 0]) & 0x0080;
+	*flipx =  ram[(offset * 2) + 0] & 0x0080;
 }
 
 static void dbz_K053936_callback2(INT32 offset, UINT16 *ram, INT32 *code, INT32 *color, INT32 *, INT32 *, INT32 *flipx, INT32 *)
 {
-	*code  =  BURN_ENDIAN_SWAP_INT16(ram[(offset * 2) + 1]) & 0x7fff;
-	*color = ((BURN_ENDIAN_SWAP_INT16(ram[(offset * 2) + 0]) & 0x000f) + (layer_colorbase[5] << 1)) << 4;
+	*code  =  ram[(offset * 2) + 1] & 0x7fff;
+	*color = ((ram[(offset * 2) + 0] & 0x000f) + (layer_colorbase[5] << 1)) << 4;
 	*color &= 0x1ff0;
-	*flipx =  BURN_ENDIAN_SWAP_INT16(ram[(offset * 2) + 0]) & 0x0080;
+	*flipx =  ram[(offset * 2) + 0] & 0x0080;
 }
 
 static void dbzYM2151IrqHandler(INT32 status)
@@ -835,9 +835,9 @@ static void DrvPaletteRecalc()
 
 	for (INT32 i = 0; i < 0x4000/2; i++)
 	{
-		INT32 r = (BURN_ENDIAN_SWAP_INT16(pal[i]) >> 10 & 0x1f);
-		INT32 g = (BURN_ENDIAN_SWAP_INT16(pal[i]) >> 5) & 0x1f;
-		INT32 b = (BURN_ENDIAN_SWAP_INT16(pal[i])) & 0x1f;
+		INT32 r = (pal[i] >> 10 & 0x1f);
+		INT32 g = (pal[i] >> 5) & 0x1f;
+		INT32 b = (pal[i]) & 0x1f;
 
 		r = (r << 3) | (r >> 2);
 		g = (g << 3) | (g >> 2);
@@ -938,18 +938,24 @@ static INT32 DrvFrame()
 	ZetOpen(0);
 
 	for (INT32 i = 0; i < nInterleave; i++) {
-		CPU_RUN(0, Sek);
+		INT32 nNext, nCyclesSegment;
 
-		if (i == 0 && K053246_is_IRQ_enabled()) {
+		nNext = (i + 1) * nCyclesTotal[0] / nInterleave;
+		nCyclesSegment = nNext - nCyclesDone[0];
+		nCyclesDone[0] += SekRun(nCyclesSegment);
+
+		if (i == ((nInterleave/2)-1) && K053246_is_IRQ_enabled()) {
+			dbz_objdma();
 			SekSetIRQLine(4, CPU_IRQSTATUS_AUTO);
 		}
 
 		if (i == (nInterleave - 1)) {
-			dbz_objdma();
 			SekSetIRQLine(2, CPU_IRQSTATUS_AUTO);
 		}
 
-		CPU_RUN(1, Zet);
+		nNext = (i + 1) * nCyclesTotal[1] / nInterleave;
+		nCyclesSegment = nNext - nCyclesDone[1];
+		nCyclesDone[1] += ZetRun(nCyclesSegment);
 
 		if (pBurnSoundOut && i&1) {
 			INT32 nSegmentLength = nBurnSoundLen / (nInterleave / 2);

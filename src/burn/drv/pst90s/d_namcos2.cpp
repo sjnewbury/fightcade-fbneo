@@ -142,15 +142,15 @@ static UINT8 DrvInputs[4];
 static UINT8 DrvDips[2];
 static UINT8 DrvReset;
 
-static INT16 DrvAnalogPort0 = 0;
-static INT16 DrvAnalogPort1 = 0;
-static INT16 DrvAnalogPort2 = 0;
+static INT32 DrvAnalogPort0 = 0;
+static INT32 DrvAnalogPort1 = 0;
+static INT32 DrvAnalogPort2 = 0;
 
 static INT32 uses_gun = 0;
-static INT16 DrvGun0 = 0;
-static INT16 DrvGun1 = 0;
-static INT16 DrvGun2 = 0;
-static INT16 DrvGun3 = 0;
+static INT32 DrvGun0 = 0;
+static INT32 DrvGun1 = 0;
+static INT32 DrvGun2 = 0;
+static INT32 DrvGun3 = 0;
 
 static INT32 is_dirtfoxj = 0;
 static INT32 is_luckywld = 0;
@@ -419,9 +419,9 @@ static inline void palette_write(UINT16 offset)
 
 	UINT16 *ram = (UINT16*)DrvPalRAM;
 
-	UINT8 r = BURN_ENDIAN_SWAP_INT16(ram[ofst + 0x0000]);
-	UINT8 g = BURN_ENDIAN_SWAP_INT16(ram[ofst + 0x0800]);
-	UINT8 b = BURN_ENDIAN_SWAP_INT16(ram[ofst + 0x1000]);
+	UINT8 r = ram[ofst + 0x0000];
+	UINT8 g = ram[ofst + 0x0800];
+	UINT8 b = ram[ofst + 0x1000];
 
 	DrvPalette[offset] = BurnHighCol(r,g,b,0);
 
@@ -565,7 +565,7 @@ static UINT16 __fastcall namcos2_68k_read_word(UINT32 address)
 
 	if ((address & 0xfffff0) == 0xd00000) {
 		if (key_prot_read != NULL)
-		return key_prot_read(address/2);
+			return key_prot_read(address/2);
 
 		return BurnRandom();
 	}
@@ -621,15 +621,15 @@ static void __fastcall namcos2_68k_write_word(UINT32 address, UINT16 data)
 	}
 
 	if ((address & 0xffffc0) == 0x420000) {
-		*((UINT16*)(DrvC123Ctrl + (address & 0x3e))) = BURN_ENDIAN_SWAP_INT16(data);
+		*((UINT16*)(DrvC123Ctrl + (address & 0x3e))) = data;
 		return;
 	}
 
 	if ((address & 0xff0000) == 0x440000) {
 		if ((address & 0x3000) >= 0x3000) {
-			*((UINT16*)(DrvPalRAM + (address & 0x301e))) = BURN_ENDIAN_SWAP_INT16(data & 0xff);
+			*((UINT16*)(DrvPalRAM + (address & 0x301e))) = data & 0xff;
 		} else {
-			*((UINT16*)(DrvPalRAM + (address & 0xfffe))) = BURN_ENDIAN_SWAP_INT16(data);
+			*((UINT16*)(DrvPalRAM + (address & 0xfffe))) = data;
 			palette_write(address);
 		}
 		return;
@@ -641,7 +641,7 @@ static void __fastcall namcos2_68k_write_word(UINT32 address, UINT16 data)
 	}
 
 	if ((address & 0xfffff0) == 0xcc0000) {
-		*((UINT16*)(DrvRozCtrl + (address & 0x0e))) = BURN_ENDIAN_SWAP_INT16(data);
+		*((UINT16*)(DrvRozCtrl + (address & 0x0e))) = data;
 		return;
 	}
 
@@ -685,7 +685,7 @@ static void __fastcall namcos2_68k_write_byte(UINT32 address, UINT8 data)
 
 	if ((address & 0xff0000) == 0x440000) {
 		if ((address & 0x3000) >= 0x3000) {
-			*((UINT16*)(DrvPalRAM + (address & 0x301e))) = BURN_ENDIAN_SWAP_INT16(data);
+			*((UINT16*)(DrvPalRAM + (address & 0x301e))) = data;
 		} else {
 			DrvPalRAM[(address & 0xffff)^1] = data;
 			palette_write(address);
@@ -729,7 +729,7 @@ static UINT8 __fastcall sgunner_68k_read_byte(UINT32 address)
 static void __fastcall luckywld_68k_write_word(UINT32 address, UINT16 data)
 {
 	if ((address & 0xffffe0) == 0xd00000) {
-		*((UINT16*)(DrvRozCtrl + (address & 0x1e))) = BURN_ENDIAN_SWAP_INT16(data);
+		*((UINT16*)(DrvRozCtrl + (address & 0x1e))) = data;
 		return;
 	}
 
@@ -811,7 +811,7 @@ static void __fastcall metlhawk_68k_write_word(UINT32 address, UINT16 data)
 {
 	if ((address & 0xffffe0) == 0xd00000) {
 
-		*((UINT16*)(DrvRozCtrl + (address & 0x1e))) = BURN_ENDIAN_SWAP_INT16(data);
+		*((UINT16*)(DrvRozCtrl + (address & 0x1e))) = data;
 		return;
 	}
 
@@ -1248,10 +1248,10 @@ static void __fastcall roz_write_word(UINT32 address, UINT16 data)
 
 	UINT16 offset = (address & 0x1ffff) / 2;
 
-	if (ram[offset] != BURN_ENDIAN_SWAP_INT16(data)) {
+	if (ram[offset] != data) {
 		roz_dirty_tile[offset] = 1;
 		roz_update_tiles = 1;
-		ram[offset] = BURN_ENDIAN_SWAP_INT16(data);
+		ram[offset] = data;
 	}
 }
 
@@ -2209,7 +2209,7 @@ static INT32 Namcos2Exit()
 static inline UINT16 get_palette_register(INT32 reg)
 {
 	UINT16 *ctrl = (UINT16*)(DrvPalRAM + 0x3000);
-	return ((BURN_ENDIAN_SWAP_INT16(ctrl[reg*2]) & 0xff) * 256 + (BURN_ENDIAN_SWAP_INT16(ctrl[reg*2+1]) & 0xff));
+	return ((ctrl[reg*2] & 0xff) * 256 + (ctrl[reg*2+1] & 0xff));
 }
 
 #define restore_XY_clip(); \
@@ -2253,9 +2253,9 @@ static void DrvRecalcPalette()
 
 		for (INT32 i = 0; i < 256; i++)
 		{
-			UINT8 r = BURN_ENDIAN_SWAP_INT16(ram[offset + i + 0x0000]);
-			UINT8 g = BURN_ENDIAN_SWAP_INT16(ram[offset + i + 0x0800]);
-			UINT8 b = BURN_ENDIAN_SWAP_INT16(ram[offset + i + 0x1000]);
+			UINT8 r = ram[offset + i + 0x0000];
+			UINT8 g = ram[offset + i + 0x0800];
+			UINT8 b = ram[offset + i + 0x1000];
 
 			DrvPalette[pen + i] = BurnHighCol(r,g,b,0);
 
@@ -2284,13 +2284,13 @@ static void draw_layer_with_masking_by_line(INT32 layer, INT32 color, INT32 line
 	INT32 sizex_full = sizex * 8;
 	INT32 sizey_full = sizey * 8;
 
-	INT32 flipscreen = (BURN_ENDIAN_SWAP_INT16(ctrl[1]) & 0x8000) ? 0xffff : 0;
+	INT32 flipscreen = (ctrl[1] & 0x8000) ? 0xffff : 0;
 
 	INT32 x_offset = x_offset_table[layer];
 	INT32 y_offset = (layer < 4) ? 24 : 0;
 
-	INT32 scrollx = ((BURN_ENDIAN_SWAP_INT16(ctrl[1 + layer * 4]) + x_offset) ^ flipscreen) % sizex_full;
-	INT32 scrolly = ((BURN_ENDIAN_SWAP_INT16(ctrl[3 + layer * 4]) + y_offset) ^ flipscreen) % sizey_full;
+	INT32 scrollx = ((ctrl[1 + layer * 4] + x_offset) ^ flipscreen) % sizex_full;
+	INT32 scrolly = ((ctrl[3 + layer * 4] + y_offset) ^ flipscreen) % sizey_full;
 
 	if (flipscreen) {
 		scrolly += 256 + 16;
@@ -2317,7 +2317,7 @@ static void draw_layer_with_masking_by_line(INT32 layer, INT32 color, INT32 line
 
 		INT32 offs = (sx / 8) + ((sy / 8) * sizex);
 
-		INT32 code = BURN_ENDIAN_SWAP_INT16(ram[offs]);
+		INT32 code = ram[offs];
 		UINT8 *gfx = DrvGfxROM2 + (code * 8 * 8);
 		UINT8 *msk = DrvGfxROM4 + (code * 8);
 
@@ -2357,13 +2357,13 @@ static void draw_layer_with_masking(INT32 layer, INT32 color, INT32 priority)
 	INT32 sizex_full = sizex * 8;
 	INT32 sizey_full = sizey * 8;
 
-	INT32 flipscreen = (BURN_ENDIAN_SWAP_INT16(ctrl[1]) & 0x8000) ? 0xffff : 0;
+	INT32 flipscreen = (ctrl[1] & 0x8000) ? 0xffff : 0;
 
 	INT32 x_offset = x_offset_table[layer];
 	INT32 y_offset = (layer < 4) ? 24 : 0;
 
-	INT32 scrollx = ((BURN_ENDIAN_SWAP_INT16(ctrl[1 + layer * 4]) + x_offset) ^ flipscreen) % sizex_full;
-	INT32 scrolly = ((BURN_ENDIAN_SWAP_INT16(ctrl[3 + layer * 4]) + y_offset) ^ flipscreen) % sizey_full;
+	INT32 scrollx = ((ctrl[1 + layer * 4] + x_offset) ^ flipscreen) % sizex_full;
+	INT32 scrolly = ((ctrl[3 + layer * 4] + y_offset) ^ flipscreen) % sizey_full;
 
 	if (flipscreen) {
 		scrolly += 256 + 16;
@@ -2396,7 +2396,7 @@ static void draw_layer_with_masking(INT32 layer, INT32 color, INT32 priority)
 
 		if (sx >= nScreenWidth || sy >= nScreenHeight) continue;
 
-		INT32 code = BURN_ENDIAN_SWAP_INT16(ram[offs]);
+		INT32 code = ram[offs];
 		UINT8 *gfx = DrvGfxROM2 + (code * 8 * 8);
 		UINT8 *msk = DrvGfxROM4 + (code * 8);
 
@@ -2448,9 +2448,9 @@ static void draw_layer_line(INT32 line, INT32 pri)
 
 	for (INT32 i = 0; i < 6; i++)
 	{
-		if((BURN_ENDIAN_SWAP_INT16(ctrl[0x10+i]) & 0xf) == (pri & 0xf))
+		if((ctrl[0x10+i] & 0xf) == (pri & 0xf))
 		{
-			layer_color = BURN_ENDIAN_SWAP_INT16(ctrl[0x18 + i]);
+			layer_color = ctrl[0x18 + i];
 			draw_layer_with_masking_by_line(i, layer_color, line, pri);
 		}
 	}
@@ -2464,9 +2464,9 @@ static void draw_layer(INT32 pri)
 
 	for (INT32 i = 0; i < 6; i++)
 	{
-		if((BURN_ENDIAN_SWAP_INT16(ctrl[0x10+i]) & 0xf) == (pri & 0xf))
+		if((ctrl[0x10+i] & 0xf) == (pri & 0xf))
 		{
-			layer_color = BURN_ENDIAN_SWAP_INT16(ctrl[0x18 + i]);
+			layer_color = ctrl[0x18 + i];
 			draw_layer_with_masking(i, layer_color, pri);
 		}
 	}
@@ -2486,12 +2486,12 @@ static void predraw_roz_layer()
 		INT32 sx = (offs & 0xff) * 8;
 		INT32 sy = (offs / 256) * 8;
 
-		UINT8 *gfx = DrvGfxROM3 + (BURN_ENDIAN_SWAP_INT16(ram[offs]) * 0x40);
+		UINT8 *gfx = DrvGfxROM3 + (ram[offs] * 0x40);
 		UINT16 *dst = roz_bitmap + (sy * 256 * 8) + sx;
 
 		for (INT32 y = 0; y < 8; y++, dst += (256 * 8)) {
 			for (INT32 x = 0; x < 8; x++, gfx++) {
-				dst[x] = BURN_ENDIAN_SWAP_INT16(*gfx);
+				dst[x] = *gfx;
 			}
 		}
 	}
@@ -2650,11 +2650,11 @@ static void draw_sprites_metalhawk()
 
 	for (INT32 loop=0; loop < 128; loop++)
 	{
-		INT32 ypos  = BURN_ENDIAN_SWAP_INT16(pSource[0]);
-		INT32 tile  = BURN_ENDIAN_SWAP_INT16(pSource[1]);
-		INT32 xpos  = BURN_ENDIAN_SWAP_INT16(pSource[3]);
-		INT32 flags = BURN_ENDIAN_SWAP_INT16(pSource[6]);
-		INT32 attrs = BURN_ENDIAN_SWAP_INT16(pSource[7]);
+		INT32 ypos  = pSource[0];
+		INT32 tile  = pSource[1];
+		INT32 xpos  = pSource[3];
+		INT32 flags = pSource[6];
+		INT32 attrs = pSource[7];
 		INT32 sizey = ((ypos>>10)&0x3f)+1;
 		INT32 sizex = (xpos>>10)&0x3f;
 		INT32 sprn  = tile&0x1fff;
@@ -2730,11 +2730,11 @@ static void predraw_c169_roz_bitmap()
 			ofst = sx + (sy * 0x80);
 		}
 
-		INT32 code = BURN_ENDIAN_SWAP_INT16(ram[ofst]) & 0x3fff;
-		if (code == BURN_ENDIAN_SWAP_INT16(dirty[ofst]) && roz_update_tiles == 0) {
+		INT32 code = ram[ofst] & 0x3fff;
+		if (code == dirty[ofst] && roz_update_tiles == 0) {
 			continue;
 		}
-		dirty[ofst] = BURN_ENDIAN_SWAP_INT16(code);
+		dirty[ofst] = code;
 
 		sx *= 16;
 		sy *= 16;
@@ -2750,9 +2750,9 @@ static void predraw_c169_roz_bitmap()
 			{
 				if (msk[x/8] & (0x80 >> (x & 7)))
 				{
-					dst[x] = BURN_ENDIAN_SWAP_INT16(gfx[x]);
+					dst[x] = gfx[x];
 				} else {
-					dst[x] = BURN_ENDIAN_SWAP_INT16(0x8000);
+					dst[x] = 0x8000;
 				}
 			}
 
@@ -2805,7 +2805,7 @@ static inline void draw_roz_helper_block(const struct roz_param *rozInfo, INT32 
 				continue;
 			}
 
-			INT32 pxl = BURN_ENDIAN_SWAP_INT16(roz_bitmap[(ypos * 256 * 8) + xpos]);
+			INT32 pxl = roz_bitmap[(ypos * 256 * 8) + xpos];
 
 			if (pxl != 0xff)
 			{
@@ -2897,16 +2897,16 @@ static void draw_roz(INT32 pri)
 	if (!max_x && !max_y) return;
 
 	rozParam.color = (gfx_ctrl & 0x0f00);
-	rozParam.incxx  = (INT16)BURN_ENDIAN_SWAP_INT16(m_roz_ctrl[0]);
-	rozParam.incxy  = (INT16)BURN_ENDIAN_SWAP_INT16(m_roz_ctrl[1]);
-	rozParam.incyx  = (INT16)BURN_ENDIAN_SWAP_INT16(m_roz_ctrl[2]);
-	rozParam.incyy  = (INT16)BURN_ENDIAN_SWAP_INT16(m_roz_ctrl[3]);
-	rozParam.startx = (INT16)BURN_ENDIAN_SWAP_INT16(m_roz_ctrl[4]);
-	rozParam.starty = (INT16)BURN_ENDIAN_SWAP_INT16(m_roz_ctrl[5]);
+	rozParam.incxx  = (INT16)m_roz_ctrl[0];
+	rozParam.incxy  = (INT16)m_roz_ctrl[1];
+	rozParam.incyx  = (INT16)m_roz_ctrl[2];
+	rozParam.incyy  = (INT16)m_roz_ctrl[3];
+	rozParam.startx = (INT16)m_roz_ctrl[4];
+	rozParam.starty = (INT16)m_roz_ctrl[5];
 	rozParam.size = 2048;
 	rozParam.wrap = 1;
 
-	switch( BURN_ENDIAN_SWAP_INT16(m_roz_ctrl[7]) )
+	switch( m_roz_ctrl[7] )
 	{
 		case 0x4400: // (2048x2048)
 		break;
@@ -2936,7 +2936,7 @@ static void draw_roz(INT32 pri)
 	rozParam.incxy<<=8;
 	rozParam.incyx<<=8;
 	rozParam.incyy<<=8;
-	
+
 	draw_roz_helper(&rozParam, pri);
 }
 
@@ -2948,12 +2948,12 @@ static void draw_sprites_bank(INT32 spritebank)
 	//for (INT32 loop=0; loop < 128; loop++)
 	for (INT32 loop=127; loop>=0; loop--) // fix rthun2 masking issue
 	{
-		INT32 word3 = BURN_ENDIAN_SWAP_INT16(m_spriteram[offset+(loop*4)+3]);
+		INT32 word3 = m_spriteram[offset+(loop*4)+3];
 		INT32 priority = word3 & 0xf;
 
-		INT32 word0 = BURN_ENDIAN_SWAP_INT16(m_spriteram[offset+(loop*4)+0]);
-		INT32 word1 = BURN_ENDIAN_SWAP_INT16(m_spriteram[offset+(loop*4)+1]);
-		INT32 offset4 = BURN_ENDIAN_SWAP_INT16(m_spriteram[offset+(loop*4)+2]);
+		INT32 word0 = m_spriteram[offset+(loop*4)+0];
+		INT32 word1 = m_spriteram[offset+(loop*4)+1];
+		INT32 offset4 = m_spriteram[offset+(loop*4)+2];
 
 		INT32 sizey=((word0>>10)&0x3f)+1;
 		INT32 sizex=(word3>>10)&0x3f;
@@ -3098,16 +3098,16 @@ static void c355_obj_draw_sprite(const UINT16 *pSource, INT32 zpos)
 	const UINT16 *spriteformat16 = &spriteram16[0x4000/2];
 	const UINT16 *spritetile16   = &spriteram16[0x8000/2];
 
-	UINT16 palette     = BURN_ENDIAN_SWAP_INT16(pSource[6]);
+	UINT16 palette     = pSource[6];
 
 	INT32 pri = (palette >> 4) & 0xf;
 
-	UINT16 linkno      = BURN_ENDIAN_SWAP_INT16(pSource[0]);
-	UINT16 offset      = BURN_ENDIAN_SWAP_INT16(pSource[1]);
-	INT32 hpos        = BURN_ENDIAN_SWAP_INT16(pSource[2]);
-	INT32 vpos        = BURN_ENDIAN_SWAP_INT16(pSource[3]);
-	UINT16 hsize       = BURN_ENDIAN_SWAP_INT16(pSource[4]);
-	UINT16 vsize       = BURN_ENDIAN_SWAP_INT16(pSource[5]);
+	UINT16 linkno      = pSource[0];
+	UINT16 offset      = pSource[1];
+	INT32 hpos        = pSource[2];
+	INT32 vpos        = pSource[3];
+	UINT16 hsize       = pSource[4];
+	UINT16 vsize       = pSource[5];
 
 	if (linkno*4>=0x4000/2) return;
 
@@ -3126,10 +3126,10 @@ static void c355_obj_draw_sprite(const UINT16 *pSource, INT32 zpos)
 	INT32 oldmax_x = max_x;
 	INT32 oldmin_y = min_y;
 	INT32 oldmax_y = max_y;
-	min_x = BURN_ENDIAN_SWAP_INT16(pWinAttr[0]) - xscroll;
-	max_x = BURN_ENDIAN_SWAP_INT16(pWinAttr[1]) - xscroll;
-	min_y = BURN_ENDIAN_SWAP_INT16(pWinAttr[2]) - yscroll;
-	max_y = BURN_ENDIAN_SWAP_INT16(pWinAttr[3]) - yscroll;
+	min_x = pWinAttr[0] - xscroll;
+	max_x = pWinAttr[1] - xscroll;
+	min_y = pWinAttr[2] - yscroll;
+	max_y = pWinAttr[3] - yscroll;
 	adjust_clip(); // make sane
 
 	if (min_x < oldmin_x) min_x = oldmin_x;
@@ -3140,10 +3140,10 @@ static void c355_obj_draw_sprite(const UINT16 *pSource, INT32 zpos)
 	hpos&=0x7ff; if( hpos&0x400 ) hpos |= ~0x7ff; /* sign extend */
 	vpos&=0x7ff; if( vpos&0x400 ) vpos |= ~0x7ff; /* sign extend */
 
-	INT32 tile_index      = BURN_ENDIAN_SWAP_INT16(spriteformat16[linkno*4+0]);
-	INT32 format          = BURN_ENDIAN_SWAP_INT16(spriteformat16[linkno*4+1]);
-	INT32 dx              = BURN_ENDIAN_SWAP_INT16(spriteformat16[linkno*4+2]);
-	INT32 dy              = BURN_ENDIAN_SWAP_INT16(spriteformat16[linkno*4+3]);
+	INT32 tile_index      = spriteformat16[linkno*4+0];
+	INT32 format          = spriteformat16[linkno*4+1];
+	INT32 dx              = spriteformat16[linkno*4+2];
+	INT32 dy              = spriteformat16[linkno*4+3];
 	INT32 num_cols        = (format>>4)&0xf;
 	INT32 num_rows        = (format)&0xf;
 
@@ -3201,7 +3201,7 @@ static void c355_obj_draw_sprite(const UINT16 *pSource, INT32 zpos)
 			{
 				sx -= tile_screen_width;
 			}
-			INT32 tile = BURN_ENDIAN_SWAP_INT16(spritetile16[tile_index++]);
+			INT32 tile = spritetile16[tile_index++];
 			if( (tile&0x8000)==0 )
 			{
 				INT32 size = 0;
@@ -3230,7 +3230,7 @@ static void c355_obj_draw_list(const UINT16 *pSpriteList16, const UINT16 *pSprit
 {
 	for (INT32 i = 0; i < 256; i++)
 	{
-		UINT16 which = BURN_ENDIAN_SWAP_INT16(pSpriteList16[i]);
+		UINT16 which = pSpriteList16[i];
 		c355_obj_draw_sprite(&pSpriteTable[(which&0xff)*8], i);
 		if (which&0x100) break;
 	}
@@ -3493,7 +3493,7 @@ static INT32 DrvFrame()
 	for (INT32 i = 0; i < nInterleave; i++) {
 		scanline = i / 2;
 
-		position = (((BURN_ENDIAN_SWAP_INT16(ctrl[0xa]) & 0xff) * 256 + (BURN_ENDIAN_SWAP_INT16(ctrl[0xb]) & 0xff)) - 35) & 0xff;
+		position = (((ctrl[0xa] & 0xff) * 256 + (ctrl[0xb] & 0xff)) - 35) & 0xff;
 
 		SekOpen(0);
 		if (i == (240+vbloffs)*2) SekSetIRQLine(irq_vblank[0], CPU_IRQSTATUS_AUTO); // should ack in c148
@@ -4651,38 +4651,38 @@ struct BurnDriver BurnDrvValkyrie = {
 // Rolling Thunder 2
 
 static struct BurnRomInfo rthun2RomDesc[] = {
-	{ "rts2_mpr0.11d",		0x20000, 0xe09a3549, 0x01 | BRF_PRG | BRF_ESS }, //  0 Main 68K Code
-	{ "rts2_mpr1.13d",		0x20000, 0x09573bff, 0x01 | BRF_PRG | BRF_ESS }, //  1
+	{ "rts2_mpr0.bin",		0x20000, 0xe09a3549, 0x01 | BRF_PRG | BRF_ESS }, //  0 Main 68K Code
+	{ "rts2_mpr1.bin",		0x20000, 0x09573bff, 0x01 | BRF_PRG | BRF_ESS }, //  1
 
-	{ "rts2_spr0.11k",		0x10000, 0x54c22ac5, 0x02 | BRF_PRG | BRF_ESS }, //  2 Sub 68K Code
-	{ "rts2_spr1.13k",		0x10000, 0x060eb393, 0x02 | BRF_PRG | BRF_ESS }, //  3
+	{ "rts2_spr0.bin",		0x10000, 0x54c22ac5, 0x02 | BRF_PRG | BRF_ESS }, //  2 Sub 68K Code
+	{ "rts2_spr1.bin",		0x10000, 0x060eb393, 0x02 | BRF_PRG | BRF_ESS }, //  3
 
-	{ "rts1_snd0.7j",		0x20000, 0x55b7562a, 0x03 | BRF_PRG | BRF_ESS }, //  4 M6809 Code
-	{ "rts1_snd1.7g",		0x20000, 0x00445a4f, 0x03 | BRF_PRG | BRF_ESS }, //  5
+	{ "rst1_snd0.bin",		0x20000, 0x55b7562a, 0x03 | BRF_PRG | BRF_ESS }, //  4 M6809 Code
+	{ "rst1_snd1.bin",		0x20000, 0x00445a4f, 0x03 | BRF_PRG | BRF_ESS }, //  5
 
 #if !defined ROM_VERIFY
 	{ "sys2mcpu.bin",		0x02000, 0xa342a97e, 0x04 | BRF_PRG | BRF_ESS }, //  6 HD68705 Code
 #endif
-	{ "sys2c65c.3f",		0x08000, 0xa5b2a4ff, 0x04 | BRF_PRG | BRF_ESS }, //  7
+	{ "sys2c65c.bin",		0x08000, 0xa5b2a4ff, 0x04 | BRF_PRG | BRF_ESS }, //  7
 
-	{ "rts_obj0.5b",		0x80000, 0xe5cb82c1, 0x05 | BRF_GRA },           //  8 Sprites
-	{ "rts_obj1.4b",		0x80000, 0x19ebe9fd, 0x05 | BRF_GRA },           //  9
-	{ "rts_obj2.5d",		0x80000, 0x455c4a2f, 0x05 | BRF_GRA },           // 10
-	{ "rts_obj3.4d",		0x80000, 0xfdcae8a9, 0x05 | BRF_GRA },           // 11
+	{ "rst1_obj0.bin",		0x80000, 0xe5cb82c1, 0x05 | BRF_GRA },           //  8 Sprites
+	{ "rst1_obj1.bin",		0x80000, 0x19ebe9fd, 0x05 | BRF_GRA },           //  9
+	{ "rst1_obj2.bin",		0x80000, 0x455c4a2f, 0x05 | BRF_GRA },           // 10
+	{ "rst1_obj3.bin",		0x80000, 0xfdcae8a9, 0x05 | BRF_GRA },           // 11
 
-	{ "rts_chr0.11n",		0x80000, 0x6f0e9a68, 0x06 | BRF_GRA },           // 12 Layer Tiles
-	{ "rts_chr1.11p",		0x80000, 0x15e44adc, 0x06 | BRF_GRA },           // 13
+	{ "rst1_chr0.bin",		0x80000, 0x6f0e9a68, 0x06 | BRF_GRA },           // 12 Layer Tiles
+	{ "rst1_chr1.bin",		0x80000, 0x15e44adc, 0x06 | BRF_GRA },           // 13
 
-	{ "rts_roz0.1a",		0x80000, 0x482d0554, 0x07 | BRF_GRA },           // 14 Roz Layer Tiles
+	{ "rst1_roz0.bin",		0x80000, 0x482d0554, 0x07 | BRF_GRA },           // 14 Roz Layer Tiles
 
-	{ "rts_sha0.7n",		0x80000, 0xcf58fbbe, 0x08 | BRF_GRA },           // 15 Layer Tiles Mask Data
+	{ "shape.bin",			0x80000, 0xcf58fbbe, 0x08 | BRF_GRA },           // 15 Layer Tiles Mask Data
 
-	{ "rts1_data0.13s",		0x20000, 0x0baf44ee, 0x09 | BRF_PRG | BRF_ESS }, // 16 Shared 68K Data
-	{ "rts1_data1.13p",		0x20000, 0x58a8daac, 0x09 | BRF_PRG | BRF_ESS }, // 17
-	{ "rts1_data2.13r",		0x20000, 0x8e850a2a, 0x09 | BRF_PRG | BRF_ESS }, // 18
+	{ "rst1_data0.13s",		0x20000, 0x0baf44ee, 0x09 | BRF_PRG | BRF_ESS }, // 16 Shared 68K Data
+	{ "rst1_data1.13p",		0x20000, 0x58a8daac, 0x09 | BRF_PRG | BRF_ESS }, // 17
+	{ "rst1_data2.13r",		0x20000, 0x8e850a2a, 0x09 | BRF_PRG | BRF_ESS }, // 18
 
-	{ "rts_voi1.3m",		0x80000, 0xe42027cd, 0x0a | BRF_SND },           // 19 C140 Samples Samples
-	{ "rts_voi2.3l",		0x80000, 0x0c4c2b66, 0x0a | BRF_SND },           // 20
+	{ "rst1_voi1.bin",		0x80000, 0xe42027cd, 0x0a | BRF_SND },           // 19 C140 Samples Samples
+	{ "rst1_voi2.bin",		0x80000, 0x0c4c2b66, 0x0a | BRF_SND },           // 20
 };
 STD_ROM_PICK(rthun2)
 STD_ROM_FN(rthun2)
@@ -4730,38 +4730,38 @@ struct BurnDriver BurnDrvRthun2 = {
 // Rolling Thunder 2 (Japan)
 
 static struct BurnRomInfo rthun2jRomDesc[] = {
-	{ "rts1_mpr0.11d",		0x20000, 0x2563b9ee, 0x01 | BRF_PRG | BRF_ESS }, //  0 Main 68K Code
-	{ "rts1_mpr1.13d",		0x20000, 0x14c4c564, 0x01 | BRF_PRG | BRF_ESS }, //  1
+	{ "rst1_mpr0.bin",		0x20000, 0x2563b9ee, 0x01 | BRF_PRG | BRF_ESS }, //  0 Main 68K Code
+	{ "rst1_mpr1.bin",		0x20000, 0x14c4c564, 0x01 | BRF_PRG | BRF_ESS }, //  1
 
-	{ "rts1_spr0.11k",		0x10000, 0xf8ef5150, 0x02 | BRF_PRG | BRF_ESS }, //  2 Sub 68K Code
-	{ "rts1_spr1.13k",		0x10000, 0x52ed3a48, 0x02 | BRF_PRG | BRF_ESS }, //  3
+	{ "rst1_spr0.bin",		0x10000, 0xf8ef5150, 0x02 | BRF_PRG | BRF_ESS }, //  2 Sub 68K Code
+	{ "rst1_spr1.bin",		0x10000, 0x52ed3a48, 0x02 | BRF_PRG | BRF_ESS }, //  3
 
-	{ "rts1_snd0.7j",		0x20000, 0x55b7562a, 0x03 | BRF_PRG | BRF_ESS }, //  4 M6809 Code
-	{ "rts1_snd1.7g",		0x20000, 0x00445a4f, 0x03 | BRF_PRG | BRF_ESS }, //  5
+	{ "rst1_snd0.bin",		0x20000, 0x55b7562a, 0x03 | BRF_PRG | BRF_ESS }, //  4 M6809 Code
+	{ "rst1_snd1.bin",		0x20000, 0x00445a4f, 0x03 | BRF_PRG | BRF_ESS }, //  5
 
 #if !defined ROM_VERIFY
-	{ "sys2mcpu.bin",		0x02000, 0xa342a97e, 0x04 | BRF_PRG | BRF_ESS }, //  6 HD68705 Code
+	{ "sys2mcpu.bin",	0x02000, 0xa342a97e, 0x04 | BRF_PRG | BRF_ESS }, //  6 HD68705 Code
 #endif
-	{ "sys2c65c.3f",		0x08000, 0xa5b2a4ff, 0x04 | BRF_PRG | BRF_ESS }, //  7
+	{ "sys2c65c.bin",	0x08000, 0xa5b2a4ff, 0x04 | BRF_PRG | BRF_ESS }, //  7
 
-	{ "rts_obj0.5b",		0x80000, 0xe5cb82c1, 0x05 | BRF_GRA },           //  8 Sprites
-	{ "rts_obj1.4b",		0x80000, 0x19ebe9fd, 0x05 | BRF_GRA },           //  9
-	{ "rts_obj2.5d",		0x80000, 0x455c4a2f, 0x05 | BRF_GRA },           // 10
-	{ "rts_obj3.4d",		0x80000, 0xfdcae8a9, 0x05 | BRF_GRA },           // 11
+	{ "rst1_obj0.bin",		0x80000, 0xe5cb82c1, 0x05 | BRF_GRA },           //  8 Sprites
+	{ "rst1_obj1.bin",		0x80000, 0x19ebe9fd, 0x05 | BRF_GRA },           //  9
+	{ "rst1_obj2.bin",		0x80000, 0x455c4a2f, 0x05 | BRF_GRA },           // 10
+	{ "rst1_obj3.bin",		0x80000, 0xfdcae8a9, 0x05 | BRF_GRA },           // 11
 
-	{ "rts_chr0.11n",		0x80000, 0x6f0e9a68, 0x06 | BRF_GRA },           // 12 Layer Tiles
-	{ "rts_chr1.11p",		0x80000, 0x15e44adc, 0x06 | BRF_GRA },           // 13
+	{ "rst1_chr0.bin",		0x80000, 0x6f0e9a68, 0x06 | BRF_GRA },           // 12 Layer Tiles
+	{ "rst1_chr1.bin",		0x80000, 0x15e44adc, 0x06 | BRF_GRA },           // 13
 
-	{ "rts_roz0.1a",		0x80000, 0x482d0554, 0x07 | BRF_GRA },           // 14 Roz Layer Tiles
+	{ "rst1_roz0.bin",		0x80000, 0x482d0554, 0x07 | BRF_GRA },           // 14 Roz Layer Tiles
 
-	{ "rts_sha0.7n",		0x80000, 0xcf58fbbe, 0x08 | BRF_GRA },           // 15 Layer Tiles Mask Data
+	{ "shape.bin",		0x80000, 0xcf58fbbe, 0x08 | BRF_GRA },           // 15 Layer Tiles Mask Data
 
-	{ "rts1_data0.13s",		0x20000, 0x0baf44ee, 0x09 | BRF_PRG | BRF_ESS }, // 16 Shared 68K Data
-	{ "rts1_data1.13p",		0x20000, 0x58a8daac, 0x09 | BRF_PRG | BRF_ESS }, // 17
-	{ "rts1_data2.13r",		0x20000, 0x8e850a2a, 0x09 | BRF_PRG | BRF_ESS }, // 18
+	{ "rst1_data0.13s",		0x20000, 0x0baf44ee, 0x09 | BRF_PRG | BRF_ESS }, // 16 Shared 68K Data
+	{ "rst1_data1.13p",		0x20000, 0x58a8daac, 0x09 | BRF_PRG | BRF_ESS }, // 17
+	{ "rst1_data2.13r",		0x20000, 0x8e850a2a, 0x09 | BRF_PRG | BRF_ESS }, // 18
 
-	{ "rts_voi1.3m",		0x80000, 0xe42027cd, 0x0a | BRF_SND },           // 19 C140 Samples Samples
-	{ "rts_voi2.3l",		0x80000, 0x0c4c2b66, 0x0a | BRF_SND },           // 20
+	{ "rst1_voi1.bin",		0x80000, 0xe42027cd, 0x0a | BRF_SND },           // 19 C140 Samples Samples
+	{ "rst1_voi2.bin",		0x80000, 0x0c4c2b66, 0x0a | BRF_SND },           // 20
 
 	/* stuff below isn't used but loaded because it was on the board .. */
 	{ "pal12l10.8d",		0x00040, 0xd3ae64a6, 0x00 | BRF_OPT },			 // 21 plds

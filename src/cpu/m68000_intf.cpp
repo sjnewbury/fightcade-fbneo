@@ -1,5 +1,7 @@
 // 680x0 (Sixty Eight K) Interface
 
+// todo: (I think!) if SekRunEnd() is called while running, wrong cycles get returned by SekRun() for m68k -dink
+
 #include "burnint.h"
 #include "m68000_intf.h"
 #include "m68000_debug.h"
@@ -16,7 +18,6 @@ INT32 nSekActive = -1;								// The cpu which is currently being emulated
 INT32 nSekCyclesTotal, nSekCyclesScanline, nSekCyclesSegment, nSekCyclesDone, nSekCyclesToDo;
 
 INT32 nSekCPUType[SEK_MAX], nSekCycles[SEK_MAX], nSekIRQPending[SEK_MAX], nSekRESETLine[SEK_MAX], nSekHALT[SEK_MAX];
-INT32 nSekCyclesToDoCache[SEK_MAX], nSekm68k_ICount[SEK_MAX];
 
 static UINT32 nSekAddressMask[SEK_MAX], nSekAddressMaskActive;
 
@@ -330,7 +331,7 @@ inline static UINT16 ReadWord(UINT32 a)
 	{
 		if (a & 1)
 		{
-			return (ReadByte(a + 0) * 256) + ReadByte(a + 1);
+			return BURN_ENDIAN_SWAP_INT16((ReadByte(a + 0) * 256) + ReadByte(a + 1));
 		}
 		else
 		{
@@ -371,6 +372,8 @@ inline static void WriteWord(UINT32 a, UINT16 d)
 		if (a & 1)
 		{
 		//	bprintf(PRINT_NORMAL, _T("write16 0x%08X\n"), a);
+
+			d = BURN_ENDIAN_SWAP_INT16(d);
 
 			WriteByte(a + 0, d / 0x100);
 			WriteByte(a + 1, d);
@@ -424,7 +427,7 @@ inline static UINT32 ReadLong(UINT32 a)
 			r += ReadByte((a + 2)) * 0x100;
 			r += ReadByte((a + 3));
 
-			return r;
+			return BURN_ENDIAN_SWAP_INT32(r);
 		}
 		else
 		{
@@ -469,6 +472,8 @@ inline static void WriteLong(UINT32 a, UINT32 d)
 		if (a & 1)
 		{
 		//	bprintf(PRINT_NORMAL, _T("write32 0x%08X 0x%8.8x\n"), a,d);
+
+			d = BURN_ENDIAN_SWAP_INT32(d);
 
 			WriteByte((a + 0), d / 0x1000000);
 			WriteByte((a + 1), d / 0x10000);
@@ -992,8 +997,6 @@ void SekNewFrame()
 
 	for (INT32 i = 0; i <= nSekCount; i++) {
 		nSekCycles[i] = 0;
-		nSekCyclesToDoCache[i] = 0;
-		nSekm68k_ICount[i] = 0;
 	}
 
 	nSekCyclesToDo = m68k_ICount = 0;
@@ -1154,9 +1157,6 @@ INT32 SekInit(INT32 nCount, INT32 nCPUType)
 	nSekAddressMask[nCount] = 0xffffff;
 
 	nSekCycles[nCount] = 0;
-	nSekCyclesToDoCache[nCount] = 0;
-	nSekm68k_ICount[nCount] = 0;
-
 	nSekIRQPending[nCount] = 0;
 	nSekRESETLine[nCount] = 0;
 	nSekHALT[nCount] = 0;
@@ -1300,10 +1300,6 @@ void SekOpen(const INT32 i)
 #endif
 
 		nSekCyclesTotal = nSekCycles[nSekActive];
-
-		// Allow for SekRun() reentrance:
-		nSekCyclesToDo = nSekCyclesToDoCache[nSekActive];
-		m68k_ICount = nSekm68k_ICount[nSekActive];
 	}
 }
 
@@ -1330,11 +1326,7 @@ void SekClose()
 #endif
 
 	nSekCycles[nSekActive] = nSekCyclesTotal;
-
-	// Allow for SekRun() reentrance:
-	nSekCyclesToDoCache[nSekActive] = nSekCyclesToDo;
-	nSekm68k_ICount[nSekActive] = m68k_ICount;
-
+	
 	nSekActive = -1;
 }
 
@@ -1609,7 +1601,6 @@ void SekSetVIRQLine(INT32 nCPU, const INT32 line, INT32 status)
 	SekCPUPop();
 }
 
-
 // Adjust the active CPU's timeslice
 void SekRunAdjust(const INT32 nCycles)
 {
@@ -1737,21 +1728,6 @@ INT32 SekRun(INT32 nCPU, INT32 nCycles)
 	SekCPUPush(nCPU);
 
 	INT32 nRet = SekRun(nCycles);
-
-	SekCPUPop();
-
-	return nRet;
-}
-
-INT32 SekIdle(INT32 nCPU, INT32 nCycles)
-{
-#if defined FBNEO_DEBUG
-	if (!DebugCPU_SekInitted) bprintf(PRINT_ERROR, _T("SekIdle called without init\n"));
-#endif
-
-	SekCPUPush(nCPU);
-
-	INT32 nRet = SekIdle(nCycles);
 
 	SekCPUPop();
 
@@ -2464,6 +2440,22 @@ INT32 SekScan(INT32 nAction)
 		SCAN_VAR(nSekRESETLine[i]);
 		SCAN_VAR(nSekHALT[i]);
 
+    /*
+    * Definitely need to be scanned
+    */
+    SCAN_VAR(nSekCyclesTotal);
+    SCAN_VAR(nSekCyclesSegment);
+
+    /*
+    * Supicious... These look like they need to be saved, too.
+    */
+    SCAN_VAR(nSekCyclesScanline);
+    SCAN_VAR(nSekCyclesDone);
+    SCAN_VAR(nSekCyclesToDo);
+    SCAN_VAR(nSekIRQPending);
+    SCAN_VAR(nSekCycles);
+    SCAN_VAR(m68k_ICount);
+
 #if defined EMU_A68K && defined EMU_M68K
 		// Switch to another core if needed
 		if ((nAction & ACB_WRITE) && nType != nSekCPUType[i]) {
@@ -2495,6 +2487,8 @@ INT32 SekScan(INT32 nAction)
 				// Blank pointers
 				SekRegs[i]->IrqCallback = NULL;
 				SekRegs[i]->ResetCallback = NULL;
+				SekRegs[i]->RTECallback = NULL;
+				SekRegs[i]->CmpCallback = NULL;
 			}
 
 			BurnAcb(&ba);

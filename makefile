@@ -19,10 +19,10 @@ export
 UNICODE = 1
 
 # Build A68K ASM 68000 core
-#BUILD_A68K = 1
+BUILD_A68K = 1
 
 # Include x86 Assembly routines
-BUILD_X86_ASM = 1
+#BUILD_X86_ASM = 1
 
 # Include GCC optmisations for your CPU e.g use -march=native. WARNING: This might mean that the generated binaries will not run on other peoples (older) machines!
 #BUILD_NATIVE = 1
@@ -44,14 +44,14 @@ INCLUDE_AVI_RECORDING = 1
 
 # Include features for debugging drivers unless we are doing a release build
 ifndef RELEASEBUILD
-DEBUG	= 1
+#DEBUG	= 1
 endif
 
 # Include rom set verifying features (comment this for release builds)
 #ROM_VERIFY = 1
 
 # Force recompilation of files that need it (i.e. use __TIME__, __DATE__, SPECIALBUILD).
-FORCE_UPDATE = 1
+# FORCE_UPDATE = 1
 
 # Use the __fastcall calling convention when interfacing with A68K/Musashi/Doze
 FASTCALL = 1

@@ -10,6 +10,8 @@ static UINT8 DrvJoy2[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 static UINT8 DrvInput[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 static UINT8 DrvReset = 0;
+static UINT8 bDrawScreen;
+static bool bVBlank;
 
 // Rom information
 static struct BurnRomInfo shippumdRomDesc[] = {
@@ -49,33 +51,33 @@ STD_ROM_PICK(kingdmgp)
 STD_ROM_FN(kingdmgp)
 
 static struct BurnInputInfo shippumdInputList[] = {
-	{"P1 Coin",		BIT_DIGITAL,	DrvButton + 3,	"p1 coin"	},
-	{"P1 Start",	BIT_DIGITAL,	DrvButton + 5,	"p1 start"	},
+	{"P1 Coin",		BIT_DIGITAL,	DrvButton + 3,	"p1 coin"},
+	{"P1 Start",	BIT_DIGITAL,	DrvButton + 5,	"p1 start"},
 
-	{"P1 Up",		BIT_DIGITAL,	DrvJoy1 + 0,	"p1 up"		},
-	{"P1 Down",		BIT_DIGITAL,	DrvJoy1 + 1,	"p1 down"	},
-	{"P1 Left",		BIT_DIGITAL,	DrvJoy1 + 2,	"p1 left"	},
-	{"P1 Right",	BIT_DIGITAL,	DrvJoy1 + 3,	"p1 right"	},
-	{"P1 Button 1",	BIT_DIGITAL,	DrvJoy1 + 4,	"p1 fire 1"	},
-	{"P1 Button 2",	BIT_DIGITAL,	DrvJoy1 + 5,	"p1 fire 2"	},
-	{"P1 Button 3",	BIT_DIGITAL,	DrvJoy1 + 6,	"p1 fire 3"	},
+	{"P1 Up",		BIT_DIGITAL,	DrvJoy1 + 0,	"p1 up"},
+	{"P1 Down",		BIT_DIGITAL,	DrvJoy1 + 1,	"p1 down"},
+	{"P1 Left",		BIT_DIGITAL,	DrvJoy1 + 2,	"p1 left"},
+	{"P1 Right",	BIT_DIGITAL,	DrvJoy1 + 3,	"p1 right"},
+	{"P1 Button 1",	BIT_DIGITAL,	DrvJoy1 + 4,	"p1 fire 1"},
+	{"P1 Button 2",	BIT_DIGITAL,	DrvJoy1 + 5,	"p1 fire 2"},
+	{"P1 Button 3",	BIT_DIGITAL,	DrvJoy1 + 6,	"p1 fire 3"},
 
-	{"P2 Coin",		BIT_DIGITAL,	DrvButton + 4,	"p2 coin"	},
-	{"P2 Start",	BIT_DIGITAL,	DrvButton + 6,	"p2 start"	},
+	{"P2 Coin",		BIT_DIGITAL,	DrvButton + 4,	"p2 coin"},
+	{"P2 Start",	BIT_DIGITAL,	DrvButton + 6,	"p2 start"},
 
-	{"P2 Up",		BIT_DIGITAL,	DrvJoy2 + 0,	"p2 up"		},
-	{"P2 Down",		BIT_DIGITAL,	DrvJoy2 + 1,	"p2 down"	},
-	{"P2 Left",		BIT_DIGITAL,	DrvJoy2 + 2,	"p2 left"	},
-	{"P2 Right",	BIT_DIGITAL,	DrvJoy2 + 3,	"p2 right"	},
-	{"P2 Button 1",	BIT_DIGITAL,	DrvJoy2 + 4,	"p2 fire 1"	},
-	{"P2 Button 2",	BIT_DIGITAL,	DrvJoy2 + 5,	"p2 fire 2"	},
-	{"P2 Button 3",	BIT_DIGITAL,	DrvJoy2 + 6,	"p2 fire 3"	},
+	{"P2 Up",		BIT_DIGITAL,	DrvJoy2 + 0,	"p2 up"},
+	{"P2 Down",		BIT_DIGITAL,	DrvJoy2 + 1,	"p2 down"},
+	{"P2 Left",		BIT_DIGITAL,	DrvJoy2 + 2,	"p2 left"},
+	{"P2 Right",	BIT_DIGITAL,	DrvJoy2 + 3,	"p2 right"},
+	{"P2 Button 1",	BIT_DIGITAL,	DrvJoy2 + 4,	"p2 fire 1"},
+	{"P2 Button 2",	BIT_DIGITAL,	DrvJoy2 + 5,	"p2 fire 2"},
+	{"P2 Button 3",	BIT_DIGITAL,	DrvJoy2 + 6,	"p2 fire 3"},
 
-	{"Reset",		BIT_DIGITAL,	&DrvReset,		"reset"		},
-	{"Diagnostics",	BIT_DIGITAL,	DrvButton + 0,	"diag"		},
-	{"Dip A",		BIT_DIPSWITCH,	DrvInput + 3,	"dip"		},
-	{"Dip B",		BIT_DIPSWITCH,	DrvInput + 4,	"dip"		},
-	{"Dip C",		BIT_DIPSWITCH,	DrvInput + 5,	"dip"		},
+	{"Reset",		BIT_DIGITAL,	&DrvReset,		"reset"},
+	{"Diagnostics",	BIT_DIGITAL,	DrvButton + 0,	"diag"},
+	{"Dip A",		BIT_DIPSWITCH,	DrvInput + 3,	"dip"},
+	{"Dip B",		BIT_DIPSWITCH,	DrvInput + 4,	"dip"},
+	{"Dip C",		BIT_DIPSWITCH,	DrvInput + 5,	"dip"},
 };
 
 STDINPUTINFO(shippumd)
@@ -253,7 +255,7 @@ static INT32 LoadRoms()
 	return 0;
 }
 
-static UINT8 __fastcall shippumdZ80Read(UINT16 nAddress)
+UINT8 __fastcall shippumdZ80Read(UINT16 nAddress)
 {
 	if (nAddress == 0xE001) {
 		return BurnYM2151Read();
@@ -264,7 +266,7 @@ static UINT8 __fastcall shippumdZ80Read(UINT16 nAddress)
 	return 0;
 }
 
-static void __fastcall shippumdZ80Write(UINT16 nAddress, UINT8 nValue)
+void __fastcall shippumdZ80Write(UINT16 nAddress, UINT8 nValue)
 {
 	switch (nAddress) {
 		case 0xE000:
@@ -304,7 +306,7 @@ static INT32 DrvZ80Init()
 	return 0;
 }
 
-static UINT8 __fastcall shippumdReadByte(UINT32 sekAddress)
+UINT8 __fastcall shippumdReadByte(UINT32 sekAddress)
 {
 	switch (sekAddress) {
 		case 0x21C021:								// Player 1 inputs
@@ -334,7 +336,7 @@ static UINT8 __fastcall shippumdReadByte(UINT32 sekAddress)
 	return 0;
 }
 
-static UINT16 __fastcall shippumdReadWord(UINT32 sekAddress)
+UINT16 __fastcall shippumdReadWord(UINT32 sekAddress)
 {
 	switch (sekAddress) {
 
@@ -373,7 +375,7 @@ static UINT16 __fastcall shippumdReadWord(UINT32 sekAddress)
 	return 0;
 }
 
-static void __fastcall shippumdWriteByte(UINT32 sekAddress, UINT8 byteValue)
+void __fastcall shippumdWriteByte(UINT32 sekAddress, UINT8 byteValue)
 {
 	switch (sekAddress) {
 		case 0x21C01D: {
@@ -391,7 +393,7 @@ static void __fastcall shippumdWriteByte(UINT32 sekAddress, UINT8 byteValue)
 	}
 }
 
-static void __fastcall shippumdWriteWord(UINT32 sekAddress, UINT16 wordValue)
+void __fastcall shippumdWriteWord(UINT32 sekAddress, UINT16 wordValue)
 {
 	switch (sekAddress) {
 
@@ -510,6 +512,8 @@ static INT32 DrvInit()
 	MSM6295Init(0, 32000000 / 32 / 132, 1);
 	MSM6295SetRoute(0, 1.00, BURN_SND_ROUTE_BOTH);
 
+	bDrawScreen = true;
+
 	DrvDoReset();				// Reset machine
 	return 0;
 }
@@ -535,12 +539,19 @@ static INT32 DrvDraw()
 {
 	ToaClearScreen(0);
 
-	ToaGetBitmap();
-	ToaRenderGP9001();						// Render GP9001 graphics
-	ToaExtraTextLayer();					// Render extra text layer
+	if (bDrawScreen) {
+		ToaGetBitmap();
+		ToaRenderGP9001();					// Render GP9001 graphics
+		ToaExtraTextLayer();				// Render extra text layer
+	}
 
 	ToaPalUpdate();							// Update the palette
 
+	return 0;
+}
+
+inline static INT32 CheckSleep(INT32)
+{
 	return 0;
 }
 
@@ -575,7 +586,7 @@ static INT32 DrvFrame()
 	SekSetCyclesScanline(nCyclesTotal[0] / 262);
 	nToaCyclesDisplayStart = nCyclesTotal[0] - ((nCyclesTotal[0] * (TOA_VBLANK_LINES + 240)) / 262);
 	nToaCyclesVBlankStart = nCyclesTotal[0] - ((nCyclesTotal[0] * TOA_VBLANK_LINES) / 262);
-	bool bVBlank = false;
+	bVBlank = false;
 
 	INT32 nSoundBufferPos = 0;
 
@@ -603,7 +614,11 @@ static INT32 DrvFrame()
 		}
 
 		nCyclesSegment = nNext - nCyclesDone[nCurrentCPU];
-		nCyclesDone[nCurrentCPU] += SekRun(nCyclesSegment);
+		if (bVBlank || (!CheckSleep(nCurrentCPU))) {					// See if this CPU is busywaiting
+			nCyclesDone[nCurrentCPU] += SekRun(nCyclesSegment);
+		} else {
+			nCyclesDone[nCurrentCPU] += SekIdle(nCyclesSegment);
+		}
 
 		// Run Z80
 		nCurrentCPU = 1;

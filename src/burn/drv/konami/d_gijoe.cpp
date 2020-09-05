@@ -138,7 +138,7 @@ static void gijoe_objdma()
 
 	for (; src_head <= src_tail; src_head += 8)
 	{
-		if (BURN_ENDIAN_SWAP_INT16(*src_head) & 0x8000)
+		if (*src_head & 0x8000)
 		{
 			memcpy(dst_head, src_head, 0x10);
 			dst_head += 8;
@@ -576,9 +576,9 @@ static void DrvPaletteRecalc()
 
 	for (INT32 i = 0; i < 0x1000/2; i++)
 	{
-		INT32 r = (BURN_ENDIAN_SWAP_INT16(pal[i]) & 0x1f);
-		INT32 g = (BURN_ENDIAN_SWAP_INT16(pal[i]) >> 5) & 0x1f;
-		INT32 b = (BURN_ENDIAN_SWAP_INT16(pal[i]) >> 10) & 0x1f;
+		INT32 r = (pal[i] & 0x1f);
+		INT32 g = (pal[i] >> 5) & 0x1f;
+		INT32 b = (pal[i] >> 10) & 0x1f;
 
 		r = (r << 3) | (r >> 2);
 		g = (g << 3) | (g >> 2);
@@ -935,7 +935,7 @@ static struct BurnRomInfo gijoeuaRomDesc[] = {
 //	{ "069a04g.r2",		0x040000, 0x00000000, 5 | BRF_SND | BRF_NODUMP }, // 33
 //	{ "069a04h.s2",		0x040000, 0x00000000, 5 | BRF_SND | BRF_NODUMP }, // 34
 // 	overlay standard ROMs for now
-	{ "069a04a.1e",		0x200000, 0x11d6dcd6, 5 | BRF_SND },           // 11 k054539
+	{ "069a04.1e",		0x200000, 0x11d6dcd6, 5 | BRF_SND },           // 11 k054539
 
 	{ "er5911.7d",		0x000080, 0x33b07813, 6 | BRF_OPT },           // 12 eeprom data
 };

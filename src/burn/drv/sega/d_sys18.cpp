@@ -7,11 +7,8 @@ Input defs
 #define A(a, b, c, d) {a, b, (UINT8*)(c), d}
 
 static struct BurnInputInfo System18InputList[] = {
-	{"Coin 1"            , BIT_DIGITAL  , System16InputPort0 + 0, "p1 coin"   },
-	{"Start 1"           , BIT_DIGITAL  , System16InputPort0 + 4, "p1 start"  },
-	{"Coin 2"            , BIT_DIGITAL  , System16InputPort0 + 1, "p2 coin"   },
-	{"Start 2"           , BIT_DIGITAL  , System16InputPort0 + 5, "p2 start"  },
-
+	{"P1 Coin"           , BIT_DIGITAL  , System16InputPort0 + 0, "p1 coin"   },
+	{"P1 Start"          , BIT_DIGITAL  , System16InputPort0 + 4, "p1 start"  },
 	{"P1 Up"             , BIT_DIGITAL  , System16InputPort1 + 5, "p1 up"     },
 	{"P1 Down"           , BIT_DIGITAL  , System16InputPort1 + 4, "p1 down"   },
 	{"P1 Left"           , BIT_DIGITAL  , System16InputPort1 + 7, "p1 left"   },
@@ -20,6 +17,8 @@ static struct BurnInputInfo System18InputList[] = {
 	{"P1 Fire 2"         , BIT_DIGITAL  , System16InputPort1 + 1, "p1 fire 2" },
 	{"P1 Fire 3"         , BIT_DIGITAL  , System16InputPort1 + 2, "p1 fire 3" },
 
+	{"P2 Coin"           , BIT_DIGITAL  , System16InputPort0 + 1, "p2 coin"   },
+	{"P2 Start"          , BIT_DIGITAL  , System16InputPort0 + 5, "p2 start"  },
 	{"P2 Up"             , BIT_DIGITAL  , System16InputPort2 + 5, "p2 up"     },
 	{"P2 Down"           , BIT_DIGITAL  , System16InputPort2 + 4, "p2 down"   },
 	{"P2 Left"           , BIT_DIGITAL  , System16InputPort2 + 7, "p2 left"   },
@@ -39,13 +38,8 @@ static struct BurnInputInfo System18InputList[] = {
 STDINPUTINFO(System18)
 
 static struct BurnInputInfo AstormInputList[] = {
-	{"Coin 1"            , BIT_DIGITAL  , System16InputPort0 + 7, "p1 coin"   },
-	{"Start 1"           , BIT_DIGITAL  , System16InputPort0 + 4, "p1 start"  },
-	{"Coin 2"            , BIT_DIGITAL  , System16InputPort0 + 1, "p2 coin"   },
-	{"Start 2"           , BIT_DIGITAL  , System16InputPort0 + 5, "p2 start"  },
-	{"Coin 3"            , BIT_DIGITAL  , System16InputPort0 + 0, "p3 coin"   },
-	{"Start 3"           , BIT_DIGITAL  , System16InputPort0 + 6, "p3 start"  },
-
+	{"P1 Coin"           , BIT_DIGITAL  , System16InputPort0 + 7, "p1 coin"   },
+	{"P1 Start"          , BIT_DIGITAL  , System16InputPort0 + 4, "p1 start"  },
 	{"P1 Up"             , BIT_DIGITAL  , System16InputPort1 + 5, "p1 up"     },
 	{"P1 Down"           , BIT_DIGITAL  , System16InputPort1 + 4, "p1 down"   },
 	{"P1 Left"           , BIT_DIGITAL  , System16InputPort1 + 7, "p1 left"   },
@@ -55,6 +49,8 @@ static struct BurnInputInfo AstormInputList[] = {
 	{"P1 Fire 3"         , BIT_DIGITAL  , System16InputPort1 + 2, "p1 fire 3" },
 	{"P1 Service"        , BIT_DIGITAL  , System16InputPort1 + 3, "p1 fire 4" },
 
+	{"P2 Coin"           , BIT_DIGITAL  , System16InputPort0 + 1, "p2 coin"   },
+	{"P2 Start"          , BIT_DIGITAL  , System16InputPort0 + 5, "p2 start"  },
 	{"P2 Up"             , BIT_DIGITAL  , System16InputPort2 + 5, "p2 up"     },
 	{"P2 Down"           , BIT_DIGITAL  , System16InputPort2 + 4, "p2 down"   },
 	{"P2 Left"           , BIT_DIGITAL  , System16InputPort2 + 7, "p2 left"   },
@@ -64,6 +60,8 @@ static struct BurnInputInfo AstormInputList[] = {
 	{"P2 Fire 3"         , BIT_DIGITAL  , System16InputPort2 + 2, "p2 fire 3" },
 	{"P2 Service"        , BIT_DIGITAL  , System16InputPort2 + 3, "p2 fire 4" },
 	
+	{"P3 Coin"           , BIT_DIGITAL  , System16InputPort0 + 0, "p3 coin"   },
+	{"P3 Start"          , BIT_DIGITAL  , System16InputPort0 + 6, "p3 start"  },
 	{"P3 Up"             , BIT_DIGITAL  , System16InputPort3 + 5, "p3 up"     },
 	{"P3 Down"           , BIT_DIGITAL  , System16InputPort3 + 4, "p3 down"   },
 	{"P3 Left"           , BIT_DIGITAL  , System16InputPort3 + 7, "p3 left"   },
@@ -83,13 +81,8 @@ static struct BurnInputInfo AstormInputList[] = {
 STDINPUTINFO(Astorm)
 
 static struct BurnInputInfo DdcrewInputList[] = {
-	{"Coin 1"            , BIT_DIGITAL  , System16InputPort0 + 0, "p1 coin"   },
-	{"Start 1"           , BIT_DIGITAL  , System16InputPort0 + 4, "p1 start"  },
-	{"Coin 2"            , BIT_DIGITAL  , System16InputPort0 + 1, "p2 coin"   },
-	{"Start 2"           , BIT_DIGITAL  , System16InputPort0 + 5, "p2 start"  },
-	{"Coin 3"            , BIT_DIGITAL  , System16InputPort0 + 7, "p3 coin"   },
-	{"Start 3"           , BIT_DIGITAL  , System16InputPort3 + 3, "p3 start"  },
-
+	{"P1 Coin"           , BIT_DIGITAL  , System16InputPort0 + 0, "p1 coin"   },
+	{"P1 Start"          , BIT_DIGITAL  , System16InputPort0 + 4, "p1 start"  },
 	{"P1 Up"             , BIT_DIGITAL  , System16InputPort1 + 5, "p1 up"     },
 	{"P1 Down"           , BIT_DIGITAL  , System16InputPort1 + 4, "p1 down"   },
 	{"P1 Left"           , BIT_DIGITAL  , System16InputPort1 + 7, "p1 left"   },
@@ -97,6 +90,8 @@ static struct BurnInputInfo DdcrewInputList[] = {
 	{"P1 Fire 1"         , BIT_DIGITAL  , System16InputPort1 + 0, "p1 fire 1" },
 	{"P1 Fire 2"         , BIT_DIGITAL  , System16InputPort1 + 1, "p1 fire 2" },
 
+	{"P2 Coin"           , BIT_DIGITAL  , System16InputPort0 + 1, "p2 coin"   },
+	{"P2 Start"          , BIT_DIGITAL  , System16InputPort0 + 5, "p2 start"  },
 	{"P2 Up"             , BIT_DIGITAL  , System16InputPort2 + 5, "p2 up"     },
 	{"P2 Down"           , BIT_DIGITAL  , System16InputPort2 + 4, "p2 down"   },
 	{"P2 Left"           , BIT_DIGITAL  , System16InputPort2 + 7, "p2 left"   },
@@ -104,6 +99,8 @@ static struct BurnInputInfo DdcrewInputList[] = {
 	{"P2 Fire 1"         , BIT_DIGITAL  , System16InputPort2 + 0, "p2 fire 1" },
 	{"P2 Fire 2"         , BIT_DIGITAL  , System16InputPort2 + 1, "p2 fire 2" },
 	
+	{"P3 Coin"           , BIT_DIGITAL  , System16InputPort0 + 7, "p3 coin"   },
+	{"P3 Start"          , BIT_DIGITAL  , System16InputPort3 + 3, "p3 start"  },
 	{"P3 Up"             , BIT_DIGITAL  , System16InputPort3 + 5, "p3 up"     },
 	{"P3 Down"           , BIT_DIGITAL  , System16InputPort3 + 4, "p3 down"   },
 	{"P3 Left"           , BIT_DIGITAL  , System16InputPort3 + 7, "p3 left"   },
@@ -121,11 +118,8 @@ static struct BurnInputInfo DdcrewInputList[] = {
 STDINPUTINFO(Ddcrew)
 
 static struct BurnInputInfo Ddcrew2InputList[] = {
-	{"Coin 1"            , BIT_DIGITAL  , System16InputPort0 + 0, "p1 coin"   },
-	{"Start 1"           , BIT_DIGITAL  , System16InputPort0 + 4, "p1 start"  },
-	{"Coin 2"            , BIT_DIGITAL  , System16InputPort0 + 1, "p2 coin"   },
-	{"Start 2"           , BIT_DIGITAL  , System16InputPort0 + 5, "p2 start"  },
-
+	{"P1 Coin"           , BIT_DIGITAL  , System16InputPort0 + 0, "p1 coin"   },
+	{"P1 Start"          , BIT_DIGITAL  , System16InputPort0 + 4, "p1 start"  },
 	{"P1 Up"             , BIT_DIGITAL  , System16InputPort1 + 5, "p1 up"     },
 	{"P1 Down"           , BIT_DIGITAL  , System16InputPort1 + 4, "p1 down"   },
 	{"P1 Left"           , BIT_DIGITAL  , System16InputPort1 + 7, "p1 left"   },
@@ -133,6 +127,8 @@ static struct BurnInputInfo Ddcrew2InputList[] = {
 	{"P1 Fire 1"         , BIT_DIGITAL  , System16InputPort1 + 0, "p1 fire 1" },
 	{"P1 Fire 2"         , BIT_DIGITAL  , System16InputPort1 + 1, "p1 fire 2" },
 
+	{"P2 Coin"           , BIT_DIGITAL  , System16InputPort0 + 1, "p2 coin"   },
+	{"P2 Start"          , BIT_DIGITAL  , System16InputPort0 + 5, "p2 start"  },
 	{"P2 Up"             , BIT_DIGITAL  , System16InputPort2 + 5, "p2 up"     },
 	{"P2 Down"           , BIT_DIGITAL  , System16InputPort2 + 4, "p2 down"   },
 	{"P2 Left"           , BIT_DIGITAL  , System16InputPort2 + 7, "p2 left"   },
@@ -197,13 +193,8 @@ static struct BurnInputInfo DdcrewuInputList[] = {
 STDINPUTINFO(Ddcrewu)
 
 static struct BurnInputInfo DesertbrInputList[] = {
-	{"Coin 1"            , BIT_DIGITAL  , System16InputPort0 + 0, "p1 coin"   },
-	{"Start 1"           , BIT_DIGITAL  , System16InputPort0 + 4, "p1 start"  },
-	{"Coin 2"            , BIT_DIGITAL  , System16InputPort0 + 1, "p2 coin"   },
-	{"Start 2"           , BIT_DIGITAL  , System16InputPort0 + 5, "p2 start"  },
-	{"Coin 3"            , BIT_DIGITAL  , System16InputPort3 + 3, "p3 coin"   },
-	{"Start 3"           , BIT_DIGITAL  , System16InputPort0 + 7, "p3 start"  },
-
+	{"P1 Coin"           , BIT_DIGITAL  , System16InputPort0 + 0, "p1 coin"   },
+	{"P1 Start"          , BIT_DIGITAL  , System16InputPort0 + 4, "p1 start"  },
 	{"P1 Up"             , BIT_DIGITAL  , System16InputPort1 + 5, "p1 up"     },
 	{"P1 Down"           , BIT_DIGITAL  , System16InputPort1 + 4, "p1 down"   },
 	{"P1 Left"           , BIT_DIGITAL  , System16InputPort1 + 7, "p1 left"   },
@@ -212,6 +203,8 @@ static struct BurnInputInfo DesertbrInputList[] = {
 	{"P1 Fire 2"         , BIT_DIGITAL  , System16InputPort1 + 1, "p1 fire 2" },
 	{"P1 Fire 3"         , BIT_DIGITAL  , System16InputPort1 + 2, "p1 fire 3" },
 
+	{"P2 Coin"           , BIT_DIGITAL  , System16InputPort0 + 1, "p2 coin"   },
+	{"P2 Start"          , BIT_DIGITAL  , System16InputPort0 + 5, "p2 start"  },
 	{"P2 Up"             , BIT_DIGITAL  , System16InputPort2 + 5, "p2 up"     },
 	{"P2 Down"           , BIT_DIGITAL  , System16InputPort2 + 4, "p2 down"   },
 	{"P2 Left"           , BIT_DIGITAL  , System16InputPort2 + 7, "p2 left"   },
@@ -220,6 +213,8 @@ static struct BurnInputInfo DesertbrInputList[] = {
 	{"P2 Fire 2"         , BIT_DIGITAL  , System16InputPort2 + 1, "p2 fire 2" },
 	{"P2 Fire 3"         , BIT_DIGITAL  , System16InputPort2 + 2, "p2 fire 3" },
 	
+	{"P3 Coin"           , BIT_DIGITAL  , System16InputPort3 + 3, "p3 coin"   },
+	{"P3 Start"          , BIT_DIGITAL  , System16InputPort0 + 7, "p3 start"  },
 	{"P3 Up"             , BIT_DIGITAL  , System16InputPort3 + 5, "p3 up"     },
 	{"P3 Down"           , BIT_DIGITAL  , System16InputPort3 + 4, "p3 down"   },
 	{"P3 Left"           , BIT_DIGITAL  , System16InputPort3 + 7, "p3 left"   },
@@ -269,13 +264,8 @@ static struct BurnInputInfo LghostInputList[] = {
 STDINPUTINFO(Lghost)
 
 static struct BurnInputInfo MwalkInputList[] = {
-	{"Coin 1"            , BIT_DIGITAL  , System16InputPort0 + 0, "p1 coin"   },
-	{"Start 1"           , BIT_DIGITAL  , System16InputPort0 + 4, "p1 start"  },
-	{"Coin 2"            , BIT_DIGITAL  , System16InputPort0 + 1, "p2 coin"   },
-	{"Start 2"           , BIT_DIGITAL  , System16InputPort0 + 5, "p2 start"  },
-	{"Coin 3"            , BIT_DIGITAL  , System16InputPort0 + 7, "p3 coin"   },
-	{"Start 3"           , BIT_DIGITAL  , System16InputPort3 + 3, "p3 start"  },
-
+	{"P1 Coin"           , BIT_DIGITAL  , System16InputPort0 + 0, "p1 coin"   },
+	{"P1 Start"          , BIT_DIGITAL  , System16InputPort0 + 4, "p1 start"  },
 	{"P1 Up"             , BIT_DIGITAL  , System16InputPort1 + 5, "p1 up"     },
 	{"P1 Down"           , BIT_DIGITAL  , System16InputPort1 + 4, "p1 down"   },
 	{"P1 Left"           , BIT_DIGITAL  , System16InputPort1 + 7, "p1 left"   },
@@ -284,6 +274,8 @@ static struct BurnInputInfo MwalkInputList[] = {
 	{"P1 Fire 2"         , BIT_DIGITAL  , System16InputPort1 + 1, "p1 fire 2" },
 	{"P1 Service"        , BIT_DIGITAL  , System16InputPort1 + 3, "service"   },
 	
+	{"P2 Coin"           , BIT_DIGITAL  , System16InputPort0 + 1, "p2 coin"   },
+	{"P2 Start"          , BIT_DIGITAL  , System16InputPort0 + 5, "p2 start"  },
 	{"P2 Up"             , BIT_DIGITAL  , System16InputPort2 + 5, "p2 up"     },
 	{"P2 Down"           , BIT_DIGITAL  , System16InputPort2 + 4, "p2 down"   },
 	{"P2 Left"           , BIT_DIGITAL  , System16InputPort2 + 7, "p2 left"   },
@@ -292,6 +284,8 @@ static struct BurnInputInfo MwalkInputList[] = {
 	{"P2 Fire 2"         , BIT_DIGITAL  , System16InputPort2 + 1, "p2 fire 2" },
 	{"P2 Service"        , BIT_DIGITAL  , System16InputPort2 + 3, "service2"  },
 	
+	{"P3 Coin"           , BIT_DIGITAL  , System16InputPort0 + 7, "p3 coin"   },
+	{"P3 Start"          , BIT_DIGITAL  , System16InputPort3 + 3, "p3 start"  },
 	{"P3 Up"             , BIT_DIGITAL  , System16InputPort3 + 5, "p3 up"     },
 	{"P3 Down"           , BIT_DIGITAL  , System16InputPort3 + 4, "p3 down"   },
 	{"P3 Left"           , BIT_DIGITAL  , System16InputPort3 + 7, "p3 left"   },
@@ -310,17 +304,16 @@ static struct BurnInputInfo MwalkInputList[] = {
 STDINPUTINFO(Mwalk)
 
 static struct BurnInputInfo WwallyInputList[] = {
-	{"Coin 1"            , BIT_DIGITAL   , System16InputPort0 + 0, "p1 coin"   },
-	{"Start 1"           , BIT_DIGITAL   , System16InputPort0 + 4, "p1 start"  },
-	{"Coin 2"            , BIT_DIGITAL   , System16InputPort0 + 1, "p2 coin"   },
-	{"Start 2"           , BIT_DIGITAL   , System16InputPort0 + 5, "p2 start"  },
-
+	{"P1 Coin"           , BIT_DIGITAL   , System16InputPort0 + 0, "p1 coin"   },
+	{"P1 Start"          , BIT_DIGITAL   , System16InputPort0 + 4, "p1 start"  },
 	{"P1 Up"             , BIT_DIGITAL   , System16InputPort1 + 3, "p1 up"     },
 	{"P1 Down"           , BIT_DIGITAL   , System16InputPort1 + 4, "p1 down"   },
 	{"P1 Left"           , BIT_DIGITAL   , System16InputPort1 + 1, "p1 left"   },
 	{"P1 Right"          , BIT_DIGITAL   , System16InputPort1 + 2, "p1 right"  },
 	{"P1 Fire 1"         , BIT_DIGITAL   , System16InputPort1 + 0, "p1 fire 1" },
 
+	{"P2 Coin"           , BIT_DIGITAL   , System16InputPort0 + 1, "p2 coin"   },
+	{"P2 Start"          , BIT_DIGITAL   , System16InputPort0 + 5, "p2 start"  },
 	{"P2 Up"             , BIT_DIGITAL   , System16InputPort2 + 3, "p2 up"     },
 	{"P2 Down"           , BIT_DIGITAL   , System16InputPort2 + 4, "p2 down"   },
 	{"P2 Left"           , BIT_DIGITAL   , System16InputPort2 + 1, "p2 left"   },
@@ -448,47 +441,6 @@ static struct BurnDIPInfo Astorm2pDIPList[]=
 };
 
 STDDIPINFO(Astorm2p)
-
-static struct BurnDIPInfo BloxeedDIPList[]=
-{
-	// Default Values
-	{0x16, 0xff, 0xff, 0xff, NULL                                 },
-	{0x17, 0xff, 0xff, 0xfd, NULL                                 },
-
-	// Dip 1
-	SYSTEM18_COINAGE(0x16)
-
-	// Dip 2
-	{0   , 0xfe, 0   ,    2, "Allow VS Mode"					  },
-	{0x17, 0x01, 0x01, 0x01, "Yes"								  },
-	{0x17, 0x01, 0x01, 0x00, "No"								  },
-
-	{0   , 0xfe, 0   ,    2, "Demo Sounds"						  },
-	{0x17, 0x01, 0x02, 0x02, "Off"								  },
-	{0x17, 0x01, 0x02, 0x00, "On"								  },
-
-	{0   , 0xfe, 0   ,    4, "Lines Per Level"					  },
-	{0x17, 0x01, 0x0c, 0x04, "2"								  },
-	{0x17, 0x01, 0x0c, 0x00, "2"								  },
-	{0x17, 0x01, 0x0c, 0x0c, "3"								  },
-	{0x17, 0x01, 0x0c, 0x08, "4"								  },
-
-	{0   , 0xfe, 0   ,    4, "Difficulty"						  },
-	{0x17, 0x01, 0x30, 0x20, "Easy"								  },
-	{0x17, 0x01, 0x30, 0x30, "Normal"							  },
-	{0x17, 0x01, 0x30, 0x10, "Hard"								  },
-	{0x17, 0x01, 0x30, 0x00, "Hardest"							  },
-
-	{0   , 0xfe, 0   ,    2, "Unknown"							  },
-	{0x17, 0x01, 0x40, 0x40, "Off"								  },
-	{0x17, 0x01, 0x40, 0x00, "On"								  },
-
-	{0   , 0xfe, 0   ,    2, "High Speed Mode"					  },
-	{0x17, 0x01, 0x80, 0x00, "Off"								  },
-	{0x17, 0x01, 0x80, 0x80, "On"								  },
-};
-
-STDDIPINFO(Bloxeed)
 
 static struct BurnDIPInfo CltchitrDIPList[]=
 {
@@ -2853,7 +2805,7 @@ void HamawayGfxBankWrite(UINT32 offset, UINT16 d)
 static UINT16 __fastcall System18ReadWord(UINT32 a)
 {
 	if (a >= 0xc00000 && a <= 0xc0000f) {
-		return GenesisVDPRead((a & 0xf) >> 1);
+		return GenesisVDPRead((a - 0xc00000) >> 1);
 	}
 	
 #if 0 && defined FBNEO_DEBUG
@@ -2866,11 +2818,11 @@ static UINT16 __fastcall System18ReadWord(UINT32 a)
 static UINT8 __fastcall System18ReadByte(UINT32 a)
 {
 	if (a >= 0xa40000 && a <= 0xa4001f) {
-		return system18_io_chip_r((a & 0x1f) >> 1);
+		return system18_io_chip_r((a - 0xa40000) >> 1);
 	}
 	
 	if (a >= 0xe40000 && a <= 0xe4001f) {
-		return system18_io_chip_r((a & 0x1f) >> 1);
+		return system18_io_chip_r((a - 0xe40000) >> 1);
 	}
 	
 #if 0 && defined FBNEO_DEBUG
@@ -2883,12 +2835,12 @@ static UINT8 __fastcall System18ReadByte(UINT32 a)
 static void __fastcall System18WriteWord(UINT32 a, UINT16 d)
 {
 	if (a >= 0x400000 && a <= 0x40ffff) {
-		System16BTileWordWrite(a & 0xffff, d);
+		System16BTileWordWrite(a - 0x400000, d);
 		return;
 	}
 	
 	if (a >= 0xc00000 && a <= 0xc0000f) {
-		GenesisVDPWrite((a & 0xf) >> 1, d);
+		GenesisVDPWrite((a - 0xc00000) >> 1, d);
 		return;
 	}
 	
@@ -2907,27 +2859,27 @@ static void __fastcall System18WriteWord(UINT32 a, UINT16 d)
 static void __fastcall System18WriteByte(UINT32 a, UINT8 d)
 {
 	if (a >= 0x400000 && a <= 0x40ffff) {
-		System16BTileByteWrite((a & 0xffff) ^ 1, d);
+		System16BTileByteWrite((a - 0x400000) ^ 1, d);
 		return;
 	}
 	
 	if (a >= 0x3e0000 && a <= 0x3e001f) {
-		System18GfxBankWrite((a & 0x1f) >> 1, d);
+		System18GfxBankWrite((a - 0x3e0000) >> 1, d);
 		return;
 	}
 	
 	if (a >= 0xa40000 && a <= 0xa41fff) {
-		system18_io_chip_w((a & 0x1fff) >> 1, d);
+		system18_io_chip_w((a - 0xa40000) >> 1, d);
 		return;
 	}
 	
 	if (a >= 0xc00000 && a <= 0xc0000f) {
-		GenesisVDPWrite((a & 0xf) >> 1, d);
+		GenesisVDPWrite((a - 0xc00000) >> 1, d);
 		return;
 	}
 	
 	if (a >= 0xe40000 && a <= 0xe41fff) {
-		system18_io_chip_w((a & 0x1fff) >> 1, d);
+		system18_io_chip_w((a - 0xe40000) >> 1, d);
 		return;
 	}
 
@@ -3353,6 +3305,7 @@ static INT32 System18Scan(INT32 nAction,INT32 *pnMin)
 	
 	if (nAction & ACB_DRIVER_DATA) {
 		SCAN_VAR(misc_io_data);
+		
 		GenesisVDPScan();
 	}
 	
@@ -3489,7 +3442,7 @@ struct BurnDriver BurnDrvBloxeed = {
 	"Bloxeed (Japan, FD1094 317-0139)\0", NULL, "Sega", "System 18",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEM18 | HARDWARE_SEGA_FD1094_ENC | HARDWARE_SEGA_171_5874, GBF_PUZZLE, 0,
-	NULL, BloxeedRomInfo, BloxeedRomName, NULL, NULL, NULL, NULL, System18InputInfo, BloxeedDIPInfo,
+	NULL, BloxeedRomInfo, BloxeedRomName, NULL, NULL, NULL, NULL, System18InputInfo, NULL,
 	System16Init, System18Exit, System18Frame, System18Render, System18Scan,
 	NULL, 0x1800, 320, 224, 4, 3
 };
@@ -3499,7 +3452,7 @@ struct BurnDriver BurnDrvBloxeedd = {
 	"Bloxeed (Japan, FD1094 317-0139 decrypted)\0", NULL, "Sega", "System 18",
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_BOOTLEG, 2, HARDWARE_SEGA_SYSTEM18 | HARDWARE_SEGA_171_5874, GBF_PUZZLE, 0,
-	NULL, BloxeeddRomInfo, BloxeeddRomName, NULL, NULL, NULL, NULL, System18InputInfo, BloxeedDIPInfo,
+	NULL, BloxeeddRomInfo, BloxeeddRomName, NULL, NULL, NULL, NULL, System18InputInfo, NULL,
 	System16Init, System18Exit, System18Frame, System18Render, System18Scan,
 	NULL, 0x1800, 320, 224, 4, 3
 };

@@ -95,7 +95,7 @@ void addi_il_rd(cpu_state *cpu, word opcode)
 void add_k_rd(cpu_state *cpu, word opcode)
 {
     dword k = fw_lut[K];
-    uint64_t sum = _rd + k;
+    u64 sum = _rd + k;
     update_vc(sum, _rd, k);
     _rd = sum;
     update_zn(_rd);
@@ -176,7 +176,7 @@ void clrc(cpu_state *cpu, word opcode)
 
 void cmp_rs_rd(cpu_state *cpu, word opcode)
 {
-    uint64_t res = _rd - _rs;
+    u64 res = _rd - _rs;
     update_zn(res);
     update_vc_sub(res, _rd, _rs);
 
@@ -188,7 +188,7 @@ void cmpi_iw_rd(cpu_state *cpu, word opcode)
 {
     sdword iw = (sword)(~mem_read(_pc));
     _pc += 16;
-    uint64_t res = _rd - iw;
+    u64 res = _rd - iw;
     update_zn(res);
     update_vc_sub(res, _rd, iw);
 
@@ -199,7 +199,7 @@ void cmpi_il_rd(cpu_state *cpu, word opcode)
 {
     sdword il = ~mem_read_d(_pc);
     _pc += 32;
-    uint64_t res = _rd - il;
+    u64 res = _rd - il;
     update_zn(res);
     update_vc_sub(res, _rd, il);
 
@@ -347,7 +347,7 @@ void mpys_rs_rd(cpu_state *cpu, word opcode)
 {
     const int shift = 32 - FW1;
     sdword mm = ((sdword)(_rs << shift)) >> shift;
-    i64 res = ((i64)(uint32_t)_rd) * ((i64)mm);
+    i64 res = ((i64)(dword)_rd) * ((i64)mm);
 
     _st &= ~(ST_Z | ST_N);
     if (ODD_RD) {
@@ -505,7 +505,7 @@ void subi_il_rd(cpu_state *cpu, word opcode)
 void sub_k_rd(cpu_state *cpu, word opcode)
 {
     dword k = fw_lut[K];
-    uint64_t sum = _rd - k;
+    u64 sum = _rd - k;
     update_vc_sub(sum, _rd, k);
     _rd = sum;
     update_zn(_rd);

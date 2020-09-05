@@ -24,7 +24,6 @@ _HiscoreMemRange HiscoreMemRange[HISCORE_MAX_RANGES];
 INT32 EnableHiscores;
 static INT32 HiscoresInUse;
 static INT32 WriteCheck1;
-static INT32 LetsTryToApply = 0;
 
 struct cheat_core {
 	cpu_core_config *cpuconfig;
@@ -330,8 +329,6 @@ void HiscoreReset()
 
 	WriteCheck1 = 0;
 
-	LetsTryToApply = 0;
-
 	for (UINT32 i = 0; i < nHiscoreNumRanges; i++) {
 		HiscoreMemRange[i].ApplyNextFrame = 0;
 		HiscoreMemRange[i].Applied = APPLIED_STATE_NONE;
@@ -374,21 +371,12 @@ INT32 HiscoreOkToWrite()
 	return WriteCheck1;
 }
 
-INT32 HiscoreOkToApply(INT32 i)
-{
-	if (!(HiscoreMemRange[i].Loaded && HiscoreMemRange[i].Applied == APPLIED_STATE_NONE && HiscoreMemRange[i].ApplyNextFrame)) {
-		return 0;
-	}
-
-	return 1;
-}
-
 INT32 HiscoreOkToApplyAll()
 { // All of the memory locations in the game's entry must be verfied, then applied when they _all_ match up
 	INT32 Ok = 1;
 
 	for (UINT32 i = 0; i < nHiscoreNumRanges; i++) {
-		if (!HiscoreOkToApply(i)) {
+		if (!(HiscoreMemRange[i].Loaded && HiscoreMemRange[i].Applied == APPLIED_STATE_NONE && HiscoreMemRange[i].ApplyNextFrame)) {
 			Ok = 0;
 		}
 	}
@@ -410,7 +398,6 @@ void HiscoreApply()
 		if (HiscoreMemRange[i].Loaded && HiscoreMemRange[i].Applied == APPLIED_STATE_ATTEMPTED) {
 			INT32 Confirmed = 1;
 			cpu_open(HiscoreMemRange[i].nCpu);
-
 			for (UINT32 j = 0; j < HiscoreMemRange[i].NumBytes; j++) {
 				if (cheat_subptr->read(HiscoreMemRange[i].Address + j) != HiscoreMemRange[i].Data[j]) {
 					Confirmed = 0;
@@ -425,23 +412,15 @@ void HiscoreApply()
 #endif
 			} else {
 				HiscoreMemRange[i].Applied = APPLIED_STATE_NONE;
-				HiscoreMemRange[i].ApplyNextFrame = 1; // Can't apply yet (machine still booting?) - let's try again!
+				HiscoreMemRange[i].ApplyNextFrame = 1;
 #if 1 && defined FBNEO_DEBUG
 				bprintf(PRINT_IMPORTANT, _T("Failed attempt to apply Hi Score Memory Range %i on frame number %i\n"), i, GetCurrentFrame());
 #endif
 			}
 		}
-
-#if 0
-		// Save for debugging hiscore.dat / driver problems.
-		cpu_open(HiscoreMemRange[i].nCpu);
-		bprintf(0, _T("start: addr %x   %x  %x\n"), HiscoreMemRange[i].Address, cheat_subptr->read(HiscoreMemRange[i].Address), HiscoreMemRange[i].StartValue);
-		bprintf(0, _T(" end : addr %x   %x  %x\n"), HiscoreMemRange[i].Address + HiscoreMemRange[i].NumBytes - 1, cheat_subptr->read(HiscoreMemRange[i].Address + HiscoreMemRange[i].NumBytes - 1), HiscoreMemRange[i].EndValue);
-		cheat_subptr->close();
-#endif
+		
 		if (HiscoreMemRange[i].Loaded && HiscoreMemRange[i].Applied == APPLIED_STATE_NONE) {
 			cpu_open(HiscoreMemRange[i].nCpu);
-
 			if (cheat_subptr->read(HiscoreMemRange[i].Address) == HiscoreMemRange[i].StartValue && cheat_subptr->read(HiscoreMemRange[i].Address + HiscoreMemRange[i].NumBytes - 1) == HiscoreMemRange[i].EndValue) {
 				HiscoreMemRange[i].ApplyNextFrame = 1;
 			}
@@ -457,11 +436,6 @@ void HiscoreApply()
 		}
 	}
 
-#if 0
-	// Save for debugging hiscore.dat / driver problems.
-	bprintf(0, _T("WriteCheckOK %d  nHiscoreNumRanges %d\n"), WriteCheckOk, nHiscoreNumRanges);
-#endif
-
 	if (WriteCheckOk == nHiscoreNumRanges) {
 #if 1 && defined FBNEO_DEBUG
 		bprintf(0, _T("Memory Verified - OK to write Hiscore data!\n"));
@@ -470,22 +444,18 @@ void HiscoreApply()
 	}
 
 	if (HiscoreOkToApplyAll()) {
-		// Game has booted - now we can attempt to apply the HS data
-		LetsTryToApply = 1;
-	}
-
-	for (UINT32 i = 0; i < nHiscoreNumRanges; i++) {
-		if (LetsTryToApply && HiscoreOkToApply(i)) {
+		for (UINT32 i = 0; i < nHiscoreNumRanges; i++) {
 			cpu_open(HiscoreMemRange[i].nCpu);
 			for (UINT32 j = 0; j < HiscoreMemRange[i].NumBytes; j++) {
-				cheat_subptr->write(HiscoreMemRange[i].Address + j, HiscoreMemRange[i].Data[j]);
+				cheat_subptr->write(HiscoreMemRange[i].Address + j, HiscoreMemRange[i].Data[j]);				
 			}
 			cheat_subptr->close();
-
+			
 			HiscoreMemRange[i].Applied = APPLIED_STATE_ATTEMPTED;
 			HiscoreMemRange[i].ApplyNextFrame = 0;
 		}
 	}
+
 }
 
 void HiscoreExit()

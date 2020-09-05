@@ -3,7 +3,6 @@
 
 #include "toaplan.h"
 #include "nec_intf.h"
-
 // Batsugun & Batsugun Special Version
 
 static UINT8 DrvButton[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -12,6 +11,8 @@ static UINT8 DrvJoy2[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 static UINT8 DrvInput[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 static UINT8 DrvReset = 0;
+static UINT8 bDrawScreen;
+static bool bVBlank;
 
 static INT32 v25_reset = 0;
 
@@ -101,33 +102,33 @@ STD_ROM_PICK(batsugunb)
 STD_ROM_FN(batsugunb)
 
 static struct BurnInputInfo batsugunInputList[] = {
-	{"P1 Coin",		BIT_DIGITAL,	DrvButton + 3,	"p1 coin"	},
-	{"P1 Start",	BIT_DIGITAL,	DrvButton + 5,	"p1 start"	},
+	{"P1 Coin",		BIT_DIGITAL,	DrvButton + 3,	"p1 coin"},
+	{"P1 Start",	BIT_DIGITAL,	DrvButton + 5,	"p1 start"},
 
-	{"P1 Up",		BIT_DIGITAL,	DrvJoy1 + 0,	"p1 up"		},
-	{"P1 Down",		BIT_DIGITAL,	DrvJoy1 + 1,	"p1 down"	},
-	{"P1 Left",		BIT_DIGITAL,	DrvJoy1 + 2,	"p1 left"	},
-	{"P1 Right",	BIT_DIGITAL,	DrvJoy1 + 3,	"p1 right"	},
-	{"P1 Button 1",	BIT_DIGITAL,	DrvJoy1 + 4,	"p1 fire 1"	},
-	{"P1 Button 2",	BIT_DIGITAL,	DrvJoy1 + 5,	"p1 fire 2"	},
-	{"P1 Button 3",	BIT_DIGITAL,	DrvJoy1 + 6,	"p1 fire 3"	},
+	{"P1 Up",		BIT_DIGITAL,	DrvJoy1 + 0,	"p1 up"},
+	{"P1 Down",		BIT_DIGITAL,	DrvJoy1 + 1,	"p1 down"},
+	{"P1 Left",		BIT_DIGITAL,	DrvJoy1 + 2,	"p1 left"},
+	{"P1 Right",	BIT_DIGITAL,	DrvJoy1 + 3,	"p1 right"},
+	{"P1 Button 1",	BIT_DIGITAL,	DrvJoy1 + 4,	"p1 fire 1"},
+	{"P1 Button 2",	BIT_DIGITAL,	DrvJoy1 + 5,	"p1 fire 2"},
+	{"P1 Button 3",	BIT_DIGITAL,	DrvJoy1 + 6,	"p1 fire 3"},
 
-	{"P2 Coin",		BIT_DIGITAL,	DrvButton + 4,	"p2 coin"	},
-	{"P2 Start",	BIT_DIGITAL,	DrvButton + 6,	"p2 start"	},
+	{"P2 Coin",		BIT_DIGITAL,	DrvButton + 4,	"p2 coin"},
+	{"P2 Start",	BIT_DIGITAL,	DrvButton + 6,	"p2 start"},
 
-	{"P2 Up",		BIT_DIGITAL,	DrvJoy2 + 0,	"p2 up"		},
-	{"P2 Down",		BIT_DIGITAL,	DrvJoy2 + 1,	"p2 down"	},
-	{"P2 Left",		BIT_DIGITAL,	DrvJoy2 + 2,	"p2 left"	},
-	{"P2 Right",	BIT_DIGITAL,	DrvJoy2 + 3,	"p2 right"	},
-	{"P2 Button 1",	BIT_DIGITAL,	DrvJoy2 + 4,	"p2 fire 1"	},
-	{"P2 Button 2",	BIT_DIGITAL,	DrvJoy2 + 5,	"p2 fire 2"	},
-	{"P2 Button 3",	BIT_DIGITAL,	DrvJoy2 + 6,	"p2 fire 3"	},
+	{"P2 Up",		BIT_DIGITAL,	DrvJoy2 + 0,	"p2 up"},
+	{"P2 Down",		BIT_DIGITAL,	DrvJoy2 + 1,	"p2 down"},
+	{"P2 Left",		BIT_DIGITAL,	DrvJoy2 + 2,	"p2 left"},
+	{"P2 Right",	BIT_DIGITAL,	DrvJoy2 + 3,	"p2 right"},
+	{"P2 Button 1",	BIT_DIGITAL,	DrvJoy2 + 4,	"p2 fire 1"},
+	{"P2 Button 2",	BIT_DIGITAL,	DrvJoy2 + 5,	"p2 fire 2"},
+	{"P2 Button 3",	BIT_DIGITAL,	DrvJoy2 + 6,	"p2 fire 3"},
 
-	{"Reset",		BIT_DIGITAL,	&DrvReset,		"reset"		},
-	{"Diagnostics",	BIT_DIGITAL,	DrvButton + 0,	"diag"		},
-	{"Dip A",		BIT_DIPSWITCH,	DrvInput + 3,	"dip"		},
-	{"Dip B",		BIT_DIPSWITCH,	DrvInput + 4,	"dip"		},
-	{"Dip C",		BIT_DIPSWITCH,	DrvInput + 5,	"dip"		},
+	{"Reset",		BIT_DIGITAL,	&DrvReset,		"reset"},
+	{"Diagnostics",	BIT_DIGITAL,	DrvButton + 0,	"diag"},
+	{"Dip A",		BIT_DIPSWITCH,	DrvInput + 3,	"dip"},
+	{"Dip B",		BIT_DIPSWITCH,	DrvInput + 4,	"dip"},
+	{"Dip C",		BIT_DIPSWITCH,	DrvInput + 5,	"dip"},
 };
 
 STDINPUTINFO(batsugun)
@@ -286,13 +287,10 @@ static INT32 DrvScan(INT32 nAction, INT32 *pnMin)
 
 		SekScan(nAction);				// scan 68000 states
 		VezScan(nAction);
-
 		BurnYM2151Scan(nAction, pnMin);
 		MSM6295Scan(nAction, pnMin);
 
 		ToaScanGP9001(nAction, pnMin);
-
-		SCAN_VAR(v25_reset);
 	}
 
 	return 0;
@@ -366,7 +364,7 @@ static INT32 KoreaLoadRoms()
 	return 0;
 }
 
-static UINT8 __fastcall batsugunReadByte(UINT32 sekAddress)
+UINT8 __fastcall batsugunReadByte(UINT32 sekAddress)
 {
 	if ((sekAddress & 0xff0000) == 0x210000) {
 		return ShareRAM[(sekAddress / 2) & 0x7fff];
@@ -389,7 +387,7 @@ static UINT8 __fastcall batsugunReadByte(UINT32 sekAddress)
 	return 0;
 }
 
-static UINT16 __fastcall batsugunReadWord(UINT32 sekAddress)
+UINT16 __fastcall batsugunReadWord(UINT32 sekAddress)
 {
 	if ((sekAddress & 0xff0000) == 0x210000) {
 		return ShareRAM[(sekAddress / 2) & 0x7fff];
@@ -425,7 +423,7 @@ static UINT16 __fastcall batsugunReadWord(UINT32 sekAddress)
 	return 0;
 }
 
-static void __fastcall batsugunWriteByte(UINT32 sekAddress, UINT8 byteValue)
+void __fastcall batsugunWriteByte(UINT32 sekAddress, UINT8 byteValue)
 {
 	if ((sekAddress & 0xff0000) == 0x210000) {
 		ShareRAM[(sekAddress / 2) & 0x7fff] = byteValue;
@@ -445,7 +443,7 @@ static void __fastcall batsugunWriteByte(UINT32 sekAddress, UINT8 byteValue)
 	}
 }
 
-static void __fastcall batsugunWriteWord(UINT32 sekAddress, UINT16 wordValue)
+void __fastcall batsugunWriteWord(UINT32 sekAddress, UINT16 wordValue)
 {
 	if ((sekAddress & 0xff0000) == 0x210000) {
 		ShareRAM[(sekAddress / 2) & 0x7fff] = wordValue;
@@ -492,7 +490,7 @@ static void __fastcall batsugunWriteWord(UINT32 sekAddress, UINT16 wordValue)
 	}
 }
 
-static void __fastcall batsugun_v25_write(UINT32 address, UINT8 data)
+void __fastcall batsugun_v25_write(UINT32 address, UINT8 data)
 {
 	switch (address)
 	{
@@ -510,7 +508,7 @@ static void __fastcall batsugun_v25_write(UINT32 address, UINT8 data)
 	}
 }
 
-static UINT8 __fastcall batsugun_v25_read(UINT32 address)
+UINT8 __fastcall batsugun_v25_read(UINT32 address)
 {
 	switch (address)
 	{
@@ -524,7 +522,7 @@ static UINT8 __fastcall batsugun_v25_read(UINT32 address)
 	return 0;
 }
 
-static UINT8 __fastcall batsugun_v25_read_port(UINT32 port)
+UINT8 __fastcall batsugun_v25_read_port(UINT32 port)
 {
 	switch (port)
 	{
@@ -630,6 +628,8 @@ static INT32 DrvInit(INT32 (*pRomLoad)())
 	ToaPalSrc = RamPal;
 	ToaPalInit();
 
+	bDrawScreen = true;
+
 	DrvDoReset(); // Reset machine
 
 	return 0;
@@ -667,11 +667,18 @@ static INT32 DrvDraw()
 {
 	ToaClearScreen(0);
 
-	ToaGetBitmap();
-	ToaRenderGP9001();						// Render GP9001 graphics
+	if (bDrawScreen) {
+		ToaGetBitmap();
+		ToaRenderGP9001();					// Render GP9001 graphics
+	}
 
 	ToaPalUpdate();							// Update the palette
 
+	return 0;
+}
+
+inline static INT32 CheckSleep(INT32)
+{
 	return 0;
 }
 
@@ -709,7 +716,7 @@ static INT32 DrvFrame()
 	SekSetCyclesScanline(nCyclesTotal[0] / 262);
 	nToaCyclesDisplayStart = nCyclesTotal[0] - ((nCyclesTotal[0] * (TOA_VBLANK_LINES + 240)) / 262);
 	nToaCyclesVBlankStart = nCyclesTotal[0] - ((nCyclesTotal[0] * TOA_VBLANK_LINES) / 262);
-	bool bVBlank = false;
+	bVBlank = false;
 
 	VezOpen(0);
 
@@ -740,9 +747,13 @@ static INT32 DrvFrame()
 		}
 
 		nCyclesSegment = nNext - nCyclesDone[nCurrentCPU];
-		nCyclesDone[nCurrentCPU] += SekRun(nCyclesSegment);
+		if (bVBlank || (!CheckSleep(nCurrentCPU))) {					// See if this CPU is busywaiting
+			nCyclesDone[nCurrentCPU] += SekRun(nCyclesSegment);
+		} else {
+			nCyclesDone[nCurrentCPU] += SekIdle(nCyclesSegment);
+		}
 
-		// sound!
+		// sound! (increase interleave?)
 		if (v25_reset) {
 			nCyclesDone[1] += nCyclesTotal[1] / nInterleave;
 		} else {

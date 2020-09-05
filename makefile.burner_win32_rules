@@ -1,8 +1,8 @@
-alldir	+= 	burner burner/win32 dep/kaillera/client dep/libs/libpng dep/libs/lib7z dep/libs/zlib intf intf/video \
+alldir	+= 	burner burner/win32 dep/libs/libpng dep/libs/lib7z dep/libs/zlib intf intf/video \
 			intf/video/scalers 	intf/video/win32 intf/audio intf/audio/win32 intf/input intf/input/win32 intf/cd intf/cd/win32 \
-			intf/perfcount intf/perfcount/win32 dep/generated
+			intf/perfcount intf/perfcount/win32 dep/generated dep/ggpo/include dep/ggpo/lib
 
-depobj	+= 	about.o bzip.o choose_monitor.o cona.o debugger.o drv.o d3dkmt_sync.o fba_kaillera.o gameinfo.o image_win32.o \
+depobj	+= 	about.o bzip.o choose_monitor.o cona.o debugger.o drv.o d3dkmt_sync.o gameinfo.o image_win32.o \
 			inpc.o inpcheat.o inpd.o inpdipsw.o inps.o ips_manager.o localise.o localise_download.o localise_gamelist.o main.o \
 			media.o memcard.o menu.o misc_win32.o neocdlist.o neocdsel.o numdial.o paletteviewer.o placeholder.o popup_win32.o \
 			progress.o replay.o res.o roms.o run.o scrn.o sel.o sfactd.o splash.o stated.o support_paths.o systeminfo.o wave.o \
@@ -15,16 +15,17 @@ depobj	+= 	about.o bzip.o choose_monitor.o cona.o debugger.o drv.o d3dkmt_sync.o
 			png.o pngerror.o pngget.o pngmem.o pngpread.o pngread.o pngrio.o pngrtran.o pngrutil.o pngset.o pngtrans.o pngwio.o \
 			pngwrite.o pngwtran.o pngwutil.o \
 			\
-			net.o \
-			\
 			aud_dsp.o aud_interface.o cd_interface.o inp_interface.o interface.o lowpass2.o prf_interface.o vid_interface.o \
 			vid_softfx.o vid_support.o \
 			\
 			2xpm.o 2xsai.o ddt3x.o epx.o hq2xs.o hq2xs_16.o xbr.o \
 			\
 			aud_dsound3.o aud_xaudio2.o cd_img.o ddraw_core.o dinput_core.o directx9_core.o dsound_core.o \
-			inp_dinput.o prf_performance_counter.o vid_d3d.o vid_ddraw.o vid_ddrawfx.o vid_directx9.o vid_directx_support.o
-			
+			inp_dinput.o prf_performance_counter.o vid_d3d.o vid_ddraw.o vid_ddrawfx.o vid_directx9.o vid_directx_support.o \
+			\
+			fbn_network.o fbn_ggpo.o fbn_ggpo_perfmon.o \
+			vid_overlay.o vid_detector.o vid_memorybuffer.o vid_font.o vid_dynrender.o vid_effect.o
+
 ifdef INCLUDE_7Z_SUPPORT
 depobj	+=	un7z.o \
 			\

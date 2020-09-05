@@ -3,7 +3,6 @@
 
 #include "toaplan.h"
 #include "nmk112.h"
-
 // Batrider
 
 static UINT8 drvButton[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -12,8 +11,10 @@ static UINT8 drvJoy2[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 static UINT8 drvInput[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 static UINT8 drvRegion = 0;
 static UINT8 drvReset = 0;
+static UINT8 bDrawScreen;
 
 static UINT8 nIRQPending;
+static bool bVBlank;
 
 static INT32 nData;
 
@@ -23,35 +24,35 @@ static INT32 nTextROMStatus;
 static void Map68KTextROM(bool bMapTextROM);
 
 static struct BurnInputInfo batriderInputList[] = {
-	{"P1 Coin",		BIT_DIGITAL,	drvButton + 3,	"p1 coin"	},
-	{"P1 Start",	BIT_DIGITAL,	drvButton + 5,	"p1 start"	},
+	{"P1 Coin",		BIT_DIGITAL,	drvButton + 3,	"p1 coin"},
+	{"P1 Start",	BIT_DIGITAL,	drvButton + 5,	"p1 start"},
 
-	{"P1 Up",		BIT_DIGITAL,	drvJoy1 + 0,	"p1 up"		},
-	{"P1 Down",		BIT_DIGITAL,	drvJoy1 + 1,	"p1 down"	},
-	{"P1 Left",		BIT_DIGITAL,	drvJoy1 + 2,	"p1 left"	},
-	{"P1 Right",	BIT_DIGITAL,	drvJoy1 + 3,	"p1 right"	},
-	{"P1 Shoot 1",	BIT_DIGITAL,	drvJoy1 + 4,	"p1 fire 1"	},
-	{"P1 Shoot 2",	BIT_DIGITAL,	drvJoy1 + 5,	"p1 fire 2"	},
-	{"P1 Shoot 3",	BIT_DIGITAL,	drvJoy1 + 6,	"p1 fire 3"	},
+	{"P1 Up",		BIT_DIGITAL,	drvJoy1 + 0,	"p1 up"},
+	{"P1 Down",		BIT_DIGITAL,	drvJoy1 + 1,	"p1 down"},
+	{"P1 Left",		BIT_DIGITAL,	drvJoy1 + 2,	"p1 left"},
+	{"P1 Right",	BIT_DIGITAL,	drvJoy1 + 3,	"p1 right"},
+	{"P1 Shoot 1",	BIT_DIGITAL,	drvJoy1 + 4,	"p1 fire 1"},
+	{"P1 Shoot 2",	BIT_DIGITAL,	drvJoy1 + 5,	"p1 fire 2"},
+	{"P1 Shoot 3",	BIT_DIGITAL,	drvJoy1 + 6,	"p1 fire 3"},
 
-	{"P2 Coin",		BIT_DIGITAL,	drvButton + 4,	"p2 coin"	},
-	{"P2 Start",	BIT_DIGITAL,	drvButton + 6,	"p2 start"	},
+	{"P2 Coin",		BIT_DIGITAL,	drvButton + 4,	"p2 coin"},
+	{"P2 Start",	BIT_DIGITAL,	drvButton + 6,	"p2 start"},
 
-	{"P2 Up",		BIT_DIGITAL,	drvJoy2 + 0,	"p2 up"		},
-	{"P2 Down",		BIT_DIGITAL,	drvJoy2 + 1,	"p2 down"	},
-	{"P2 Left",		BIT_DIGITAL,	drvJoy2 + 2,	"p2 left"	},
-	{"P2 Right",	BIT_DIGITAL,	drvJoy2 + 3,	"p2 right"	},
-	{"P2 Shoot 1",	BIT_DIGITAL,	drvJoy2 + 4,	"p2 fire 1"	},
-	{"P2 Shoot 2",	BIT_DIGITAL,	drvJoy2 + 5,	"p2 fire 2"	},
-	{"P2 Shoot 3",	BIT_DIGITAL,	drvJoy2 + 6,	"p2 fire 3"	},
+	{"P2 Up",		BIT_DIGITAL,	drvJoy2 + 0,	"p2 up"},
+	{"P2 Down",		BIT_DIGITAL,	drvJoy2 + 1,	"p2 down"},
+	{"P2 Left",		BIT_DIGITAL,	drvJoy2 + 2,	"p2 left"},
+	{"P2 Right",	BIT_DIGITAL,	drvJoy2 + 3,	"p2 right"},
+	{"P2 Shoot 1",	BIT_DIGITAL,	drvJoy2 + 4,	"p2 fire 1"},
+	{"P2 Shoot 2",	BIT_DIGITAL,	drvJoy2 + 5,	"p2 fire 2"},
+	{"P2 Shoot 3",	BIT_DIGITAL,	drvJoy2 + 6,	"p2 fire 3"},
 
-	{"Reset",		BIT_DIGITAL,	&drvReset,		"reset"		},
-	{"Test",	  	BIT_DIGITAL,	drvButton + 2,	"diag"		},
-	{"Service",		BIT_DIGITAL,	drvButton + 0,	"service"	},
-	{"Dip 1",		BIT_DIPSWITCH,	drvInput + 3,	"dip"		},
-	{"Dip 2",		BIT_DIPSWITCH,	drvInput + 4,	"dip"		},
-	{"Dip 3",		BIT_DIPSWITCH,	drvInput + 5,	"dip"		},
-	{"Region",  	BIT_DIPSWITCH,	&drvRegion  ,	"dip"		},
+	{"Reset",		BIT_DIGITAL,	  &drvReset,		"reset"},
+	{"Test",	  BIT_DIGITAL,	 drvButton + 2,	"diag"},
+	{"Service",	BIT_DIGITAL,	 drvButton + 0,	"service"},
+	{"Dip 1",		BIT_DIPSWITCH,	drvInput + 3,	"dip"},
+	{"Dip 2",		BIT_DIPSWITCH,	drvInput + 4,	"dip"},
+	{"Dip 3",		BIT_DIPSWITCH,	drvInput + 5,	"dip"},
+	{"Region",  BIT_DIPSWITCH,	&drvRegion  ,	"dip"},
 };
 
 STDINPUTINFO(batrider)
@@ -257,7 +258,7 @@ static UINT8 *Mem = NULL, *MemEnd = NULL;
 static UINT8 *RamStart, *RamEnd;
 static UINT8 *Rom01;
 static UINT8 *Ram01, *Ram02, *RamPal;
-static UINT8 *RamShared;
+UINT8 *RamShared;
 static INT32 nColCount = 0x0800;
 
 static INT32 MemIndex()
@@ -299,8 +300,8 @@ static void drvZ80Bankswitch(INT32 nBank)
 	nBank &= 0x0F;
 	if (nBank != nCurrentBank) {
 		UINT8* nStartAddress = RomZ80 + (nBank << 14);
-
-		ZetMapMemory(nStartAddress, 0x8000, 0xbfff, MAP_ROM);
+		ZetMapArea(0x8000, 0xBFFF, 0, nStartAddress);
+		ZetMapArea(0x8000, 0xBFFF, 2, nStartAddress);
 
 		nCurrentBank = nBank;
 	}
@@ -324,17 +325,17 @@ static INT32 drvScan(INT32 nAction, INT32* pnMin)
 
 		SekScan(nAction);				// Scan 68000
 		ZetScan(nAction);				// Scan Z80
+		SCAN_VAR(nCurrentBank);
 
 		MSM6295Scan(nAction, pnMin);
 		BurnYM2151Scan(nAction, pnMin);
-		NMK112_Scan(nAction);
 
 		ToaScanGP9001(nAction, pnMin);
 
 		SCAN_VAR(nIRQPending);
 		SCAN_VAR(nTextROMStatus);
-		SCAN_VAR(nCurrentBank);
-		SCAN_VAR(nData);
+
+		SCAN_VAR(drvInput);
 
 		if (nAction & ACB_WRITE) {
 			INT32 n = nTextROMStatus;
@@ -376,7 +377,7 @@ static INT32 LoadRoms()
 	return 0;
 }
 
-static UINT8 __fastcall batriderZIn(UINT16 nAddress)
+UINT8 __fastcall batriderZIn(UINT16 nAddress)
 {
 	nAddress &= 0xFF;
 
@@ -399,7 +400,7 @@ static UINT8 __fastcall batriderZIn(UINT16 nAddress)
 	return 0;
 }
 
-static void __fastcall batriderZOut(UINT16 nAddress, UINT8 nValue)
+void __fastcall batriderZOut(UINT16 nAddress, UINT8 nValue)
 {
 	nAddress &= 0xFF;
 
@@ -473,7 +474,7 @@ static INT32 drvZInit()
 	return 0;
 }
 
-static UINT8 __fastcall batriderReadByte(UINT32 sekAddress)
+UINT8 __fastcall batriderReadByte(UINT32 sekAddress)
 {
 	switch (sekAddress) {
 
@@ -502,7 +503,7 @@ static UINT8 __fastcall batriderReadByte(UINT32 sekAddress)
 	return 0;
 }
 
-static UINT16 __fastcall batriderReadWord(UINT32 sekAddress)
+UINT16 __fastcall batriderReadWord(UINT32 sekAddress)
 {
 	switch (sekAddress) {
 		case 0x500006:
@@ -526,7 +527,7 @@ static UINT16 __fastcall batriderReadWord(UINT32 sekAddress)
 	return 0;
 }
 
-static void __fastcall batriderWriteByte(UINT32 sekAddress, UINT8)	// UINT8 byteValue
+void __fastcall batriderWriteByte(UINT32 sekAddress, UINT8)	// UINT8 byteValue
 {
 	switch (sekAddress) {
 
@@ -538,7 +539,7 @@ static void __fastcall batriderWriteByte(UINT32 sekAddress, UINT8)	// UINT8 byte
 	}
 }
 
-static void __fastcall batriderWriteWord(UINT32 sekAddress, UINT16 wordValue)
+void __fastcall batriderWriteWord(UINT32 sekAddress, UINT16 wordValue)
 {
 	switch (sekAddress) {
 		case 0x500020: {
@@ -607,7 +608,7 @@ static void __fastcall batriderWriteWord(UINT32 sekAddress, UINT16 wordValue)
 	}
 }
 
-static UINT16 __fastcall batriderReadWordGP9001(UINT32 sekAddress)
+UINT16 __fastcall batriderReadWordGP9001(UINT32 sekAddress)
 {
 	switch (sekAddress) {
 		case 0x400008:
@@ -620,7 +621,7 @@ static UINT16 __fastcall batriderReadWordGP9001(UINT32 sekAddress)
 	return 0;
 }
 
-static void __fastcall batriderWriteWordGP9001(UINT32 sekAddress, UINT16 wordValue)
+void __fastcall batriderWriteWordGP9001(UINT32 sekAddress, UINT16 wordValue)
 {
 	switch (sekAddress) {
 
@@ -643,12 +644,12 @@ static void __fastcall batriderWriteWordGP9001(UINT32 sekAddress, UINT16 wordVal
 	}
 }
 
-static UINT8 __fastcall batriderReadByteZ80ROM(UINT32 sekAddress)
+UINT8 __fastcall batriderReadByteZ80ROM(UINT32 sekAddress)
 {
 	return RomZ80[(sekAddress & 0x7FFFF) >> 1];
 }
 
-static UINT16 __fastcall batriderReadWordZ80ROM(UINT32 sekAddress)
+UINT16 __fastcall batriderReadWordZ80ROM(UINT32 sekAddress)
 {
 	return RomZ80[(sekAddress & 0x7FFFF) >> 1];
 }
@@ -784,9 +785,9 @@ static INT32 drvInit()
 	ToaPalInit();
 
 	nTextROMStatus = -1;
+	bDrawScreen = true;
 
 	drvDoReset(); // Reset machine
-
 	return 0;
 }
 
@@ -810,11 +811,13 @@ static INT32 drvDraw()
 {
 	ToaClearScreen(0);
 
-	ToaGetBitmap();
-	ToaRenderGP9001();					// Render GP9001 graphics
-	ToaExtraTextLayer();				// Render extra text layer
+	if (bDrawScreen) {
+		ToaGetBitmap();
+		ToaRenderGP9001();					// Render GP9001 graphics
+		ToaExtraTextLayer();				// Render extra text layer
+	}
 
-	ToaPalUpdate();						// Update the palette
+	ToaPalUpdate();							// Update the palette
 
 	return 0;
 }
@@ -850,8 +853,8 @@ static INT32 drvFrame()
 	SekSetCyclesScanline(nCyclesTotal[0] / 262);
 	nToaCyclesDisplayStart = nCyclesTotal[0] - ((nCyclesTotal[0] * (TOA_VBLANK_LINES + 240)) / 262);
 	nToaCyclesVBlankStart = nCyclesTotal[0] - ((nCyclesTotal[0] * TOA_VBLANK_LINES) / 262);
+	bVBlank = false;
 
-	bool bVBlank = false;
 	INT32 nSoundBufferPos = 0;
 
 	ZetOpen(0);

@@ -29,8 +29,6 @@
 
 #include "cps3.h"
 
-#define LESS_ACCURATE 0
-
 static struct BurnInputInfo cps3InputList[] = {
 	{"P1 Coin",			BIT_DIGITAL,	Cps3But2 +  8,	"p1 coin"	},
 	{"P1 Start",		BIT_DIGITAL,	Cps3But2 + 12,	"p1 start"	},
@@ -81,7 +79,7 @@ static struct BurnInputInfo jojoInputList[] = {
 	{"P1 Medium Attack",BIT_DIGITAL,	Cps3But1 +  5,	"p1 fire 2"	},
 	{"P1 Strong Attack",BIT_DIGITAL,	Cps3But1 +  6,	"p1 fire 3"	},
 	{"P1 Stand",		BIT_DIGITAL,	Cps3But3 +  3,	"p1 fire 4"	},
-	{"P1 All Attacks (Fake)",	BIT_DIGITAL,	Cps3But3 +  2,	"p1 fire 5"	},
+	{"P1 Not in use 1",	BIT_DIGITAL,	Cps3But3 +  2,	"p1 fire 5"	},
 	{"P1 Not in use 2",	BIT_DIGITAL,	Cps3But3 +  1,	"p1 fire 6"	},
 
 	{"P2 Coin",			BIT_DIGITAL,	Cps3But2 +  9,	"p2 coin"	},
@@ -95,7 +93,7 @@ static struct BurnInputInfo jojoInputList[] = {
 	{"P2 Medium Attack",BIT_DIGITAL,	Cps3But1 + 13,	"p2 fire 2"	},
 	{"P2 Strong Attack",BIT_DIGITAL,	Cps3But1 + 14,	"p2 fire 3"	},
 	{"P2 Stand",		BIT_DIGITAL,	Cps3But3 +  4,	"p2 fire 4"	},
-	{"P2 All Attacks (Fake)",	BIT_DIGITAL,	Cps3But3 +  5,	"p2 fire 5"	},
+	{"P2 Not in use 1",	BIT_DIGITAL,	Cps3But3 +  5,	"p2 fire 5"	},
 	{"P2 Not in use 2",	BIT_DIGITAL,	Cps3But2 + 10,	"p2 fire 6"	},
 
 	{"Reset",			BIT_DIGITAL,	&cps3_reset,	"reset"		},
@@ -123,7 +121,7 @@ static struct BurnDIPInfo regionDIPList[] = {
 	{0x1B,	0x01, 0xFF,	0x08, "Asia"},
 	{0x1B,	0x01, 0xFF,	0x00, "XXXXXX"},
 
-	{0,		0xFE, 0,	2,	  "Less sprite lag"},
+	{0,		0xFE, 0,	2,	  "1f sprite lag"},
 	{0x1C,	0x01, 0x01,	0x00, "No"},
 	{0x1C,	0x01, 0x01,	0x01, "Yes"},
 
@@ -146,7 +144,7 @@ static struct BurnDIPInfo jojobaRegionDIPList[] = {
 	{0x1B,	0x01, 0xFF,	0x08, "Korea"}, // fake region?
 	{0x1B,	0x01, 0xFF,	0x00, "XXXXXX"},
 
-	{0,		0xFE, 0,	2,	  "Less sprite lag"},
+	{0,		0xFE, 0,	2,	  "1f sprite lag"},
 	{0x1C,	0x01, 0x01,	0x00, "No"},
 	{0x1C,	0x01, 0x01,	0x01, "Yes"},
 };
@@ -165,7 +163,7 @@ static struct BurnDIPInfo redeartnRegionDIPList[] = {
 	{0x1B,	0x01, 0xFF,	0x58, "Asia"},
 	{0x1B,	0x01, 0xFF,	0x50, "Japan"},
 
-	{0,		0xFE, 0,	2,	  "Less sprite lag"},
+	{0,		0xFE, 0,	2,	  "1f sprite lag"},
 	{0x1C,	0x01, 0x01,	0x00, "No"},
 	{0x1C,	0x01, 0x01,	0x01, "Yes"},
 };
@@ -188,7 +186,7 @@ static struct BurnDIPInfo sfiiiDIPList[] = {
 	{0x1B,	0x01, 0x80,	0x80, "Widescreen"},
 	{0x1B,	0x01, 0x80,	0x00, "Normal"},
 
-	{0,		0xFE, 0,	2,	  "Less sprite lag"},
+	{0,		0xFE, 0,	2,	  "1f sprite lag"},
 	{0x1C,	0x01, 0x01,	0x00, "No"},
 	{0x1C,	0x01, 0x01,	0x01, "Yes"},
 
@@ -201,77 +199,42 @@ static struct BurnDIPInfo japanRegionDIPList[] = {
 
 	// Defaults
 	{0x1B,	0xFF, 0xFF,	0x01, NULL},
-#if LESS_ACCURATE
-	{0x1C,  0xFF, 0xFF, 0x01, NULL},
-#else
-	{0x1C,  0xFF, 0xFF, 0x00, NULL},
-#endif
 };
 
 static struct BurnDIPInfo asiaRegionDIPList[] = {
 
 	// Defaults
 	{0x1B,	0xFF, 0xFF,	0x02, NULL},
-#if LESS_ACCURATE
-	{0x1C,  0xFF, 0xFF, 0x01, NULL},
-#else
-	{0x1C,  0xFF, 0xFF, 0x00, NULL},
-#endif
 };
 
 static struct BurnDIPInfo euroRegionDIPList[] = {
 
 	// Defaults
 	{0x1B,	0xFF, 0xFF,	0x03, NULL},
-#if LESS_ACCURATE
-	{0x1C,  0xFF, 0xFF, 0x01, NULL},
-#else
-	{0x1C,  0xFF, 0xFF, 0x00, NULL},
-#endif
 };
 
 static struct BurnDIPInfo usaRegionDIPList[] = {
 
 	// Defaults
 	{0x1B,	0xFF, 0xFF,	0x04, NULL},
-#if LESS_ACCURATE
-	{0x1C,  0xFF, 0xFF, 0x01, NULL},
-#else
-	{0x1C,  0xFF, 0xFF, 0x00, NULL},
-#endif
 };
 
 static struct BurnDIPInfo hispanicRegionDIPList[] = {
 
 	// Defaults
 	{0x1B,	0xFF, 0xFF,	0x05, NULL},
-#if LESS_ACCURATE
-	{0x1C,  0xFF, 0xFF, 0x01, NULL},
-#else
-	{0x1C,  0xFF, 0xFF, 0x00, NULL},
-#endif
 };
 
 static struct BurnDIPInfo euroRedeartnDIPList[] = {
 
 	// Defaults
 	{0x1B,	0xFF, 0xFF,	0x53, NULL},
-#if LESS_ACCURATE
-	{0x1C,  0xFF, 0xFF, 0x01, NULL},
-#else
-	{0x1C,  0xFF, 0xFF, 0x00, NULL},
-#endif
 };
 
 static struct BurnDIPInfo japanwarzardDIPList[] = {
 
 	// Defaults
 	{0x1B,	0xFF, 0xFF,	0x51, NULL},
-#if LESS_ACCURATE
-	{0x1C,  0xFF, 0xFF, 0x01, NULL},
-#else
-	{0x1C,  0xFF, 0xFF, 0x00, NULL},
-#endif
 };
 
 STDDIPINFOEXT(japan, region, japanRegion)

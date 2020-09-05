@@ -122,7 +122,6 @@ INT32 write_datfile(INT32 bType, FILE* fDat)
 	if (bType == DAT_NEOGEO_ONLY) fprintf(fDat, "\t\t<name>" APP_TITLE " - Neogeo Games</name>\n");
 	if (bType == DAT_NES_ONLY) fprintf(fDat, "\t\t<name>" APP_TITLE " - NES Games</name>\n");
 	if (bType == DAT_FDS_ONLY) fprintf(fDat, "\t\t<name>" APP_TITLE " - FDS Games</name>\n");
-	if (bType == DAT_NGP_ONLY) fprintf(fDat, "\t\t<name>" APP_TITLE " - Neo Geo Pocket Games</name>\n");
 
 	if (bType == DAT_ARCADE_ONLY) _ftprintf(fDat, _T("\t\t<description>") _T(APP_TITLE) _T(" v%s") _T(" Arcade Games</description>\n"), szAppBurnVer);
 	if (bType == DAT_MEGADRIVE_ONLY) _ftprintf(fDat, _T("\t\t<description>") _T(APP_TITLE) _T(" v%s") _T(" Megadrive Games</description>\n"), szAppBurnVer);
@@ -138,7 +137,6 @@ INT32 write_datfile(INT32 bType, FILE* fDat)
 	if (bType == DAT_NEOGEO_ONLY) _ftprintf(fDat, _T("\t\t<description>") _T(APP_TITLE) _T(" v%s") _T(" Neogeo Games</description>\n"), szAppBurnVer);
 	if (bType == DAT_NES_ONLY) _ftprintf(fDat, _T("\t\t<description>") _T(APP_TITLE) _T(" v%s") _T(" NES Games</description>\n"), szAppBurnVer);
 	if (bType == DAT_FDS_ONLY) _ftprintf(fDat, _T("\t\t<description>") _T(APP_TITLE) _T(" v%s") _T(" FDS Games</description>\n"), szAppBurnVer);
-	if (bType == DAT_NGP_ONLY) _ftprintf(fDat, _T("\t\t<description>") _T(APP_TITLE) _T(" v%s") _T(" Neo Geo Pocket Games</description>\n"), szAppBurnVer);
 	fprintf(fDat, "\t\t<category>Standard DatFile</category>\n");
 	_ftprintf(fDat, _T("\t\t<version>%s</version>\n"), szAppBurnVer);
 	fprintf(fDat, "\t\t<author>" APP_TITLE "</author>\n");
@@ -177,7 +175,6 @@ INT32 write_datfile(INT32 bType, FILE* fDat)
 			|| ((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) == HARDWARE_SPECTRUM)
 			|| ((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) == HARDWARE_NES)
 			|| ((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) == HARDWARE_FDS)
-			|| ((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) == HARDWARE_SNK_NGP)
 			) && (bType == DAT_ARCADE_ONLY)) {
 			continue;
 		}
@@ -227,10 +224,6 @@ INT32 write_datfile(INT32 bType, FILE* fDat)
 		}
 
 		if (((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) != HARDWARE_FDS) && (bType == DAT_FDS_ONLY)) {
-			continue;
-		}
-
-		if (((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) != HARDWARE_SNK_NGP) && (bType == DAT_NGP_ONLY)) {
 			continue;
 		}
 
@@ -306,7 +299,6 @@ INT32 write_datfile(INT32 bType, FILE* fDat)
 		remove_driver_leader(HARDWARE_SPECTRUM, 5, 1)
 		remove_driver_leader(HARDWARE_NES, 4, 1)
 		remove_driver_leader(HARDWARE_FDS, 4, 1)
-		remove_driver_leader(HARDWARE_SNK_NGP, 4, 1)
 
 		// Report problems
 		if (nParentSelect==-1U)
@@ -563,7 +555,6 @@ INT32 write_datfile(INT32 bType, FILE* fDat)
 			|| ((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) == HARDWARE_SPECTRUM)
 			|| ((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) == HARDWARE_NES)
 			|| ((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) == HARDWARE_FDS)
-			|| ((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) == HARDWARE_SNK_NGP)
 			) && (bType == DAT_ARCADE_ONLY)) {
 			continue;
 		}
@@ -616,10 +607,6 @@ INT32 write_datfile(INT32 bType, FILE* fDat)
 			continue;
 		}
 
-		if (((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) != HARDWARE_SNK_NGP) && (bType == DAT_NGP_ONLY)) {
-			continue;
-		}
-
 		if (((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) != HARDWARE_SNK_NEOGEO) && (bType == DAT_NEOGEO_ONLY)) {
 			continue;
 		}
@@ -642,7 +629,6 @@ INT32 write_datfile(INT32 bType, FILE* fDat)
 		remove_driver_leader(HARDWARE_SPECTRUM, 5, 0)
 		remove_driver_leader(HARDWARE_NES, 4, 0)
 		remove_driver_leader(HARDWARE_FDS, 4, 0)
-		remove_driver_leader(HARDWARE_SNK_NGP, 4, 0)
 
 		fprintf(fDat, "\t<game isbios=\"yes\" name=\"%s\">\n", sgName);
 		fprintf(fDat, "\t\t<description>%s</description>\n", DecorateGameName(nBurnDrvActive));
@@ -683,11 +669,7 @@ INT32 write_datfile(INT32 bType, FILE* fDat)
 					memset(szPossibleNameBuffer, 0, 255);
 					ReplaceGreaterThan(szPossibleNameBuffer, szPossibleNameBuffer2);
 
-					if (ri.nType & BRF_NODUMP) {
-						fprintf(fDat, "\t\t<rom name=\"%s\" size=\"%d\" status=\"nodump\"/>\n", szPossibleNameBuffer, ri.nLen);
-					} else {
-						fprintf(fDat, "\t\t<rom name=\"%s\" size=\"%d\" crc=\"%08x\"/>\n", szPossibleNameBuffer, ri.nLen, ri.nCrc);
-					}
+					fprintf(fDat, "\t\t<rom name=\"%s\" size=\"%d\" crc=\"%08x\"/>\n", szPossibleNameBuffer, ri.nLen, ri.nCrc);
 				}
 			}
 		}

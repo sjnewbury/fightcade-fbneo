@@ -4,7 +4,6 @@
 
 extern UINT32 *BurnPalette;
 extern UINT8 *BurnPalRAM;
-extern UINT8 BurnRecalc;
 
 // palette update functions are called to recalculate the entire palette
 

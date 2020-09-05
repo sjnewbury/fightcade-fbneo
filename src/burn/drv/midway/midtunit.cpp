@@ -506,8 +506,7 @@ static INT32 ScanlineRender(INT32 line, TMS34010Display *info)
 
     const INT32 heblnk = info->heblnk;
     const INT32 hsblnk = info->hsblnk * 2; // T-Unit is 2 pixels per clock
-	for (INT32 x = heblnk; x < hsblnk; x++) {
-		if ((x - heblnk) >= nScreenWidth) break;
+    for (INT32 x = heblnk; x < hsblnk; x++) {
         dest[x - heblnk] = src[col++ & 0x1FF] & 0x7FFF;
     }
 
