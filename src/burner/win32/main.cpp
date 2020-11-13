@@ -31,7 +31,7 @@
 HINSTANCE hAppInst = NULL;			// Application Instance
 HANDLE hMainThread;
 long int nMainThreadID;
-int nAppThreadPriority = THREAD_PRIORITY_NORMAL;
+int nAppProcessPriority = NORMAL_PRIORITY_CLASS;
 int nAppShowCmd;
 
 static TCHAR szCmdLine[1024] = _T("");
@@ -43,7 +43,6 @@ int nAppVirtualFps = 6000;			// App fps * 100
 TCHAR szAppBurnVer[EXE_NAME_SIZE] = _T("");
 TCHAR szAppExeName[EXE_NAME_SIZE + 1];
 
-int  nCmdOptUsed = 0; // 1 fullscreen, 2 windowed (-w)
 bool bAlwaysProcessKeyboardInput = false;
 bool bAlwaysCreateSupportFolders = true;
 bool bAutoLoadGameList = false;
@@ -553,6 +552,13 @@ void GetAspectRatio(int x, int y, int *AspectX, int *AspectY)
 		return;
 	}
 
+	// 32:9
+	if (fabs(aspect_ratio - 32.f/9.f) < 0.1f) {
+		*AspectX = 32;
+		*AspectY = 9;
+		return;
+	}
+
 	// Vertical
 
 	// 3:4
@@ -587,6 +593,13 @@ void GetAspectRatio(int x, int y, int *AspectX, int *AspectY)
 	if (fabs(aspect_ratio - 9.f/21.f) < 0.1f) {
 		*AspectX = 9;
 		*AspectY = 21;
+		return;
+	}
+
+	// 9:32
+	if (fabs(aspect_ratio - 9.f/32.f) < 0.1f) {
+		*AspectX = 9;
+		*AspectY = 32;
 		return;
 	}
 }
@@ -710,6 +723,7 @@ static int AppInit()
 	bVidTripleBuffer = 0; // no triple buffer
 	bVidScanlines = 0; // no ddraw scanlines
 	bVidDWMSync = 0; // no dwm sync
+	nAudSegCount = nAudSegCount < 4 ? 4 : nAudSegCount;
 	bDoGamma = 0; // no gamma
 	bForce60Hz = 1;
 	nGamma = 1; // default gamma
@@ -743,8 +757,22 @@ static int AppInit()
 	}
 #endif
 
-	// Set the thread priority for the main thread
-	SetThreadPriority(GetCurrentThread(), nAppThreadPriority);
+	switch (nAppProcessPriority) {
+	case HIGH_PRIORITY_CLASS:
+	case ABOVE_NORMAL_PRIORITY_CLASS:
+	case NORMAL_PRIORITY_CLASS:
+	case BELOW_NORMAL_PRIORITY_CLASS:
+	case IDLE_PRIORITY_CLASS:
+		// nothing to change, we're good.
+		break;
+	default:
+		// invalid priority class, set to normal.
+		nAppProcessPriority = NORMAL_PRIORITY_CLASS;
+		break;
+	}
+
+	// Set the process priority
+	SetPriorityClass(GetCurrentProcess(), nAppProcessPriority);
 
 #ifdef USE_SDL
 	SDL_Init(0);
@@ -852,7 +880,7 @@ int ProcessCmdLine()
 	unsigned int i;
 	int nOptX = 0, nOptY = 0, nOptD = 0;
 	int nOpt1Size;
-	TCHAR szOpt2[3] = _T("");
+	TCHAR szOpt2[MAX_PATH] = _T("");
 	TCHAR szName[MAX_PATH];
 
 	if (szCmdLine[0] == _T('\"')) {
@@ -959,11 +987,10 @@ int ProcessCmdLine()
 		}
 	}
 
-	_stscanf(&szCmdLine[nOpt1Size], _T("%2s %i x %i x %i"), szOpt2, &nOptX, &nOptY, &nOptD);
+	_stscanf(&szCmdLine[nOpt1Size], _T("%s %i x %i x %i"), szOpt2, &nOptX, &nOptY, &nOptD);
 
 	if (_tcslen(szName)) {
-		bool bFullscreen = 1;
-		nCmdOptUsed = 1;
+		bool bFullscreen = 0;
 
 		if (_tcscmp(szOpt2, _T("-r")) == 0) {
 			if (nOptX && nOptY) {
@@ -977,14 +1004,12 @@ int ProcessCmdLine()
 		else if (_tcscmp(szOpt2, _T("-a")) == 0) {
 			bVidArcaderes = 1;
 		}
-		else if (_tcscmp(szOpt2, _T("-w")) == 0) {
-			nCmdOptUsed = 2;
-			bFullscreen = 0;
-		}
 		else if (_tcscmp(szOpt2, _T("-q")) == 0) {
-			nCmdOptUsed = 2;
 			bFullscreen = 0;
 			QuarkRecordReplay();
+		} else if (wcsstr(szOpt2, _T(".lua")) != 0) {
+			bFullscreen = 0;
+			FBA_LoadLuaCode(TCHARToANSI(szOpt2, NULL, NULL));
 		}
 
 		if (bFullscreen) {
@@ -1002,16 +1027,10 @@ int ProcessCmdLine()
 				if (StartReplay(szName)) {
 					return 1;
 				}
-			} else if (_tcscmp(&szName[_tcslen(szName) - 4], _T(".lua")) == 0) {
-				FBA_LoadLuaCode(TCHARToANSI(szName, NULL, NULL));
-				UpdateLuaConsole(szName);
 			} else if (_tcsncmp(szName, _T("quark:"), 6) == 0) {
 				QuarkInit(szName);
 			} else {
 				bQuietLoading = true;
-
-				//FBA_LoadLuaCode("scrolling-input-display.lua");
-				//UpdateLuaConsole(L"scrolling-input-display.lua");
 
 				for (i = 0; i < nBurnDrvCount; i++) {
 					nBurnDrvActive = i;
@@ -1099,7 +1118,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nShowCmd
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
 
 	DSCore_Init();
-	DICore_Init();
 	DDCore_Init();
 
 	// Provide a custom exception handler

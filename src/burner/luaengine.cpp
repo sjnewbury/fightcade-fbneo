@@ -69,6 +69,7 @@ static int LUA_SCREEN_HEIGHT = 240;
 
 // Current working directory of the script
 static char luaCWD [_MAX_PATH] = {0};
+static char fbnCWD [_MAX_PATH] = {0};
 
 // Are we running any code right now?
 static char *luaScriptName = NULL;
@@ -928,7 +929,9 @@ void CallRegisteredLuaFunctions(LuaCallID calltype)
 	int errorcode = 0;
 	if (lua_isfunction(LUA, -1))
 	{
+		chdir(luaCWD);
 		errorcode = lua_pcall(LUA, 0, 0, 0);
+		chdir(fbnCWD);
 		if (errorcode)
 			HandleCallbackError(LUA);
 	}
@@ -1180,8 +1183,7 @@ registerPointerMap m68000RegPointerMap [] = {
 };
 
 registerPointerMap z80RegPointerMap [] = {
-	/*
-	RPM_ENTRY("prvpc", Z80.prvpc.w.l)
+	/*	RPM_ENTRY("prvpc", Z80.prvpc.w.l)
 	RPM_ENTRY("pc", Z80.pc.w.l)
 	RPM_ENTRY("sp", Z80.sp.w.l)
 	RPM_ENTRY("af", Z80.af.w.l)
@@ -1408,7 +1410,10 @@ void luasav_save(const char *filename) {
 
 	sprintf(luaSaveFilename, "%s.luasav", filename);
 
-	strncpy( slotnum, strrchr(filename, '\\')+1, strlen(strrchr(filename, '\\')) );
+	const char *posa = strrchr(filename, '/') ;
+	const char *posb = strrchr(filename, '\\');
+	const char *pos = posa > posb ? posa : posb;
+	strncpy(slotnum, pos+1, strlen(pos));
 	filenameEnd = strrchr(slotnum, '.');
 	filenameEnd[0] = '\0';
 	strcpy(slotnum, filenameEnd-1);
@@ -1435,7 +1440,10 @@ void luasav_load(const char *filename) {
 
 	sprintf(luaSaveFilename, "%s.luasav", filename);
 
-	strncpy( slotnum, strrchr(filename, '\\')+1, strlen(strrchr(filename, '\\')) );
+	const char *posa = strrchr(filename, '/') ;
+	const char *posb = strrchr(filename, '\\');
+	const char *pos = posa > posb ? posa : posb;
+	strncpy(slotnum, pos+1, strlen(pos));
 	filenameEnd = strrchr(slotnum, '.');
 	filenameEnd[0] = '\0';
 	strcpy(slotnum, filenameEnd-1);
@@ -2186,7 +2194,7 @@ static inline UINT32 gui_getcolour_wrapped(lua_State *L, int offset, UINT8 hasDe
 }
 static UINT32 gui_getcolour(lua_State *L, int offset) {
 	UINT32 colour;
-	int a, r, g, b;
+	UINT32 a, r, g, b;
 
 	colour = gui_getcolour_wrapped(L, offset, FALSE, 0);
 	a = ((colour & 0xff) * transparencyModifier) / 255;
@@ -2198,7 +2206,7 @@ static UINT32 gui_getcolour(lua_State *L, int offset) {
 }
 static UINT32 gui_optcolour(lua_State *L, int offset, UINT32 defaultColour) {
 	UINT32 colour;
-	int a, r, g, b;
+	UINT32 a, r, g, b;
 	UINT8 defA, defB, defG, defR;
 
 	LUA_DECOMPOSE_PIXEL(defaultColour, defA, defR, defG, defB);
@@ -2787,6 +2795,7 @@ static int gui_text(lua_State *L) {
 //  Overlays the given image on the screen.
 // example: gui.gdoverlay(gd.createFromPng("myimage.png"):gdStr())
 static int gui_gdoverlay(lua_State *L) {
+
 	int i,y,x;
 	int argCount = lua_gettop(L);
 
@@ -3631,7 +3640,7 @@ void CallExitFunction() {
 	{
 		chdir(luaCWD);
 		errorcode = lua_pcall(LUA, 0, 0, 0);
-		_getcwd(luaCWD, _MAX_PATH);
+		chdir(fbnCWD);
 	}
 
 	if (errorcode)
@@ -3798,7 +3807,7 @@ void FBA_LuaFrameBoundary() {
 	numTries = 1000;
 	chdir(luaCWD);
 	result = lua_resume(thread, 0);
-	_getcwd(luaCWD, _MAX_PATH);
+	chdir(fbnCWD);
 	
 	if (result == LUA_YIELD) {
 		// Okay, we're fine with that.
@@ -3842,21 +3851,26 @@ int FBA_LoadLuaCode(const char *filename) {
 	int result;
 	char dir[_MAX_PATH];
 	char *slash, *backslash;
+	const char *luafile = filename;
 
-	if (filename != luaScriptName)
+	if (luafile != luaScriptName)
 	{
 		if (luaScriptName) free(luaScriptName);
-		luaScriptName = strdup(filename);
+		luaScriptName = strdup(luafile);
 	}
 
-	// Set current directory from filename (for dofile)
-	strcpy(dir, filename);
+	// Set current directory from luafile (for dofile)
+	_getcwd(fbnCWD, _MAX_PATH);
+	strcpy(dir, luafile);
 	slash = strrchr(dir, '/');
 	backslash = strrchr(dir, '\\');
 	if (!slash || (backslash && backslash < slash))
 		slash = backslash;
 	if (slash) {
 		slash[1] = '\0';    // keep slash itself for some reasons
+		if (!LuaConsoleHWnd) {
+			luafile+= strlen (dir);
+		}
 		_chdir(dir);
 	}
 	_getcwd(luaCWD, _MAX_PATH);
@@ -3905,7 +3919,7 @@ int FBA_LoadLuaCode(const char *filename) {
 	thread = lua_newthread(LUA);
 	
 	// Load the data	
-	result = luaL_loadfile(LUA,filename);
+	result = luaL_loadfile(LUA, luafile);
 
 	if (result) {
 #ifdef WIN32
@@ -3917,6 +3931,7 @@ int FBA_LoadLuaCode(const char *filename) {
 
 		// Wipe the stack. Our thread
 		lua_settop(LUA,0);
+		_chdir(fbnCWD);
 		return 0; // Oh shit.
 	}
 
@@ -3939,8 +3954,8 @@ int FBA_LoadLuaCode(const char *filename) {
 	info_print = PrintToWindowConsole;
 	info_onstart = WinLuaOnStart;
 	info_onstop = WinLuaOnStop;
-	if(!LuaConsoleHWnd)
-		LuaConsoleHWnd = CreateDialog(hAppInst, MAKEINTRESOURCE(IDD_LUA), NULL, (DLGPROC) DlgLuaScriptDialog);
+	//if(!LuaConsoleHWnd)
+	//	LuaConsoleHWnd = CreateDialog(hAppInst, MAKEINTRESOURCE(IDD_LUA), NULL, (DLGPROC) DlgLuaScriptDialog);
 	info_uid = (int)LuaConsoleHWnd;
 #else
 	info_print = NULL;
@@ -3955,6 +3970,8 @@ int FBA_LoadLuaCode(const char *filename) {
 
 	// Set up our protection hook to be executed once every 10,000 bytecode instructions.
 	lua_sethook(thread, FBA_LuaHookFunction, LUA_MASKCOUNT, 10000);
+
+	_chdir(fbnCWD);
 
 	// We're done.
 	return 1;
@@ -4115,7 +4132,9 @@ void FBA_LuaGui(unsigned char *s, int width, int height, int bpp, int pitch) {
 
 		// We call it now
 		numTries = 1000;
+		chdir(luaCWD);
 		ret = lua_pcall(LUA, 0, 0, 0);
+		chdir(fbnCWD);
 		if (ret != 0) {
 #ifdef WIN32
 			MessageBoxA(hScrnWnd, lua_tostring(LUA, -1), "Lua Error in GUI function", MB_OK);

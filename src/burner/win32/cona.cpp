@@ -164,6 +164,8 @@ int ConfigAppLoad()
 		VAR(bVidBigOverlay);
 		VAR(bVidUnrankedScores);
 		VAR(bVidSaveOverlayFiles);
+		VAR(bVidSaveChatHistory);
+		VAR(bVidMuteChat);
 
 		// Runahead
 		VAR(nVidRunahead);
@@ -197,7 +199,7 @@ int ConfigAppLoad()
 #endif
 
 		VAR(bDrvSaveAll);
-		VAR(nAppThreadPriority);
+		VAR(nAppProcessPriority);
 		VAR(bAlwaysProcessKeyboardInput);
 		VAR(bAutoPause);
 		VAR(bSaveInputs);
@@ -332,10 +334,6 @@ int ConfigAppSave()
 {
 	TCHAR szConfig[MAX_PATH];
 	FILE *h;
-
-	if (nCmdOptUsed & 1) {
-		return 1;
-	}
 
 #ifdef _UNICODE
 	setlocale(LC_ALL, "");
@@ -521,6 +519,10 @@ int ConfigAppSave()
 	VAR(bVidUnrankedScores);
 	_ftprintf(h, _T("\n// Save Fightcade overlay data to files in realtime (for Streaming)\n"));
 	VAR(bVidSaveOverlayFiles);
+	_ftprintf(h, _T("\n// Save Fightcade chat history\n"));
+	VAR(bVidSaveChatHistory);
+	_ftprintf(h, _T("\n// Mute Fightcade chat\n"));
+	VAR(bVidMuteChat);
 	_ftprintf(h, _T("\n// Run ahead frames (0 = disabled, 1, 2)\n"));
 	VAR(nVidRunahead);
 
@@ -582,8 +584,8 @@ int ConfigAppSave()
 
 	_ftprintf(h, _T("\n// If non-zero, load and save all ram (the state)\n"));
 	VAR(bDrvSaveAll);
-	_ftprintf(h, _T("\n// The thread priority for the application. Do *NOT* edit this manually\n"));
-	VAR(nAppThreadPriority);
+	_ftprintf(h, _T("\n// The process priority for the application. Do *NOT* edit this manually\n"));
+	VAR(nAppProcessPriority);
 	_ftprintf(h, _T("\n// If non-zero, process keyboard input even when the application loses focus\n"));
 	VAR(bAlwaysProcessKeyboardInput);
 	_ftprintf(h, _T("\n// If non-zero, pause when the application loses focus\n"));

@@ -629,8 +629,7 @@ void MenuUpdate()
 
 	CreateStateslotItems();
 
-	CheckMenuItem(hMenu, MENU_PAUSE, bAltPause ? MF_CHECKED : MF_UNCHECKED);
-	CheckMenuItem(hMenu, MENU_ALLRAM, bDrvSaveAll ? MF_CHECKED : MF_UNCHECKED);
+	EnableMenuItem(hMenu, ID_LUA_OPEN, kNetLua ? MF_ENABLED | MF_BYCOMMAND : MF_GRAYED | MF_BYCOMMAND);
 
 //	CreateCDItems();
 //	CheckMenuRadioItem(hMenu, MENU_CDIMAGE, MENU_CDIMAGE, MENU_CDIMAGE + nCDEmuSelect, MF_BYCOMMAND);
@@ -767,6 +766,8 @@ void MenuUpdate()
 	CheckMenuItem(hMenu, MENU_BIG_OVERLAY, (bVidBigOverlay) ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(hMenu, MENU_UNRANKED_SCORES, (bVidUnrankedScores) ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(hMenu, MENU_SAVE_OVERLAY_FILES, (bVidSaveOverlayFiles) ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuItem(hMenu, MENU_SAVE_CHAT_HISTORY, (bVidSaveChatHistory) ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuItem(hMenu, MENU_MUTE_CHAT, (bVidMuteChat) ? MF_CHECKED : MF_UNCHECKED);
 
 	CheckMenuItem(hMenu, MENU_RUNAHEAD_DISABLED, (nVidRunahead == 0) ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(hMenu, MENU_RUNAHEAD_1F, (nVidRunahead == 1) ? MF_CHECKED : MF_UNCHECKED);
@@ -1050,28 +1051,26 @@ void MenuUpdate()
 	CheckMenuRadioItem(hMenu, MENU_AVI1X, MENU_AVI3X, var, MF_BYCOMMAND);
 #endif
 
-	if (nAppThreadPriority == THREAD_PRIORITY_TIME_CRITICAL) {
-		var = MENU_PRIORITY_REALTIME;
-	} else {
-		if (nAppThreadPriority == THREAD_PRIORITY_HIGHEST) {
-			var = MENU_PRIORITY_HIGH;
-		} else {
-			if (nAppThreadPriority == THREAD_PRIORITY_ABOVE_NORMAL) {
-				var = MENU_PRIORITY_ABOVE_NORMAL;
-			} else {
-				if (nAppThreadPriority == THREAD_PRIORITY_BELOW_NORMAL) {
-					var = MENU_PRIORITY_BELOW_NORMAL;
-				} else {
-					if (nAppThreadPriority == THREAD_PRIORITY_LOWEST) {
-						var = MENU_PRIORITY_LOW;
-					} else {
-						var = MENU_PRIORITY_NORMAL;
-					}
-				}
-			}
-		}
+	switch (nAppProcessPriority) {
+	case HIGH_PRIORITY_CLASS:
+		break;
+	case ABOVE_NORMAL_PRIORITY_CLASS:
+		var = MENU_PRIORITY_ABOVE_NORMAL;
+		break;
+	case NORMAL_PRIORITY_CLASS:
+		var = MENU_PRIORITY_NORMAL;
+		break;
+	case BELOW_NORMAL_PRIORITY_CLASS:
+		var = MENU_PRIORITY_BELOW_NORMAL;
+		break;
+	case IDLE_PRIORITY_CLASS:
+		var = MENU_PRIORITY_LOW;
+		break;
+	default:
+		var = MENU_PRIORITY_NORMAL;
+		break;
 	}
-	CheckMenuRadioItem(hMenu, MENU_PRIORITY_REALTIME, MENU_PRIORITY_LOW, var, MF_BYCOMMAND);
+	CheckMenuRadioItem(hMenu, MENU_PRIORITY_HIGH, MENU_PRIORITY_LOW, var, MF_BYCOMMAND);
 	CheckMenuItem(hMenu, MENU_SAVEGAMEINPUT, bSaveInputs ? MF_CHECKED : MF_UNCHECKED);
 
 	// Auto-Fire
@@ -1325,7 +1324,7 @@ void MenuEnableItems()
 		EnableMenuItem(hMenu, MENU_AUD_PLUGIN_2, MF_GRAYED  | MF_BYCOMMAND);
 
 		BurnDIPInfo bdi;
-		if (BurnDrvGetDIPInfo(&bdi, 0) == 0) {
+		if (BurnDrvGetDIPInfo(&bdi, 0) == 0 && !kNetGame && !kNetSpectator) {
 			EnableMenuItem(hMenu, MENU_DIPSW,			MF_ENABLED | MF_BYCOMMAND);
 		} else {
 			EnableMenuItem(hMenu, MENU_DIPSW,			MF_GRAYED | MF_BYCOMMAND);

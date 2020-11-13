@@ -558,10 +558,10 @@
     (defined(__i386) || defined (_M_IX86) || defined(__i386__))
 
 /* On a Microsoft compiler, use assembler */
-#if defined(_MSC_VER) && defined(TEST)
+#if defined(_MSC_VER)
 
-#define lua_number2int(i,d)   __asm fld d   __asm fistp i
-#define lua_number2integer(i,n)		lua_number2int(i, n)
+#define lua_number2int(i,d)	((i)=(unsigned int)(d))
+#define lua_number2integer(i,d)	((i)=(unsigned int)(d))
 
 /* the next trick should work on any Pentium, but sometimes clashes
    with a DirectX idiosyncrasy */

@@ -224,6 +224,8 @@ extern INT32 bVidOverlay;
 extern INT32 bVidBigOverlay;
 extern INT32 bVidUnrankedScores;
 extern INT32 bVidSaveOverlayFiles;
+extern INT32 bVidSaveChatHistory;
+extern INT32 bVidMuteChat;
 extern INT32 nVidRunahead;
 extern wchar_t HorScreen[32];
 extern wchar_t VerScreen[32];

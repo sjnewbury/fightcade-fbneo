@@ -5,5 +5,5 @@
  #define APP_TITLE "Fightcade FBNeo"
 #endif
 
-#define APP_DESCRIPTION "Fightcade - Online Retro Gaming"
+#define APP_DESCRIPTION "Fightcade FBNeo - Online Retro Gaming"
 

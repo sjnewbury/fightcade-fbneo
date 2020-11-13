@@ -327,7 +327,6 @@ INT32 InputMake(bool bCopy)
 				if (bCopy) {
 					*(pgi->Input.pShortVal) = pgi->Input.nVal;
 				}
-
 				break;
 			}
 			case GIT_JOYAXIS_NEG:	{				// Joystick axis Lo

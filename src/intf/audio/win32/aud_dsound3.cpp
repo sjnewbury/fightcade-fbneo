@@ -156,10 +156,13 @@ static int DxSoundCheck()
 
 	int nDiff = AudioBufferDiff(nAudBufferWrite, nAudBufferRead, nAudBufferCount);
 	if (nDiff < 0) {
+		//VidDebug("Dry Buffers", nDiff, nAudBufferRead);
 		nAudBufferWrite = nAudBufferRead;
 	}
 
 	if (nDiff < 4) {
+		//VidDebug("Close to Dry Buffers", nDiff, 0);
+		
 		// Lock and fill next write buffer segment
 		void *pData1 = NULL, *pData2 = NULL;
 		DWORD nLen1 = 0, nLen2 = 0;
@@ -181,6 +184,7 @@ static int DxSoundFrame()
 
 	int nDiff = AudioBufferDiff(nAudBufferWrite, nAudBufferRead, nAudBufferCount);
 	if (nDiff > (nAudSegCount - 1)) {
+		//VidDebug("Writing too fast", nDiff, 0);
 		return 0;
 	}
 

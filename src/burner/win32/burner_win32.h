@@ -38,7 +38,6 @@
 #include "d3dkmt_sync.h"
 
 INT32 DSCore_Init();
-INT32 DICore_Init();
 INT32 DDCore_Init();
 
 // Additions to the Cygwin/MinGW win32 headers
@@ -96,7 +95,7 @@ extern bool bDisableDebugConsole;                   // Disable debug console?
 extern HINSTANCE hAppInst;							// Application Instance
 extern HANDLE hMainThread;							// Handle to the main thread
 extern long int nMainThreadID;						// ID of the main thread
-extern int nAppThreadPriority;
+extern int nAppProcessPriority;
 extern int nAppShowCmd;
 
 extern HACCEL hAccel;
@@ -107,7 +106,6 @@ extern int nAppVirtualFps;							// virtual fps
 extern TCHAR szAppExeName[EXE_NAME_SIZE + 1];
 extern TCHAR szAppBurnVer[EXE_NAME_SIZE];
 
-extern int  nCmdOptUsed;
 extern bool bAlwaysProcessKeyboardInput;
 extern bool bAlwaysCreateSupportFolders;
 
@@ -236,11 +234,14 @@ extern int bRunFrame;
 extern int bRunPause;
 extern int bAltPause;
 extern int bAlwaysDrawFrames;
+extern int kNetVersion;
 extern int kNetGame;
 extern int kNetSpectator;
+extern int kNetLua;
 
+int RunIdleDelay(int frames);
 int RunIdle();
-int RunFrame(int bDraw, int bPause);
+int RunFrame(int bDraw, int bPause, int bInput);
 int RunMessageLoop();
 int RunReset();
 void ToggleLayer(unsigned char thisLayer);
@@ -432,7 +433,9 @@ int NetworkInitInput();
 int NetworkGetInputSize();
 int NetworkGetInput();
 
-// fba_quark.cpp
+// fbn_ggpo.cpp
+#define QUARKS_VERSION 3
+
 void QuarkInit(TCHAR *connect);
 void QuarkEnd();
 void QuarkTogglePerfMon();

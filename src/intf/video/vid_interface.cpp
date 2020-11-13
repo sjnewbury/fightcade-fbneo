@@ -123,6 +123,8 @@ INT32 bVidOverlay = 1;							// 1 = draw overlay
 INT32 bVidBigOverlay = 0;						// 1 = bigger overlay
 INT32 bVidUnrankedScores = 0;				// 1 = show scores in unranked
 INT32 bVidSaveOverlayFiles = 0;			// 1 = save overlay data to obs files
+INT32 bVidSaveChatHistory = 0;			// 1 = save chat history to file
+INT32 bVidMuteChat = 0;							// 1 = mute ingame chat
 INT32 nVidRunahead = 0;							// 0|1|2 = number of run ahead frames
 
 wchar_t HorScreen[32] = L"";

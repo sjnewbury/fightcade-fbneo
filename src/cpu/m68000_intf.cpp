@@ -2440,6 +2440,14 @@ INT32 SekScan(INT32 nAction)
 		SCAN_VAR(nSekRESETLine[i]);
 		SCAN_VAR(nSekHALT[i]);
 
+		extern int kNetVersion;
+		if (kNetVersion >= 3) {
+			if (nAction == (ACB_FULLSCANL | ACB_READ) || nAction == (ACB_FULLSCANL | ACB_WRITE)) {
+				SCAN_VAR(nSekAddressMask[i]);
+				SCAN_VAR(nSekAddressMaskActive);
+			}
+		}
+
     /*
     * Definitely need to be scanned
     */

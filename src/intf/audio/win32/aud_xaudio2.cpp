@@ -179,6 +179,9 @@ static int XAudio2Check()
 
 	if (vState.BuffersQueued < (unsigned int)(nAudSegCount - 1)) {
 		if (vState.BuffersQueued < 3) {
+			// buffers ran dry
+			//VidDebug("Close to dry Buffers", vState.BuffersQueued, 0);
+
 			// dsp update
 			if (nAudDSPModule[1] & 1) {
 				if (bRunPause)
@@ -188,7 +191,12 @@ static int XAudio2Check()
 			}
 
 			// copy & protect the audio data in own memory area while playing it
-			memcpy(&pAudioBuffers[nAudioBuffer * nAudAllocSegLen], nAudNextSound, nAudAllocSegLen);
+			if (kNetSpectator) {
+				memset(&pAudioBuffers[nAudioBuffer * nAudAllocSegLen], 0, nAudAllocSegLen);
+			}
+			else {
+				memcpy(&pAudioBuffers[nAudioBuffer * nAudAllocSegLen], nAudNextSound, nAudAllocSegLen);
+			}
 
 			sAudioBuffer.AudioBytes = nAudAllocSegLen;
 			sAudioBuffer.pAudioData = &pAudioBuffers[nAudioBuffer * nAudAllocSegLen];

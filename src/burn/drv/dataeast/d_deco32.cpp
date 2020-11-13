@@ -3524,6 +3524,14 @@ static INT32 DrvFrame()
 	{
 		memset (DrvInputs, 0xff, 3 * sizeof(INT16));
 
+		// @FC
+		extern int kNetGame;
+		extern int kNetSpectator;
+		if (kNetGame || kNetSpectator) {
+			DrvDips[1] = 0xfe;
+			DrvDips[4] = 0x04;
+		}
+
 		if (game_select == 1 || game_select == 2 || game_select == 3) {
 			DrvInputs[1] = (DrvInputs[1] & ~0x18) | (DrvDips[0] & 8);
 		}

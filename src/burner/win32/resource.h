@@ -245,6 +245,7 @@
 #define IDC_BUTTON_LUAEDIT              20370
 #define IDC_LUACONSOLE_CLEAR            20371
 #define IDC_LUACONSOLE_CHOOSEFONT       20372
+
 #define IDC_ADDYS                       20374
 #define IDC_C_ADD                       20375
 #define IDC_LESS_THAN                   20376
@@ -913,10 +914,15 @@
 #define MENU_BIG_OVERLAY						11711
 #define MENU_UNRANKED_SCORES				11712
 #define MENU_SAVE_OVERLAY_FILES			11713
+#define MENU_SAVE_CHAT_HISTORY			11714
+#define MENU_MUTE_CHAT							11715
 
 #define MENU_RUNAHEAD_DISABLED			11750
 #define MENU_RUNAHEAD_1F						11751
 #define MENU_RUNAHEAD_2F						11752
+
+#define ID_LUA_OPEN                 11812
+#define ID_LUA_CLOSE_ALL            11813
 
 #define MENU_AVISTART								11827
 #define MENU_AVISTOP								11828

@@ -55,6 +55,7 @@ static struct BurnInputInfo SMSInputList[] = {
 	{"P1 Button 1",		BIT_DIGITAL,	SMSJoy1 + 7,	"p1 fire 1"	},
 	{"P1 Button 2",		BIT_DIGITAL,	SMSJoy1 + 8,	"p1 fire 2"	},
 
+	{"P2 Start(GG)/Pause(SMS)",		BIT_DIGITAL,	SMSJoy2 + 1,	"p2 start"	},
 	{"P2 Up",		    BIT_DIGITAL,	SMSJoy2 + 3,	"p2 up"		},
 	{"P2 Down",		    BIT_DIGITAL,	SMSJoy2 + 4,	"p2 down"	},
 	{"P2 Left",		    BIT_DIGITAL,	SMSJoy2 + 5,	"p2 left"	},

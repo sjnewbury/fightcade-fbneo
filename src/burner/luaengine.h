@@ -57,4 +57,6 @@ struct lua_State* FBA_GetLuaState();
 void luasav_save(const char *filename);
 void luasav_load(const char *filename);
 
+INT_PTR CALLBACK DlgLuaScriptDialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
+
 #endif

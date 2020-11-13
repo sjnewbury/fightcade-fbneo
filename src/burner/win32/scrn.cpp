@@ -1,5 +1,6 @@
 // Screen Window
 #include "burner.h"
+#include "luaengine.h"
 #include <shlobj.h>
 
 #define		HORIZONTAL_ORIENTED_RES		0
@@ -700,10 +701,6 @@ int BurnerLoadDriver(TCHAR *szDriverName)
 			AudSoundPlay();			// Restart sound
 			bLoading = 0;
 			UpdatePreviousGameList();
-			if (bVidAutoSwitchFull) {
-				nVidFullscreen = 1;
-				POST_INITIALISE_MESSAGE;
-			}
 			break;
 		}
 	}
@@ -737,10 +734,6 @@ int StartFromReset(TCHAR *szDriverName)
 	AudSoundPlay();			// Restart sound
 	bLoading = 0;
 	UpdatePreviousGameList();
-	if (bVidAutoSwitchFull) {
-		nVidFullscreen = 1;
-		POST_INITIALISE_MESSAGE;
-	}
 	return 1;
 }
 
@@ -807,11 +800,6 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 				AudSoundPlay();					// Restart sound
 				bLoading = 0;
 				UpdatePreviousGameList();
-				if (bVidAutoSwitchFull) {
-					nVidFullscreen = 1;
-					POST_INITIALISE_MESSAGE;
-				}
-
 				POST_INITIALISE_MESSAGE;
 				break;
 			} else {
@@ -877,6 +865,22 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			}
 			break;
 		}
+
+		case ID_LUA_OPEN:
+			if (UseDialogs()) {
+				if (!LuaConsoleHWnd) {
+					InputSetCooperativeLevel(false, bAlwaysProcessKeyboardInput);
+					LuaConsoleHWnd = CreateDialog(hAppInst, MAKEINTRESOURCE(IDD_LUA), NULL, (DLGPROC) DlgLuaScriptDialog);
+				}
+				else
+					SetForegroundWindow(LuaConsoleHWnd);
+			}
+			break;
+		case ID_LUA_CLOSE_ALL:
+			if (LuaConsoleHWnd) {
+				PostMessage(LuaConsoleHWnd, WM_CLOSE, 0, 0);
+			}
+			break;
 
 		case MENU_STARTREPLAY:
 			if (UseDialogs()) {
@@ -2012,29 +2016,27 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 		case MENU_INPUT_AUTOFIRE_RATE_3: nAutoFireRate =  8; break;
 		case MENU_INPUT_AUTOFIRE_RATE_4: nAutoFireRate =  4; break;
 
-		case MENU_PRIORITY_REALTIME:
-			nAppThreadPriority = THREAD_PRIORITY_TIME_CRITICAL;
-			SetThreadPriority(GetCurrentThread(), nAppThreadPriority);
+		case MENU_PRIORITY_REALTIME: // bad idea, this will freeze the entire system.
 			break;
 		case MENU_PRIORITY_HIGH:
-			nAppThreadPriority = THREAD_PRIORITY_HIGHEST;
-			SetThreadPriority(GetCurrentThread(), nAppThreadPriority);
+			nAppProcessPriority = HIGH_PRIORITY_CLASS;
+			SetPriorityClass(GetCurrentProcess(), nAppProcessPriority);
 			break;
 		case MENU_PRIORITY_ABOVE_NORMAL:
-			nAppThreadPriority = THREAD_PRIORITY_ABOVE_NORMAL;
-			SetThreadPriority(GetCurrentThread(), nAppThreadPriority);
+			nAppProcessPriority = ABOVE_NORMAL_PRIORITY_CLASS;
+			SetPriorityClass(GetCurrentProcess(), nAppProcessPriority);
 			break;
 		case MENU_PRIORITY_NORMAL:
-			nAppThreadPriority = THREAD_PRIORITY_NORMAL;
-			SetThreadPriority(GetCurrentThread(), nAppThreadPriority);
+			nAppProcessPriority = NORMAL_PRIORITY_CLASS;
+			SetPriorityClass(GetCurrentProcess(), nAppProcessPriority);
 			break;
 		case MENU_PRIORITY_BELOW_NORMAL:
-			nAppThreadPriority = THREAD_PRIORITY_BELOW_NORMAL;
-			SetThreadPriority(GetCurrentThread(), nAppThreadPriority);
+			nAppProcessPriority = BELOW_NORMAL_PRIORITY_CLASS;
+			SetPriorityClass(GetCurrentProcess(), nAppProcessPriority);
 			break;
 		case MENU_PRIORITY_LOW:
-			nAppThreadPriority = THREAD_PRIORITY_LOWEST;
-			SetThreadPriority(GetCurrentThread(), nAppThreadPriority);
+			nAppProcessPriority = IDLE_PRIORITY_CLASS;
+			SetPriorityClass(GetCurrentProcess(), nAppProcessPriority);
 			break;
 
 		case MENU_CLRMAME_PRO_XML:
@@ -2373,6 +2375,14 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 
 		case MENU_SAVE_OVERLAY_FILES:
 			bVidSaveOverlayFiles = !bVidSaveOverlayFiles;
+			break;
+
+		case MENU_SAVE_CHAT_HISTORY:
+			bVidSaveChatHistory = !bVidSaveChatHistory;
+			break;
+
+		case MENU_MUTE_CHAT:
+			bVidMuteChat = !bVidMuteChat;
 			break;
 
 		case MENU_RUNAHEAD_DISABLED:

@@ -8,7 +8,8 @@
 
 //#define PRINT_DEBUG_INFO
 //#define TEST_OVERLAY
-#define TEST_VERSION					L"RC3 v13"
+//#define TEST_INPUTS
+#define TEST_VERSION					L"Beta 10/11/2020 RC1"
 
 #define MIN(x,y) ((x)<(y)?(x):(y))
 #define MAX(x,y) ((x)>(y)?(x):(y))
@@ -18,6 +19,7 @@
 #define INFO_FRAMES			      150
 #define WARNING_FRAMES				180
 #define CHAT_LINES			      7
+#define CHAT_HISTORY					1000
 #define CHAT_FRAMES			      200
 #define CHAT_FRAMES_EXT 	    350
 #define START_FRAMES          300
@@ -42,6 +44,7 @@ static IDirect3DDevice9Ex *pD3DDevice = 0;
 static CDynRender renderer;
 static CFont font;
 static RECT frame_dest;
+static bool debug_mode = false;
 static float frame_scale;
 static float frame_adjust;
 static float frame_width;
@@ -51,6 +54,33 @@ static int frame_time = 0;
 static int frame_warning = 0;
 static int frame_warning_sent = 0;
 static int frame_warning_count = 0;
+
+//------------------------------------------------------------------------------------------------------------------------------
+// test inputs
+//------------------------------------------------------------------------------------------------------------------------------
+#define INPUT_DISPLAY 60
+#define INPUT_BUTTONS 10
+struct TInput {
+	INT32 frame;
+	INT32 values;
+	int stage;
+};
+
+static TInput inputs_p1[2][INPUT_DISPLAY+1] = {};
+static TInput inputs_p2[2][INPUT_DISPLAY+1] = {};
+
+enum {
+	INPUT_UP,
+	INPUT_DOWN,
+	INPUT_LEFT,
+	INPUT_RIGHT,
+	INPUT_LP,
+	INPUT_MP,
+	INPUT_HP,
+	INPUT_LK,
+	INPUT_MK,
+	INPUT_HK,
+};
 
 #define FPX(x)	((float)(x) * (float)(frame_dest.right - frame_dest.left) + frame_dest.left * frame_ratio)
 #define FPY(x)	((float)(x) * (float)(frame_dest.right - frame_dest.left) + frame_dest.top * frame_ratio)
@@ -79,6 +109,35 @@ enum
 {
 	CMD_FPSWARNING = 1,
 };
+
+static bool CopyFileContents(const char *src, const char *dst)
+{
+	FILE * fs = NULL;
+	if (fopen_s(&fs, src, "rb") == 0 && fs != NULL)
+	{
+		FILE * fd = NULL;
+		if (fopen_s(&fd, dst, "wb") == 0 && fd != NULL)
+		{
+			fseek(fs, 0L, SEEK_END);
+			int size = (int)ftell(fs);
+			rewind(fs);
+
+			char buffer[4096];
+			while (size > 0)
+			{
+				fread (buffer, 1, MIN(4096, size), fs);
+				fwrite(buffer, 1, MIN(4096, size), fd);
+				size-= 4096;
+			}
+			fflush(fd);
+			fclose(fd);
+			fclose(fs);
+			return true;
+		}
+		fclose(fs);
+	}
+	return false;
+}
 
 //------------------------------------------------------------------------------------------------------------------------------
 // font helpers
@@ -109,6 +168,7 @@ struct Detector {
 	};
   int type = None;
 	int frames = 0;
+	bool raw = false;
 	char name[64] = {};
 	char area[64] = {};
 	unsigned int memory_ptr;
@@ -134,6 +194,7 @@ void Detector::Load(const char *_name, const char *_area, unsigned int _ptr, uns
 {
 	strcpy(name, _name);
 	type = _type;
+	raw = !strcmp(_area, "raw");
 	// memory based
 	strcpy(area, _area);
 	memory_ptr = _ptr;
@@ -145,21 +206,63 @@ void Detector::Load(const char *_name, const char *_area, unsigned int _ptr, uns
 
 void Detector::Update(const BurnArea *ba, bool start_detected)
 {
-	if (!strcmp(ba->szName, area)) {
+	if (ba) {
+		if (!strcmp(ba->szName, area)) {
+			// detection process
+			memory_current = 0;
+			switch (memory_bits) {
+				// 32 bits
+				case 0xffffffff:
+					memory_current = ((unsigned int *)ba->Data)[memory_ptr>>2];
+					break;
+				// 16 bits
+				case 0xffff:
+					memory_current = ((unsigned short *)ba->Data)[memory_ptr>>1];
+					break;
+				// 8 bits or less
+				default:
+					memory_current = ((unsigned char *)ba->Data)[memory_ptr];
+					break;
+			}
+			if (start_detected) {
+				memory_start = memory_current;
+			}
+
+			bool found = false;
+			switch (type) {
+				case MemEq:
+					// Equal to memory value
+					found = (memory_current == memory_value);
+					break;
+				case MemGts:
+					// Greater than value at start
+					if (!start_detected) {
+						found = (memory_current > memory_start);
+					}
+					break;
+			}
+			if (found) {
+				frames++;
+			}
+			else {
+				frames = 0;
+			}
+		}
+	} else if (raw) {
 		// detection process
 		memory_current = 0;
 		switch (memory_bits) {
 			// 32 bits
 			case 0xffffffff:
-				memory_current = ((unsigned int *)ba->Data)[memory_ptr>>2];
+				memory_current = ReadValueAtHardwareAddress(memory_ptr, 4, 0);
 				break;
 			// 16 bits
 			case 0xffff:
-				memory_current = ((unsigned short *)ba->Data)[memory_ptr>>1];
+				memory_current = ReadValueAtHardwareAddress(memory_ptr, 2, 0);
 				break;
 			// 8 bits or less
 			default:
-				memory_current = ((unsigned char *)ba->Data)[memory_ptr];
+				memory_current = ReadValueAtHardwareAddress(memory_ptr, 1, 0);
 				break;
 		}
 		if (start_detected) {
@@ -207,7 +310,7 @@ struct GameDetector {
 	int frame_start = 0;
 	int frame_end = 0;
 	bool ranked = false;
-	bool debug = false;
+	bool raw_detector = false;
 	bool run_detector = false;
 	int score1 = 0;
 	int score2 = 0;
@@ -221,21 +324,20 @@ struct GameDetector {
 	std::vector<Detector> dPlayer2;
 	Detector dChar1;
 	Detector dChar2;
-	void Load(const char *game, bool is_debug);
+	void Load(const char *game);
 	void Save();
 	void Update();
+	void UpdateDetectors(struct BurnArea* pba, bool detect_start);
 	void Render();
 };
 
-void GameDetector::Load(const char *game, bool is_debug)
+void GameDetector::Load(const char *game)
 {
-	debug = is_debug;
-
 	MemoryBuffer buffer;
 	char file[MAX_PATH];
 	sprintf(file, "detector\\%s.inf", game);
 	bool loaded = false;
-	if (LoadMemoryBufferDetector(buffer, file, debug)) {
+	if (LoadMemoryBufferDetector(buffer, file, debug_mode)) {
 		const char *ini = buffer.data;
 		const char *end = buffer.data + buffer.len;
 		while (ini > 0 && ini < end) {
@@ -259,6 +361,7 @@ void GameDetector::Load(const char *game, bool is_debug)
 				if (!strcmp(target, "start")) {
 					dStart.push_back(Detector());
 					dStart.back().Load(name, area, ptr, type, value, bits);
+					raw_detector = !strcmp(area, "raw");
 				}
 				else if (!strcmp(target, "player1")) {
 					dPlayer1.push_back(Detector());
@@ -274,12 +377,12 @@ void GameDetector::Load(const char *game, bool is_debug)
 				else if (!strcmp(target, "char2")) {
 					dChar2.Load(name, area, ptr, type, value, bits);
 				}
+				loaded = true;
 			}
 			else if (sscanf(line, "char=%d,%[^,]", &value, target) == 2) {
 				// character names
 				wsprintf(characters[value], _T("%s"), ANSIToTCHAR(target, NULL, NULL));
 			}
-			loaded = true;
 		}
 	}
 	// something found, set state
@@ -301,7 +404,7 @@ int __cdecl GetMemoryAcbDetectorUpdate(struct BurnArea* pba);
 void GameDetector::Update()
 {
 	// not loaded
-	if (state == ST_NONE && debug) {
+	if (state == ST_NONE && debug_mode) {
 		return;
 	}
 
@@ -309,17 +412,23 @@ void GameDetector::Update()
 	winner = 0;
 
 	// memory based
-	BurnAcb = GetMemoryAcbDetectorUpdate;
-	BurnAreaScan(ACB_MEMORY_RAM | ACB_READ, NULL);
+	if (raw_detector) {
+		UpdateDetectors(NULL, true);
+	} else {
+		BurnAcb = GetMemoryAcbDetectorUpdate;
+		BurnAreaScan(ACB_MEMORY_RAM | ACB_READ, NULL);
+	}
 
 	// If we detect F3 on P1, disable detector state (some games write values on P1/P2 winners on reset)
 	struct BurnInputInfo bii;
 	memset(&bii, 0, sizeof(bii));
-	for (int i = 0; i < nGameInpCount; i++) {
+	for (unsigned int i = 0; i < nGameInpCount; i++) {
 		BurnDrvGetInputInfo(&bii, i);
 		struct GameInp *pgi = &GameInp[i];
-		if (pgi->nInput == GIT_SWITCH && pgi->Input.nVal && !strcmp(bii.szInfo, "reset")) {
-			state = ST_WAIT_START;
+		if (pgi->nInput == GIT_SWITCH && pgi->Input.pVal && !strcmp(bii.szInfo, "reset")) {
+			if (*pgi->Input.pVal) {
+				state = ST_WAIT_START;
+			}
 		}
 	}
 
@@ -337,11 +446,11 @@ void GameDetector::Update()
 			if (start_detected) {
 				DetectorSetState(ST_WAIT_WINNER, score1, score2);
 				if (bVidSaveOverlayFiles) {
-					VidOverlaySaveFiles(false, false, true); // save only characters (if any)
+					VidOverlaySaveFiles(false, false, true); // to save characters (if there's any detected)
 				}
 			}
 			break;
-			// playing
+		// playing
 		case ST_WAIT_WINNER:
 			if ((frame_time - frame_start) > START_FRAMES) {
 				// detect player1
@@ -379,15 +488,36 @@ void GameDetector::Update()
 	}
 }
 
+void GameDetector::UpdateDetectors(struct BurnArea* pba, bool detect_start)
+{
+	// update detectors
+	bool start_detected = false;
+	for (size_t i = 0; i < dStart.size(); i++) {
+		dStart[i].Update(pba, false);
+		start_detected |= dStart[i].Detected() && detect_start;
+	}
+	for (size_t i = 0; i < dPlayer1.size(); i++) {
+		dPlayer1[i].Update(pba, start_detected);
+	}
+	for (size_t i = 0; i < dPlayer2.size(); i++) {
+		dPlayer2[i].Update(pba, start_detected);
+	}
+	if (dChar1.IsOk()) {
+		dChar1.Update(pba, start_detected);
+	}
+	if (dChar2.IsOk()) {
+		dChar2.Update(pba, start_detected);
+	}
+}
+
 void GameDetector::Render()
 {
 	// not loaded
-	if (state == ST_NONE && debug) {
-		fontWrite(_T("detector.inf not found for this game"), frame_width - 0.005f, frame_height - 0.003f, 0xFFFFFFFF, 1.f, FNT_SMA, FONT_ALIGN_RIGHT);
+	if (state == ST_NONE) {
 		return;
 	}
 
-	bool draw_detector_info = debug;
+	bool draw_detector_info = debug_mode;
 
 	// run state
 	switch (state)
@@ -419,37 +549,48 @@ void GameDetector::Render()
 		// start
 		for (size_t i = 0; i < dStart.size(); i++) {
 			bool detected = dStart[i].Detected();
-			swprintf(buffer, _T("%.32hs (%d / %d)"), dStart[i].name, dStart[i].memory_start, dStart[i].memory_current);
-			fontWrite(buffer, frame_width - 0.005f, frame_height - 0.003f - FNT_MED * FNT_SEP * (y++), detected ? 0xFFA0FF00 : 0xFFAAAAAA, 1.f, FNT_MED, FONT_ALIGN_RIGHT);
+			swprintf(buffer, 128, _T("%.32hs (%d / %d)"), dStart[i].name, dStart[i].memory_start, dStart[i].memory_current);
+			fontWrite(buffer, frame_width - 0.005f, frame_height - 0.003f - FNT_MED * FNT_SEP * (y++), detected ? 0xFFA0FF00 : 0xFFBBBBBB, 1.f, FNT_MED, FONT_ALIGN_RIGHT);
 		}
 		// p1
 		for (size_t i = 0; i < dPlayer1.size(); i++) {
 			bool detected = dPlayer1[i].Detected();
-			swprintf(buffer, _T("%.32hs (%d / %d)"), dPlayer1[i].name, dPlayer1[i].memory_start, dPlayer1[i].memory_current);
-			fontWrite(buffer, frame_width - 0.005f, frame_height - 0.003f - FNT_MED * FNT_SEP * (y++), detected ? 0xFFA0FF00 : 0xFFAAAAAA, 1.f, FNT_MED, FONT_ALIGN_RIGHT);
+			swprintf(buffer, 128, _T("%.32hs (%d / %d)"), dPlayer1[i].name, dPlayer1[i].memory_start, dPlayer1[i].memory_current);
+			fontWrite(buffer, frame_width - 0.005f, frame_height - 0.003f - FNT_MED * FNT_SEP * (y++), detected ? 0xFFA0FF00 : 0xFFBBBBBB, 1.f, FNT_MED, FONT_ALIGN_RIGHT);
 		}
 		// p2
 		for (size_t i = 0; i < dPlayer2.size(); i++) {
 			bool detected = dPlayer2[i].Detected();
-			swprintf(buffer, _T("%.32hs (%d / %d)"), dPlayer2[i].name, dPlayer2[i].memory_start, dPlayer2[i].memory_current);
-			fontWrite(buffer, frame_width - 0.005f, frame_height - 0.003f - FNT_MED * FNT_SEP * (y++), detected ? 0xFFA0FF00 : 0xFFAAAAAA, 1.f, FNT_MED, FONT_ALIGN_RIGHT);
+			swprintf(buffer, 128, _T("%.32hs (%d / %d)"), dPlayer2[i].name, dPlayer2[i].memory_start, dPlayer2[i].memory_current);
+			fontWrite(buffer, frame_width - 0.005f, frame_height - 0.003f - FNT_MED * FNT_SEP * (y++), detected ? 0xFFA0FF00 : 0xFFBBBBBB, 1.f, FNT_MED, FONT_ALIGN_RIGHT);
+		}
+		// char1
+		if (dChar1.IsOk()) {
+			swprintf(buffer, 128, _T("%.32hs (%d / %s)"), dChar1.name, dChar1.memory_current, dChar1.memory_current < MAX_CHARACTERS ? characters[dChar1.memory_current] : L"");
+			fontWrite(buffer, frame_width - 0.005f, frame_height - 0.003f - FNT_MED * FNT_SEP * (y++), 0xFFBBBBBB, 1.f, FNT_MED, FONT_ALIGN_RIGHT);
+		}
+		// char2
+		if (dChar2.IsOk()) {
+			swprintf(buffer, 128, _T("%.32hs (%d / %s)"), dChar2.name, dChar2.memory_current, dChar2.memory_current < MAX_CHARACTERS ? characters[dChar2.memory_current] : L"");
+			fontWrite(buffer, frame_width - 0.005f, frame_height - 0.003f - FNT_MED * FNT_SEP * (y++), 0xFFBBBBBB, 1.f, FNT_MED, FONT_ALIGN_RIGHT);
 		}
 	}
 }
 
 static GameDetector gameDetector;
 
-int __cdecl GetMemoryAcbDetectorUpdate(struct BurnArea* pba)
+static int __cdecl GetMemoryAcbDetectorUpdate(struct BurnArea* pba)
 {
-	int gameDetector2p = 1;
+	bool gameDetector2p = true;
 
 	// Stage selector for SSF2XJR1
 	if (!strcmp(BurnDrvGetTextA(DRV_NAME), "ssf2xjr1")) {
 		if (!strcmp("CpsRamFF", pba->szName)) {
-			// 0x82F7 == 1 -> select stage
-			if (((unsigned char *)pba->Data)[0x82F7] == 1) {
+			// 0x82F6 -> select stage
+			if (ReadValueAtHardwareAddress(0xFF82F6, 1, 0)) {
 				struct BurnInputInfo bii;
 				memset(&bii, 0, sizeof(bii));
+				// Next stage on the array of used stages
 				int addr = 0xE18A;
 				while (((unsigned char *)pba->Data)[addr] == 0xFF) {
 					addr++;
@@ -477,35 +618,70 @@ int __cdecl GetMemoryAcbDetectorUpdate(struct BurnArea* pba)
 			}
 			// do not run detector if not in 2p mode
 			if (((unsigned char *)pba->Data)[0x87DC] == 0 || ((unsigned char *)pba->Data)[0x8BDC] == 0) {
-				gameDetector2p = 0;
+				gameDetector2p = false;
 			}
 		}
 	}
 
-	// update detectors
-	bool start_detected = false;
-	for (size_t i = 0; i < gameDetector.dStart.size(); i++) {
-		gameDetector.dStart[i].Update(pba, false);
-		start_detected |= gameDetector.dStart[i].Detected() && gameDetector2p;
+	// Stage selector for SFA3, introduced in version 3
+	if (kNetVersion >= 3) {
+		if (!strcmp(BurnDrvGetTextA(DRV_NAME), "sfa3")) {
+			const char stages[] = { 0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,34,44,48,50,52,54,56,58 };
+			struct BurnInputInfo bii;
+			memset(&bii, 0, sizeof(bii));
+			// Check p1 cursor is enabled
+			if (ReadValueAtHardwareAddress(0xFF855B, 2, 0) == 0x400) {
+				// P1 Coin
+				BurnDrvGetInputInfo(&bii, 0);
+				if (bii.pVal && *bii.pVal) {
+					WriteValueAtHardwareAddress(0xFFFFD1, stages[ReadValueAtHardwareAddress(0xFF8502, 1, 0)] + 1, 1, 0);
+				}
+			}
+			// Check p2 cursor is enabled
+			if (ReadValueAtHardwareAddress(0xFF895B, 2, 0) == 0x400 && ReadValueAtHardwareAddress(0xFF855B, 2, 0) != 0x400) {
+				// P1 Coin
+				BurnDrvGetInputInfo(&bii, 12);
+				if (bii.pVal && *bii.pVal) {
+					WriteValueAtHardwareAddress(0xFFFFD1, stages[ReadValueAtHardwareAddress(0xFF8902, 1, 0)] + 1, 1, 0);
+				}
+			}
+
+			// write position
+			int value = ReadValueAtHardwareAddress(0xFF8101 + 7*2, 2, 0);
+			int stage = ReadValueAtHardwareAddress(0xFFFFD1, 1, 0) - 1;
+			int timer = ReadValueAtHardwareAddress(0xFF8109, 2, 0);
+			if (timer >= 25374 && timer <= 25400) {
+				//WriteValueAtHardwareAddress(0x618002, 0xFF09, 2, 0);
+			}
+			if (value == 0x01 && stage >= 0) {
+				// write stage
+				WriteValueAtHardwareAddress(0xFF8101, stage, 1, 0);
+				// reset stage
+				WriteValueAtHardwareAddress(0xFFFFD1, 0, 1, 0);
+			}
+		}
 	}
-	for (size_t i = 0; i < gameDetector.dPlayer1.size(); i++) {
-		gameDetector.dPlayer1[i].Update(pba, start_detected);
-	}
-	for (size_t i = 0; i < gameDetector.dPlayer2.size(); i++) {
-		gameDetector.dPlayer2[i].Update(pba, start_detected);
-	}
-	if (gameDetector.dChar1.IsOk()) {
-		gameDetector.dChar1.Update(pba, start_detected);
-	}
-	if (gameDetector.dChar2.IsOk()) {
-		gameDetector.dChar2.Update(pba, start_detected);
-	}
+
+	gameDetector.UpdateDetectors(pba, gameDetector2p);
+
 	return 0;
 }
 
-void DetectorLoad(const char *game, bool debug)
+void DetectorLoad(const char *game, bool debug, int seed)
 {
-	gameDetector.Load(game, debug);
+	debug_mode = debug;
+ 	gameDetector.Load(game);
+
+	// initial state
+	if (kNetVersion >= 3 && seed) {
+		if (!strcmp(BurnDrvGetTextA(DRV_NAME), "kof98")) {
+			srand(seed);
+			for (int i = 0x001000A1; i <= 0x001000C2; i++) {
+				int value = rand() % 3;
+				WriteValueAtHardwareAddress(i, value, 1, 0);
+			}
+		}
+	}
 }
 
 void DetectorUpdate()
@@ -539,6 +715,7 @@ void DetectorUpdate()
 		// in ranked games, if there is a winner send to server and terminate game if it was a FTx
 		if (game_ranked && !game_spectator && gameDetector.winner != 0) {
 			char temp[32];
+			// send ReceiveWinner message
 			sprintf(temp, "%d,%d,%d,%d,%d", gameDetector.winner, gameDetector.score1, gameDetector.score2, char1, char2);
 			QuarkSendChatCmd(temp, 'W');
 			if (gameDetector.frame_end) {
@@ -552,6 +729,9 @@ void DetectorUpdate()
 		gameDetector.frame_end = INT_MAX;
 		QuarkEnd();
 	}
+
+	// save info if needed
+	VidOverlaySaveInfo();
 }
 
 
@@ -582,7 +762,7 @@ void DetectorGetState(int &state, int &score1, int &score2, int &start1, int &st
 //------------------------------------------------------------------------------------------------------------------------------
 struct Text
 {
-	wchar_t str[256] = {};
+	wchar_t str[300] = {};
 	unsigned int col = 0;
 	Text();
 	void Set(const wchar_t *text);
@@ -638,7 +818,7 @@ struct Sprite
 	void Init(const wchar_t *file, CDynRender* render, unsigned color = 0xffffffff, unsigned int w = 0, unsigned int h = 0);
 	void End();
 	void Render(float x, float y, float scale, unsigned int anchor = TOPLEFT);
-	void Render(float x, float y, float w, float h, float u, float v);
+	void Render(float x, float y, float w, float h, float u0, float v0, float u1, float v1);
 };
 
 void Sprite::Init(const wchar_t *file, CDynRender* render, unsigned int color, unsigned int w, unsigned int h)
@@ -663,8 +843,8 @@ void Sprite::Render(float x, float y, float scale, unsigned int anchor)
 
 	x = FPX(x);
 	y = FPY(y);
-	float w = FS(width*scale);
-	float h = FS(height*scale);
+	float w = FS(width * scale);
+	float h = FS(height * scale);
 	float u0 = 0.5f / w;
 	float u1 = 1 - 0.5f / w;
 	float v0 = 0.5f / h;
@@ -696,7 +876,7 @@ void Sprite::Render(float x, float y, float scale, unsigned int anchor)
 	renderer->VtxPos(x, y + h, 0);
 }
 
-void Sprite::Render(float x, float y, float w, float h, float u, float v)
+void Sprite::Render(float x, float y, float w, float h, float u0, float v0, float u1, float v1)
 {
 	if (!texture) {
 		return;
@@ -709,13 +889,13 @@ void Sprite::Render(float x, float y, float w, float h, float u, float v)
 
 	// add sprite quad
 	renderer->VtxColor(col);
-	renderer->VtxTexCoord(0, 0);
+	renderer->VtxTexCoord(u0, v0);
 	renderer->VtxPos(x, y, 0);
-	renderer->VtxTexCoord(u, 0);
+	renderer->VtxTexCoord(u1, v0);
 	renderer->VtxPos(x + w, y, 0);
-	renderer->VtxTexCoord(u, v);
+	renderer->VtxTexCoord(u1, v1);
 	renderer->VtxPos(x + w, y + h, 0);
-	renderer->VtxTexCoord(0, v);
+	renderer->VtxTexCoord(u0, v1);
 	renderer->VtxPos(x, y + h, 0);
 }
 
@@ -737,6 +917,7 @@ struct PlayerInfo {
 //------------------------------------------------------------------------------------------------------------------------------
 static PlayerInfo player1;
 static PlayerInfo player2;
+static Sprite inputs_spr;
 static Sprite scanlines_spr;
 static Sprite background_spr;
 static Sprite spectators_spr;
@@ -750,6 +931,15 @@ static Text stats;
 static Text info;
 static Text volume;
 static Text warning;
+static Text chat_history[CHAT_HISTORY];
+static int lines_history = 0;
+
+void InputRender(float &x, float &y, int idx)
+{
+	static float w = 3.f;
+	static float h = 3.f;
+	inputs_spr.Render(x, y, FS(w), FS(h), 0.f * 8.f / 16.f, idx * 8.f / 120.f, 8.f / 16.f, (idx + 1) * 8.f / 120.f);
+}
 
 //------------------------------------------------------------------------------------------------------------------------------
 // overlay
@@ -759,6 +949,7 @@ void VidOverlayInit(IDirect3DDevice9Ex *device)
 	pD3DDevice = device;
 	renderer.Init(pD3DDevice);
 	font.Init("ui/font.fnt", NULL, &renderer);
+	inputs_spr.Init(_T("ui/inputs.png"), &renderer, 0xFFFFFFFF);
 	scanlines_spr.Init(_T("ui/scanlines.png"), &renderer, 0xFF000000);
 	background_spr.Init(_T("ui/background.png"), &renderer, 0xFFFFFFFF);
 	spectators_spr.Init(_T("ui/spectators.png"), &renderer);
@@ -767,6 +958,7 @@ void VidOverlayInit(IDirect3DDevice9Ex *device)
 		wsprintf(temp, _T("ui/rank%d.png"), i);
 		badges_spr[i].Init(temp, &renderer);
 	}
+	DeleteFileA("fightcade/started.inf");
 
 #ifdef TEST_OVERLAY
 	VidOverlaySetGameInfo(_T("Kinikkuman#2,10"), _T("shine#3,8"), false, 10, 0);
@@ -789,6 +981,7 @@ void VidOverlayEnd()
 {
 	renderer.End();
 	font.End();
+	inputs_spr.End();
 	scanlines_spr.End();
 	background_spr.End();
 	spectators_spr.End();
@@ -796,7 +989,8 @@ void VidOverlayEnd()
 		badges_spr[i].End();
 	}
 	pD3DDevice = NULL;
-	VidOverlaySaveInfo(false);
+	// save chat history
+	VidOverlaySaveChatHistory();
 }
 
 void VidOverlaySetSize(const RECT &dest, float size)
@@ -822,6 +1016,15 @@ void VidOverlayRender(const RECT &dest, int gameWidth, int gameHeight, int scan_
 #ifdef TEST_OVERLAY
 	VidOverlaySetChatInput(_T("testing chat input with a long sentence..."));
 #endif
+
+	// save to chat history
+	if (bVidSaveChatHistory && kNetGame && !kNetSpectator) {
+		static bool enabled = false;
+		if (!enabled) {
+			enabled = true;
+			VidOverlayAddChatLine(_T("System"), _T("Chat history will be saved to fightcade/chat_history.txt"));
+		}
+	}
 
 	VidOverlaySetSize(dest, 260.f);
 
@@ -855,7 +1058,7 @@ void VidOverlayRender(const RECT &dest, int gameWidth, int gameHeight, int scan_
 	// scanlines
 	if (scan_intensity > 0) {
 		scanlines_spr.col = scan_intensity << 24;
-		scanlines_spr.Render(0.f, 0.f, (float)frame_dest.right, (float)(frame_dest.bottom - frame_dest.top), (float)gameWidth, (float)gameHeight);
+		scanlines_spr.Render(0.f, 0.f, (float)frame_dest.right, (float)(frame_dest.bottom - frame_dest.top), 0.f, 0.f, (float)gameWidth, (float)gameHeight);
 	}
 
 	renderer.Flush();
@@ -867,6 +1070,9 @@ void VidOverlayRender(const RECT &dest, int gameWidth, int gameHeight, int scan_
 
 #ifdef TEST_VERSION
 	fontWrite(TEST_VERSION, 0.005f, 0.005f, 0xffffffff, 1.f, FNT_MED, FONT_ALIGN_LEFT);
+	wchar_t buf[128];
+	wsprintf(buf, _T("%d"), nFramesEmulated);
+	fontWrite(buf, 0.005f, 0.005f + FNT_MED * 0.8f * FNT_SEP, 0xffffffff, 1.f, FNT_MED, FONT_ALIGN_LEFT);
 #endif
 
 	// system message
@@ -914,13 +1120,12 @@ void VidOverlayRender(const RECT &dest, int gameWidth, int gameHeight, int scan_
 			// VS / FT
 			wchar_t vs[16] = _T("VS");
 			if (game_ranked > 1) {
-				swprintf(vs, _T("FT%d"), game_ranked);
+				swprintf(vs, 16, _T("FT%d"), game_ranked);
 				fontWrite(vs, x, yn, 0xFFFFB200, 1.f, FNT_MED, FONT_ALIGN_CENTER);
 			}
 			else {
 				fontWrite(vs, x, yn, 0xFF808080, 1.f, FNT_MED, FONT_ALIGN_CENTER);
 			}
-			
 
 			// matchinfo
 			if (player1.name.str[0]) {
@@ -986,6 +1191,43 @@ void VidOverlayRender(const RECT &dest, int gameWidth, int gameHeight, int scan_
 		show_chat = false;
 	}
 
+#ifdef TEST_INPUTS
+	// inputs P1
+	for (int j = 0; j < 2; j++) {
+		for (int i = 0; i < INPUT_DISPLAY; i++) {
+			static float sep = 0.01f;
+			static float size = 1.f;
+			static float fy = 0.f;
+			static float fx = 0.15f;
+			float x = 0.05f + j * fx;
+			float y = 0.05f + i * sep;
+			INT32 inputs = inputs_p1[j][i].values;
+			wchar_t buf[128];
+			wsprintf(buf, _T("%d"), inputs_p1[j][i].frame);
+			INT32 color;
+			switch (inputs_p1[j][i].stage) {
+				case 0: color = 0xFFFFFFFF; break;
+				case 1: color = 0xFFFF9090; break;
+				case 2: color = 0xFF9090FF; break;
+				case 3: color = 0xFF90FF90; inputs = 0; break;
+				case 4: color = 0xFFFF90FF; break;
+			}
+			fontWrite(buf, x, y + fy, color, 1.f, FNT_SMA * size, FONT_ALIGN_CENTER);
+			x+= sep*2.5f;
+			if (inputs & (1 << INPUT_LEFT)) { InputRender(x, y, 0); x+= sep; }
+			if (inputs & (1 << INPUT_RIGHT)) { InputRender(x, y, 1); x+= sep; }
+			if (inputs & (1 << INPUT_UP)) { InputRender(x, y, 2); x+= sep; }
+			if (inputs & (1 << INPUT_DOWN)) { InputRender(x, y, 3); x+= sep; }
+			if (inputs & (1 << INPUT_LP)) { InputRender(x, y, 8); x+= sep; }
+			if (inputs & (1 << INPUT_MP)) { InputRender(x, y, 9); x+= sep; }
+			if (inputs & (1 << INPUT_HP)) { InputRender(x, y, 10); x+= sep; }
+			if (inputs & (1 << INPUT_LK)) { InputRender(x, y, 11); x+= sep; }
+			if (inputs & (1 << INPUT_MK)) { InputRender(x, y, 12); x+= sep; }
+			if (inputs & (1 << INPUT_HK)) { InputRender(x, y, 13); x+= sep; }
+		}
+	}
+#endif
+
 	gameDetector.Render();
 
 	renderer.EndRender();
@@ -1015,7 +1257,7 @@ void VidOverlaySetGameInfo(const wchar_t *name1, const wchar_t *name2, int spect
 		}
 		int score1;
 		swscanf(&name1[pos1], _T("#%d,%d,%s"), &player1.rank, &score1, &player1.country.str);
-		swprintf(player1.name.str, _T("%.*s"), pos1, name1);
+		swprintf(player1.name.str, 256, _T("%.*s"), pos1, name1);
 	}
 	// player2#rank,score,country
 	if (name2) {
@@ -1028,7 +1270,7 @@ void VidOverlaySetGameInfo(const wchar_t *name1, const wchar_t *name2, int spect
 		}
 		int score2;
 		swscanf(&name2[pos2], _T("#%d,%d,%s"), &player2.rank, &score2, &player2.country.str);
-		swprintf(player2.name.str, _T("%.*s"), pos2, name2);
+		swprintf(player2.name.str, 256, _T("%.*s"), pos2, name2);
 	}
 
 	// update scores
@@ -1068,10 +1310,10 @@ void VidOverlaySetStats(double fps, int ping, int delay)
 {
 	wchar_t buf[64];
 	if (game_spectator || ping == 0) {
-		swprintf(buf, _T("%2.2ffps"), fps);
+		swprintf(buf, 64, _T("%2.2ffps"), fps);
 	}
 	else {
-		swprintf(buf, _T("%2.2ffps | %dms (%d-%d)"), fps, ping, delay, nVidRunahead, frame_warning);
+		swprintf(buf, 64, _T("%2.2ffps | %dms (%d-%d)"), fps, ping, delay, nVidRunahead);
 	}
 
 	stats.Set(buf);
@@ -1109,7 +1351,7 @@ void VidOverlayShowStats(bool show)
 void VidOverlayShowVolume(int vol)
 {
 	wchar_t buffer[32];
-	swprintf(buffer, _T("VOL %d%%"), vol / 100);
+	swprintf(buffer, 32, _T("VOL %d%%"), vol / 100);
 	volume.Set(buffer);
 	volume_time = frame_time + INFO_FRAMES;
 }
@@ -1125,6 +1367,10 @@ void VidOverlaySetChatInput(const wchar_t *text)
 
 void VidOverlayAddChatLine(const wchar_t *name, const wchar_t *text)
 {
+	if (bVidMuteChat) {
+		return;
+	}
+
 	if (!wcscmp(name, _T("Command"))) {
 		int cmd;
 		int idx;
@@ -1155,22 +1401,26 @@ void VidOverlayAddChatLine(const wchar_t *name, const wchar_t *text)
 		chat_names[i - 1].Copy(chat_names[i - 2]);
 		chat_lines[i - 1].Copy(chat_lines[i - 2]);
 	}
-	wchar_t temp[128];
+	wchar_t user[128];
 	if (!wcscmp(name, player1.name.str)) {
-		swprintf(temp, _T("%s"), name);
+		swprintf(user, 128, _T("%s"), name);
 		chat_names[0].col = (game_player == 0) ? 0xFF00B2FF : 0xFFFFB200;
 	}
 	else if (!wcscmp(name, player2.name.str)) {
-		swprintf(temp, _T("%s"), name);
+		swprintf(user, 128, _T("%s"), name);
 		chat_names[0].col = (game_player == 1) ? 0xFF00B2FF : 0xFFFFB200;
 	}
 	else {
-		swprintf(temp, _T("%s"), name);
+		swprintf(user, 128, _T("%s"), name);
 		chat_names[0].col = 0xFFFFFFFF - 0x00B2FF;
 	}
-	chat_names[0].Set(temp);
+	chat_names[0].Set(user);
 	chat_lines[0].Set(text);
 	chat_time = frame_time + CHAT_FRAMES_EXT;
+
+	// chat history
+	swprintf(chat_history[lines_history].str, 300, _T("%s: %s"), user, text);
+	lines_history++;
 }
 
 void VidOverlaySaveFile(const char *file, const wchar_t *text)
@@ -1185,11 +1435,10 @@ void VidOverlaySaveFile(const char *file, const wchar_t *text)
 void VidOverlaySaveFiles(bool save_info, bool save_scores, bool save_characters)
 {
 	if (save_info) {
-		wchar_t buf[64];
 		wchar_t vs[16] = _T("VS");
 		wchar_t *ranks[] = { _T("?"), _T("E"), _T("D"), _T("C"), _T("B"), _T("A"), _T("S") };
 		if (game_ranked > 1) {
-			swprintf(vs, _T("FT%d"), game_ranked);
+			swprintf(vs, 256, _T("FT%d"), game_ranked);
 		}
 		VidOverlaySaveFile("fightcade/vs.txt", vs);
 		VidOverlaySaveFile("fightcade/p1name.txt", player1.name.str);
@@ -1198,34 +1447,100 @@ void VidOverlaySaveFiles(bool save_info, bool save_scores, bool save_characters)
 		VidOverlaySaveFile("fightcade/p2rank.txt", ranks[player2.rank]);
 		VidOverlaySaveFile("fightcade/p1country.txt", player1.country.str);
 		VidOverlaySaveFile("fightcade/p2country.txt", player2.country.str);
-		swprintf(buf, _T("ui/flags/%s.png"), player1.country.str);
-		CopyFileW(buf, _T("fightcade/p1country.png"), FALSE);
-		swprintf(buf, _T("ui/flags/%s.png"), player2.country.str);
-		CopyFileW(buf, _T("fightcade/p2country.png"), FALSE);
-		VidOverlaySaveFile("fightcade/test.txt", buf);
+
+		char buf[64];
+		sprintf(buf, "ui/flags/%s.png", TCHARToANSI(player1.country.str, NULL, NULL));
+		DeleteFile(_T("fightcade/p1country.png"));
+		CopyFileContents(buf, "fightcade/p1country.png");
+		sprintf(buf, "ui/flags/%s.png", TCHARToANSI(player2.country.str, NULL, NULL));
+		DeleteFile(_T("fightcade/p2country.png"));
+		CopyFileContents(buf, "fightcade/p2country.png");
 	}
 	if (save_scores) {
 		VidOverlaySaveFile("fightcade/p1score.txt", player1.score.str);
 		VidOverlaySaveFile("fightcade/p2score.txt", player2.score.str);
 	}
 	if (save_characters) {
-		if (wcslen(gameDetector.char1) > 0) VidOverlaySaveFile("fightcade/p1character.txt", gameDetector.char1);
-		if (wcslen(gameDetector.char2) > 0) VidOverlaySaveFile("fightcade/p2character.txt", gameDetector.char2);
+		if (wcslen(gameDetector.char1) > 0) {
+			VidOverlaySaveFile("fightcade/p1character.txt", gameDetector.char1);
+		}
+		if (wcslen(gameDetector.char2) > 0) {
+			VidOverlaySaveFile("fightcade/p2character.txt", gameDetector.char2);
+		}
 	}
 }
 
-void VidOverlaySaveInfo(bool start)
+void VidOverlaySaveInfo()
 {
 	if (bVidSaveOverlayFiles) {
 		static bool started = false;
-		if (start) {
-			if (!started) {
-				started = true;
-				VidOverlaySaveFile("fightcade/started.inf", _T("1"));
-			}
-		}
-		else {
-			DeleteFileA("fightcade/started.inf");
+		if (!started) {
+			started = true;
+			VidOverlaySaveFile("fightcade/started.inf", _T("1"));
 		}
 	}
+}
+
+void VidOverlaySaveChatHistory()
+{
+	if (bVidSaveChatHistory && !kNetSpectator) {
+		FILE *f = fopen("fightcade/chat_history.txt", "wt");
+		if (f) {
+			for (int i = 0; i < lines_history; i++) {
+				fwprintf(f, _T("%s\n"), chat_history[i].str);
+			}
+			fclose(f);
+		}
+	}
+}
+
+void VidDebug(const wchar_t *text, float a, float b)
+{
+#ifdef TEST_VERSION
+	wchar_t buf[128];
+	swprintf(buf, 128, _T("%.2f / %.2f (frame %d)"), a, b, nFramesEmulated);
+	VidOverlayAddChatLine(text, buf);
+#endif
+}
+
+void VidDisplayInputs(int slot, int stage)
+{
+#ifdef TEST_INPUTS
+	INT32 inputs[2] = {};
+	INT32 pressed[2] = {};
+	INT32 released[2] = {};
+
+	// read all inputs
+	struct BurnInputInfo bii;
+	memset(&bii, 0, sizeof(bii));
+	for (unsigned int i = 0; i < nGameInpCount; i++) {
+		BurnDrvGetInputInfo(&bii, i);
+		struct GameInp *pgi = &GameInp[i];
+
+		if (pgi->nInput == GIT_SWITCH && pgi->Input.pVal) {
+			int value = *pgi->Input.pVal;
+
+			// P1 inputs
+			if (!strcmp(bii.szInfo, "p1 up")) inputs[0] |= value << INPUT_UP;
+			if (!strcmp(bii.szInfo, "p1 down")) inputs[0] |= value << INPUT_DOWN;
+			if (!strcmp(bii.szInfo, "p1 left")) inputs[0] |= value << INPUT_LEFT;
+			if (!strcmp(bii.szInfo, "p1 right")) inputs[0] |= value << INPUT_RIGHT;
+			if (!strcmp(bii.szInfo, "p1 fire 1")) inputs[0] |= value << INPUT_LP;
+			if (!strcmp(bii.szInfo, "p1 fire 2")) inputs[0] |= value << INPUT_MP;
+			if (!strcmp(bii.szInfo, "p1 fire 3")) inputs[0] |= value << INPUT_HP;
+			if (!strcmp(bii.szInfo, "p1 fire 4")) inputs[0] |= value << INPUT_LK;
+			if (!strcmp(bii.szInfo, "p1 fire 5")) inputs[0] |= value << INPUT_MK;
+			if (!strcmp(bii.szInfo, "p1 fire 6")) inputs[0] |= value << INPUT_HK;
+		}
+	}
+
+
+	for (int i = 1; i < INPUT_DISPLAY; i++) {
+		inputs_p1[slot][INPUT_DISPLAY-i] = inputs_p1[slot][INPUT_DISPLAY-i-1];
+	}
+	extern bool bSkipPerfmonUpdates;
+	inputs_p1[slot][0].values = inputs[0];
+	inputs_p1[slot][0].stage = stage;
+	inputs_p1[slot][0].frame = nFramesEmulated;
+#endif
 }

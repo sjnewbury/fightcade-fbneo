@@ -12,26 +12,29 @@ static unsigned int nDoFPS = 0;
 static bool bMute = false;
 static int nOldAudVolume;
 
+int kNetVersion = 0;				// Network version (ggpo related)
 int kNetGame = 0;						// Non-zero if network is being used
 int kNetSpectator = 0;			// Non-zero if network replay is active
+int kNetLua = 1;						// Allow lua in network game
 
 #ifdef FBNEO_DEBUG
 int counter;								// General purpose variable used when debugging
 #endif
 
-static double nFrameLast = 0;		// Last value of getTime()
-
+static double nFrameLast = 0;
 static bool bAppDoStep = 0;
 static bool bAppDoFast = 0;
-static bool bAppDoFasttoggled = 0;
+static bool bAppDoFastToggled = 0;
 static int nFastSpeed = 10;
+static int nSkipFrames = 0;
+static int nRunQuark = 1;
 
 int bRestartVideo = 0;
 int bDrvExit = 0;
 int bMediaExit = 0;
 
 // For System Macros (below)
-static int prevPause = 0, prevFFWD = 0, prevSState = 0, prevLState = 0, prevUState = 0;
+static int prevPause = 0, prevFFWD = 0, prevFrame = 0, prevSState = 0, prevLState = 0, prevUState = 0;
 UINT32 prevPause_debounce = 0;
 
 static void CheckSystemMacros() // These are the Pause / FFWD macros added to the input dialog
@@ -44,12 +47,22 @@ static void CheckSystemMacros() // These are the Pause / FFWD macros added to th
 		}
 	}
 	prevPause = macroSystemPause;
-	// FFWD
 	if (!kNetGame) {
+		// FFWD
 		if (macroSystemFFWD) {
 			bAppDoFast = 1; prevFFWD = 1;
 		} else if (prevFFWD) {
 			bAppDoFast = 0; prevFFWD = 0;
+		}
+		// Frame
+		if (macroSystemFrame) {
+			bRunPause = 1;
+			if (!prevFrame) {
+				bAppDoStep = 1;
+				prevFrame = 1;
+			}
+		} else {
+			prevFrame = 0;
 		}
 	}
 	// Load State
@@ -71,17 +84,19 @@ static void CheckSystemMacros() // These are the Pause / FFWD macros added to th
 
 static int GetInput(bool bCopy)
 {
-	static unsigned int i = 0;
-	InputMake(bCopy); 						// get input
+	// get input
+	InputMake(bCopy);
 
 	if (!kNetGame) {
 		CheckSystemMacros();
 	}
 
 	// Update Input dialog every 3rd frame
-	if ((i%3) == 0) {
+	static unsigned int i = 0;
+	if ((i%2) == 0) {
 		InpdUpdate();
 	}
+	i++;
 
 	// Update Input Set dialog
 	InpsUpdate();
@@ -165,59 +180,58 @@ void RunaheadLoadState()
 	bRunaheadFrame = 0;
 }
 
-LARGE_INTEGER qpFrequency;
-
-double getTime()
-{
-	static int qpInit = 1;
-	if (qpInit) {
-		QueryPerformanceFrequency(&qpFrequency);
-		qpInit = 0;
-	}
-	LARGE_INTEGER now;
-	QueryPerformanceCounter(&now);
-	return ((1e9 * now.QuadPart) / qpFrequency.QuadPart) / (double)1e6;
-}
-
 // With or without sound, run one frame.
 // If bDraw is true, it's the last frame before we are up to date, and so we should draw the screen
-int RunFrame(int bDraw, int bPause)
+int RunFrame(int bDraw, int bPause, int bInput)
 {
 	if (!bDrvOkay) {
 		return 1;
 	}
-
-	if (bAudPlaying) {
-		AudSoundCheck();
-	}
-
-	if (bPause) {
+	
+	if (bPause && !bAppDoFast) {
 		GetInput(false);						// Update burner inputs, but not game inputs
 	} else {
 		nFramesEmulated++;
 		nCurrentFrame++;
 
 		if (kNetGame) {
-			GetInput(true);						// Update inputs
-			if (NetworkGetInput()) {	// Synchronize input with Network
-				return 1;
-			}
-			if (kNetSpectator) {
-				VidOverlaySaveInfo(true);
+			if (bInput) {
+				GetInput(true);						// Update inputs
+				VidDisplayInputs(0, 0);
+				if (NetworkGetInput()) {	// Synchronize input with Network
+					VidDisplayInputs(1, 1);
+					return 1;
+				}
+				VidDisplayInputs(1, 2);
+			} else {
+				VidDisplayInputs(0, 3);
+				if (NetworkGetInput()) {
+					VidDisplayInputs(1, 1);
+					return 1;
+				}
+				VidDisplayInputs(1, 4);
 			}
 		} else {
 			if (nReplayStatus == 2) {
-				GetInput(false);				  // Update burner inputs, but not game inputs
+				GetInput(false);					// Update burner inputs, but not game inputs
 				if (ReplayInput()) {		  // Read input from file
 					SetPauseMode(1);        // Replay has finished
 					bAppDoFast = 0;
-					bAppDoFasttoggled = 0;  // Disable FFWD
+					bAppDoFastToggled = 0;  // Disable FFWD
 					MenuEnableItems();
 					InputSetCooperativeLevel(false, false);
 					return 0;
 				}
 			} else {
-				GetInput(true);				  	// Update inputs
+				GetInput(true);						// Update inputs
+				VidDisplayInputs(0, 0);
+			}
+		}
+
+		if (kNetLua) {
+			CallRegisteredLuaFunctions(LUACALL_BEFOREEMULATION); //TODO: find proper place
+			if (FBA_LuaUsingJoypad()) {
+				FBA_LuaReadJoypad();
 			}
 		}
 
@@ -227,18 +241,23 @@ int RunFrame(int bDraw, int bPause)
 
 		// Render frame with video or audio
 		if (bDraw) {
-			int runahead = nVidRunahead;
-			if (strstr(BurnDrvGetTextA(DRV_NAME), "tgm2")) {
-				runahead = 0;
-			}
-			if (runahead > 0 && runahead <= 2) {
+			if (nVidRunahead > 0 && nVidRunahead <= 3 && !kNetSpectator) {
+				// Runahead frames, first frame is audio only
+				pBurnDraw = NULL;
 				pBurnSoundOut = nAudNextSound; 
 				BurnDrvFrame();
+				// Save state
 				RunaheadSaveState();
-				for (int i = 0; i < runahead; i++) {
+				// Intermediate frames don't have audio or video
+				for (int i = 0; i < (nVidRunahead-1); i++) {
+					pBurnDraw = NULL;
+					pBurnSoundOut = NULL;
 					BurnDrvFrame();
 				}
+				// Last frame is video only
+				pBurnSoundOut = NULL;
 				VidFrame();
+				// Restore state
 				RunaheadLoadState();
 			} else {
 				// Render video and audio
@@ -248,6 +267,8 @@ int RunFrame(int bDraw, int bPause)
 			// add audio from last frame
 			AudSoundFrame();
 		} else {
+			pBurnDraw = NULL;
+			pBurnSoundOut = nAudNextSound;
 			BurnDrvFrame();
 		}
 
@@ -256,7 +277,12 @@ int RunFrame(int bDraw, int bPause)
 		}
 
 		DetectorUpdate();
-		
+
+		if (kNetLua) {
+			FBA_LuaFrameBoundary();
+			CallRegisteredLuaFunctions(LUACALL_AFTEREMULATION); // TODO: find proper place
+		}
+
 #ifdef INCLUDE_AVI_RECORDING
 		if (nAviStatus) {
 			if (AviRecordFrame(bDraw)) {
@@ -269,6 +295,20 @@ int RunFrame(int bDraw, int bPause)
 	return 0;
 }
 
+int RunIdleDelay(int frames)
+{
+	int ms = (int)(frames * 100.0 / nAppVirtualFps);
+	if (ms < 0) {
+		//VidDebug(_T("Idle Skip"), (float)-ms, 0);
+		nSkipFrames = ((-frames * 2) / 1000);
+	}
+	else {
+		//VidDebug(_T("Idle Fwd"), (float)ms, 0);
+		nFrameLast+= ms;
+	}
+	return 0;
+}
+
 int RunIdle()
 {
 	if (bAudPlaying) {
@@ -276,24 +316,27 @@ int RunIdle()
 	}
 
 	// Render loop with sound
-	double nTime = getTime();
+	double nTime = timeGetTime();
 	double nAccTime = nTime - nFrameLast;
 	double nFps = 1000.0 * 100.0 / nAppVirtualFps;
 	double nFpsIdle = nFps - 1.0;
 
-	if (nAccTime < nFps) {
+	if (nAccTime < nFps || (kNetGame && nRunQuark)) {
+		// No need to do anything for a bit
 		if (kNetGame) {
-			if (nAccTime < nFpsIdle)  {
+			if (nAccTime < nFpsIdle || nRunQuark) {
 				QuarkRunIdle(1);
+				nRunQuark = 0;
 			}
-		} else {
-
+		}
+		else {
 			if (nAccTime < nFpsIdle) {
 				Sleep(1);
 			}
 		}
 		return 0;
 	}
+	nRunQuark = 1;
 
 	// frame accumulator
 	int nCount = -1;
@@ -309,9 +352,11 @@ int RunIdle()
 
 	if (bRunPause) {
 		if (bAppDoStep) {					  // Step one frame
-			nCount = 1;
+			nCount = 0;
 		} else {
-			RunFrame(1, 1);						// Paused
+			RunFrame(1, 1, 1);				// Paused
+			VidPaint(3);
+			AudBlankSound();
 			return 0;
 		}
 	}
@@ -319,27 +364,33 @@ int RunIdle()
 
 	if (kNetGame)
 	{
-		RunFrame(1, 0);					    // End-frame
+		int skip = bAlwaysDrawFrames ? nSkipFrames : (nCount > nSkipFrames ? nCount : nSkipFrames);
+		// skip frames (for rift balance or auto frame skip)
+		for (int i = skip; i > 0; i--) {
+			RunFrame(0, 0, 1);
+		}
+		nSkipFrames = 0;
+		RunFrame(1, 0, 1);					    // End-frame
 	} else {
 		if (bAppDoFast) {				    // do more frames
 			for (int i = 0; i < nFastSpeed; i++) {
 #ifdef INCLUDE_AVI_RECORDING
 				if (nAviStatus) {
-					RunFrame(1, 0);
+					RunFrame(1, 0, 1);
 				} else {
-					RunFrame(0, 0);
+					RunFrame(0, 0, 1);
 				}
 #else
-				RunFrame(0, 0);
+				RunFrame(0, 0, 1);
 #endif
 			}
 		}
 		if (!bAlwaysDrawFrames) {
 			for (int i = nCount; i > 0; i--) {	// Mid-frames
-				RunFrame(0, 0);
+				RunFrame(0, 0, 1);
 			}
 		}
-		RunFrame(1, 0);					// End-frame
+		RunFrame(1, 0, 1);					// End-frame
 	}
 
 	// render
@@ -361,7 +412,7 @@ int RunReset()
 	DisplayFPSInit();
 
 	// Reset the speed throttling code
-	nFrameLast = getTime();
+	nFrameLast = timeGetTime();
 
 	return 0;
 }
@@ -383,7 +434,7 @@ static int RunExit()
 	nFrameLast = 0;
 
 	bAppDoFast = 0;
-	bAppDoFasttoggled = 0;
+	bAppDoFastToggled = 0;
 
 	return 0;
 }
@@ -433,13 +484,14 @@ int RunMessageLoop()
 			SuperWaitVBlankInit();
 		}
 
-		if (bAutoLoadGameList && !nCmdOptUsed) {
+		/*
+		if (bAutoLoadGameList && !nVidFullscreen) {
 			static INT32 bLoaded = 0; // only do this once (at startup!)
-
 			if (bLoaded == 0)
 				PostMessage(hScrnWnd, WM_KEYDOWN, VK_F6, 0);
 			bLoaded = 1;
 		}
+		*/
 
 		while (1) {
 			if (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE)) {
@@ -552,6 +604,15 @@ int RunMessageLoop()
 							case VK_MENU: {
 								continue;
 							}
+							case '1':
+							case '2':
+							case '3':
+							case '4':
+							case '5':
+								if (kNetLua) {
+									CallRegisteredLuaFunctions((LuaCallID)(LUACALL_HOTKEY_1 + Msg.wParam - '1'));
+								}
+								break;
 						}
 					} else {
 
@@ -584,13 +645,9 @@ int RunMessageLoop()
 										DeActivateChat();
 									}
 								} else {
-									if (nCmdOptUsed & 1) {
-										PostQuitMessage(0);
-									} else {
-										if (nVidFullscreen) {
-											nVidFullscreen = 0;
-											POST_INITIALISE_MESSAGE;
-										}
+									if (nVidFullscreen) {
+										nVidFullscreen = 0;
+										POST_INITIALISE_MESSAGE;
 									}
 								}
 								break;
@@ -637,7 +694,7 @@ int RunMessageLoop()
 
 										if ((GetAsyncKeyState(VK_SHIFT) & 0x80000000) && !GetAsyncKeyState(VK_CONTROL)) { // Shift-F1: toggles FFWD state
 											bAppDoFast = !bAppDoFast;
-											bAppDoFasttoggled = bAppDoFast;
+											bAppDoFastToggled = bAppDoFast;
 										}
 
 										if (bOldAppDoFast != bAppDoFast) {
@@ -705,9 +762,9 @@ int RunMessageLoop()
 								if (!kNetGame) {
 									bool bOldAppDoFast = bAppDoFast;
 
-									if (!bAppDoFasttoggled)
+									if (!bAppDoFastToggled)
 										bAppDoFast = 0;
-									bAppDoFasttoggled = 0;
+									bAppDoFastToggled = 0;
 									if (bOldAppDoFast != bAppDoFast) {
 										DisplayFPSInit(); // resync fps display
 									}

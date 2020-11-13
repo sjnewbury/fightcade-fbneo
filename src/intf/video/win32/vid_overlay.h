@@ -2,7 +2,7 @@
 
 struct IDirect3DDevice9Ex;
 
-void DetectorLoad(const char *game, bool edit_detector);
+void DetectorLoad(const char *game, bool debug, int seed);
 void DetectorUpdate();
 void DetectorSetState(int state, int score1, int score2, int start1 = 0, int start2 = 0);
 void DetectorGetState(int &state, int &score1, int &score2, int &start1, int &start2);
@@ -22,4 +22,8 @@ void VidOverlayShowVolume(int volume);
 void VidOverlaySetChatInput(const wchar_t *text);
 void VidOverlayAddChatLine(const wchar_t *name, const wchar_t *text);
 void VidOverlaySaveFiles(bool save_info, bool save_scores, bool save_characters);
-void VidOverlaySaveInfo(bool start);
+void VidOverlaySaveInfo();
+void VidOverlaySaveChatHistory();
+
+void VidDebug(const wchar_t *text, float a, float b);
+void VidDisplayInputs(int slot, int stage);

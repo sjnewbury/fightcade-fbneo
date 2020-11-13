@@ -14,6 +14,38 @@ extern int nAcbVersion;
 extern int bMediaExit;
 extern int nAcbLoadState;
 
+// average helper
+template <int _size>
+struct Averager {
+	int current = 0;
+	int data[_size] = {};
+	float average = 0.f;
+	float deviation = 0.f;
+	void Update(int value) {
+		data[current] = value;
+		current = (current + 1) % _size;
+		// average
+		average = 0.f;
+		for (int i = 0; i < _size; i++) {
+			average += data[i];
+		}
+		average = average / _size;
+		// deviation
+		/*
+		deviation = 0.f;
+		for (int i = 0; i < size; i++) {
+			deviation+= fabs(data[i] - average);
+		}
+		deviation = deviation / _size;
+		*/
+	}
+};
+
+static Averager<60> LocalFramesBehind;
+static Averager<60> RemoteFramesBehind;
+static Averager<90> FramesBehind;
+static Averager<10> FrameTimes;
+
 static bool bDirect = false;
 static bool bReplaySupport = false;
 static bool bReplayStarted = false;
@@ -22,8 +54,18 @@ static bool bReplayRecording = false;
 static int iRanked = 0;
 static int iPlayer = 0;
 static int iDelay = 0;
+static int iSeed = 0;
 
 const int ggpo_state_header_size = 6 * sizeof(int);
+
+int GetHash(const char *id, int len)
+{
+	unsigned int hash = 1315423911;
+	for (int i = 0; i < len; i++) {
+		hash ^= ((hash << 5) + id[i] + (hash >> 2));
+	}
+	return (hash & 0x7FFFFFFF);
+}
 
 bool __cdecl ggpo_on_client_event_callback(GGPOClientEvent *info)
 {
@@ -53,6 +95,13 @@ bool __cdecl ggpo_on_client_event_callback(GGPOClientEvent *info)
   case GGPOCLIENT_EVENTCODE_MATCHINFO: {
 		VidOverlaySetSystemMessage(_T(""));
 		VidSSetSystemMessage(_T(""));
+		if (kNetSpectator) {
+			kNetVersion = strlen(info->u.matchinfo.blurb) > 0 ? atoi(info->u.matchinfo.blurb) : QUARKS_VERSION;
+		}
+		if (kNetVersion <= 1) {
+			// Version 1: use old framerate (5994)
+			nBurnFPS = 5994;
+		}
 		TCHAR szUser1[128];
 		TCHAR szUser2[128];
     VidOverlaySetGameInfo(ANSIToTCHAR(info->u.matchinfo.p1, szUser1, 128), ANSIToTCHAR(info->u.matchinfo.p2, szUser2, 128), kNetSpectator, iRanked, iPlayer);
@@ -110,10 +159,15 @@ bool __cdecl ggpo_on_event_callback(GGPOEvent *info)
 		VidSSetSystemMessage(_T("Synchronizing with Peer..."));
     break;
 
-  case GGPO_EVENTCODE_RUNNING:
+  case GGPO_EVENTCODE_RUNNING: {
     VidOverlaySetSystemMessage(_T(""));
 		VidSSetSystemMessage(_T(""));
+		// send ReceiveVersion message
+		char temp[16];
+		sprintf(temp, "%d", QUARKS_VERSION);
+		QuarkSendChatCmd(temp, 'V');
     break;
+	}
 
   case GGPO_EVENTCODE_DISCONNECTED_FROM_PEER:
     VidOverlaySetSystemMessage(_T("Disconnected from Peer"));
@@ -125,7 +179,7 @@ bool __cdecl ggpo_on_event_callback(GGPOEvent *info)
     break;
 
   case GGPO_EVENTCODE_TIMESYNC:
-		Sleep(1000 * info->u.timesync.frames_ahead / 60);
+		// GGPO timesync is bad
     break;
 
   default:
@@ -148,8 +202,8 @@ bool __cdecl ggpo_begin_game_callback(char *name)
 		if (FindFirstFile(tfilename, &fd) != INVALID_HANDLE_VALUE) {
 			// Load our save-state file (freeplay, event mode, etc.)
 			BurnStateLoad(tfilename, 1, &DrvInitCallback);
-			// load detector
-			DetectorLoad(name, false);
+			// detector
+			DetectorLoad(name, false, iSeed);
 			// if playing a direct game, we never get match information, so put anonymous
 			if (bDirect) {
 				VidOverlaySetGameInfo(_T("Player1#0,0"), _T("Player2#0,0"), false, iRanked, iPlayer);
@@ -165,7 +219,7 @@ bool __cdecl ggpo_begin_game_callback(char *name)
     // Load our save-state file (freeplay, event mode, etc.)
     BurnStateLoad(tfilename, 1, &DrvInitCallback);
     // load detector
-    DetectorLoad(name, false);
+    DetectorLoad(name, false, iSeed);
     // if playing a direct game, we never get match information, so put anonymous
     if (bDirect) {
       VidOverlaySetGameInfo(_T("Player1#0,0"), _T("Player2#0,0"), false, iRanked, iPlayer);
@@ -182,7 +236,7 @@ bool __cdecl ggpo_begin_game_callback(char *name)
       MediaInit();
       DrvInit(i, true);
       // load game detector
-			DetectorLoad(name, false);
+			DetectorLoad(name, false, iSeed);
       // if playing a direct game, we never get match information, so play anonymous
       if (bDirect) {
         VidOverlaySetGameInfo(_T("player 1#0,0"), _T("player 2#0,0"), false, iRanked, iPlayer);
@@ -198,7 +252,8 @@ bool __cdecl ggpo_begin_game_callback(char *name)
 bool __cdecl ggpo_advance_frame_callback(int flags)
 {
   bSkipPerfmonUpdates = true;
-	RunFrame(0, 0);
+	nFramesEmulated--;
+	RunFrame(0, 0, 0);
 	bSkipPerfmonUpdates = false;
   return true;
 }
@@ -419,12 +474,18 @@ void QuarkInit(TCHAR *tconnect)
   int player = 0;
   int localPort, remotePort;
 
+	kNetVersion = QUARKS_VERSION;
   kNetGame = 1;
+	kNetLua = 0;
 	kNetSpectator = 0;
   bForce60Hz = 1;
   iRanked = 0;
   iPlayer = 0;
 	iDelay = 0;
+
+#ifdef _DEBUG
+	kNetLua = 1;
+#endif
 
   GGPOSessionCallbacks cb = { 0 };
 
@@ -441,17 +502,20 @@ void QuarkInit(TCHAR *tconnect)
     iRanked = ranked;
     iPlayer = atoi(&quarkid[strlen(quarkid)-1]);
 		iDelay = delay;
+		iSeed = GetHash(quarkid, strlen(quarkid)-2);
     ggpo = ggpo_client_connect(&cb, game, quarkid, port);
     ggpo_set_frame_delay(ggpo, delay);
 		VidOverlaySetSystemMessage(_T("Connecting..."));
   }
   else if (strncmp(connect, "quark:direct", strlen("quark:direct")) == 0) {
     sscanf(connect, "quark:direct,%[^,],%d,%[^,],%d,%d,%d,%d", game, &localPort, server, &remotePort, &player, &delay, &ranked);
-    bDirect = true;
+		kNetLua = 1;
+		bDirect = true;
     iRanked = 0;
     iPlayer = player;
 		iDelay = delay;
-    ggpo = ggpo_start_session(&cb, game, localPort, server, remotePort, player);
+		iSeed = 0;
+		ggpo = ggpo_start_session(&cb, game, localPort, server, remotePort, player);
     ggpo_set_frame_delay(ggpo, delay);
 		VidOverlaySetSystemMessage(_T("Connecting..."));
   }
@@ -464,6 +528,8 @@ void QuarkInit(TCHAR *tconnect)
   else if (strncmp(connect, "quark:stream", strlen("quark:stream")) == 0) {
     sscanf(connect, "quark:stream,%[^,],%[^,],%d", game, quarkid, &remotePort);
 		kNetSpectator = 1;
+		kNetLua = 1;
+		iSeed = 0;
     ggpo = ggpo_start_streaming(&cb, game, quarkid, remotePort);
 		VidOverlaySetSystemMessage(_T("Connecting..."));
   }
@@ -475,17 +541,27 @@ void QuarkInit(TCHAR *tconnect)
     kNetGame = 0;
     iRanked = 1;
     iPlayer = 0;
+		iSeed = 0x133;
+		kNetLua = 1;
     // load game
     TCHAR tgame[128];
     ANSIToTCHAR(game, tgame, 128);
     UINT32 i;
     for (i = 0; i < nBurnDrvCount; i++) {
       nBurnDrvActive = i;
-      if ((_tcscmp(BurnDrvGetText(DRV_NAME), tgame) == 0) && (!(BurnDrvGetFlags() & BDF_BOARDROM))) {
-        MediaInit();
-        DrvInit(i, true);
+			if ((_tcscmp(BurnDrvGetText(DRV_NAME), tgame) == 0) && (!(BurnDrvGetFlags() & BDF_BOARDROM))) {
+				// Load game
+				MediaInit();
+				DrvInit(i, true);
+				// Load our save-state file (freeplay, event mode, etc.)
+				WIN32_FIND_DATA fd;
+				TCHAR tfilename[MAX_PATH];
+				_stprintf(tfilename, _T("savestates\\%s_fbneo.fs"), tgame);
+				if (FindFirstFile(tfilename, &fd) != INVALID_HANDLE_VALUE) {
+					BurnStateLoad(tfilename, 1, &DrvInitCallback);
+				}
         // load game detector in editor mode
-				DetectorLoad(game, true);
+				DetectorLoad(game, true, iSeed);
         VidOverlaySetGameInfo(_T("Detector1#0,0,0"), _T("Detector2#0,0,0"), false, iRanked, iPlayer);
         VidOverlaySetGameSpectators(0);
 				VidSSetGameInfo(_T("Detector1"), _T("Detector2"), false, iRanked, iPlayer);
@@ -540,6 +616,32 @@ bool QuarkIncrementFrame()
 		GGPONetworkStats stats;
 		ggpo_get_stats(ggpo, &stats);
 		ggpoutil_perfmon_update(ggpo, stats);
+
+		// Average of frame times
+		/*
+		ggpoutil_perfmon_update(ggpo, stats, FramesBehind.average, FrameTimes.average);
+		static int time = timeGetTime();
+		int t = timeGetTime();
+		FrameTimes.Update((int)(t - time));
+		time = t;
+		*/
+
+		LocalFramesBehind.Update(stats.timesync.local_frames_behind);
+		RemoteFramesBehind.Update(stats.timesync.remote_frames_behind);
+		FramesBehind.Update(stats.timesync.local_frames_behind - stats.timesync.remote_frames_behind);
+		int frames_behind = (int)(FramesBehind.average * 1000 / 2);
+		// balance rift if ahead or behind the connection (one to go slightly faster, the other slightly slower! win win)
+		if (abs(frames_behind) > 1000) {
+			static int time = 0;
+			int t = timeGetTime();
+			// balance rift
+			if ((t - time) > 1000.f) {
+				if (frames_behind < -5000) frames_behind = -5000;
+				if (frames_behind > 5000) frames_behind = 5000;
+				RunIdleDelay(-frames_behind/3);
+				time = t;
+			}
+		}
   }
 
   if (!bReplaySupport && !bReplayStarted) {

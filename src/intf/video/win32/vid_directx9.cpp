@@ -860,7 +860,7 @@ static int dx9Init()
 		}
 	}
 
-	// check selected atapter
+	// check selected adapter
 	D3DDISPLAYMODE dm;
 	pD3D->GetAdapterDisplayMode(nD3DAdapter, &dm);
 
@@ -881,7 +881,7 @@ static int dx9Init()
 		d3dpp.FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;
 		d3dpp.PresentationInterval = bVidVSync ? D3DPRESENT_INTERVAL_DEFAULT : D3DPRESENT_INTERVAL_IMMEDIATE;
 		if (bVidDX9WinFullscreen) {
-			d3dpp.SwapEffect = D3DSWAPEFFECT_COPY;
+			d3dpp.SwapEffect = bVidVSync || bVidDX9LegacyRenderer ? D3DSWAPEFFECT_COPY : D3DSWAPEFFECT_FLIPEX;
 			MoveWindow(hScrnWnd, 0, 0, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, TRUE);
 		}
 	} else {
@@ -890,7 +890,7 @@ static int dx9Init()
 		d3dpp.BackBufferWidth = rect.right - rect.left;
 		d3dpp.BackBufferHeight = rect.bottom - rect.top;
 		d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
-		d3dpp.SwapEffect = D3DSWAPEFFECT_COPY;
+		d3dpp.SwapEffect = bVidVSync || bVidDX9LegacyRenderer ? D3DSWAPEFFECT_COPY : D3DSWAPEFFECT_FLIPEX;
 		d3dpp.BackBufferCount = 1;
 		d3dpp.hDeviceWindow = hVidWnd;
 		d3dpp.Windowed = TRUE;
@@ -1106,6 +1106,10 @@ static int dx9Render()
 
 		for (int y = 0; y < nVidImageHeight; y++, pd += p, ps += nVidImagePitch) {
 			memcpy(pd, ps, s);
+		}
+
+		if (kNetLua) {
+			FBA_LuaGui(pd, nVidImageWidth, nVidImageHeight, nVidImageBPP, p);
 		}
 
 		pSurface->UnlockRect();
@@ -1689,12 +1693,13 @@ static int dx9AltSetHardFX(int nHardFX)
 
 	nDX9HardFX = nHardFX;
 
-	if (nHardFX == 0)
+	if (pVidEffect) {
+		delete pVidEffect;
+		pVidEffect = NULL;
+	}
+	
+	if (nDX9HardFX == 0)
 	{
-		if (pVidEffect) {
-			delete pVidEffect;
-			pVidEffect = NULL;
-		}
 		return 0;
 	}
 
@@ -1767,7 +1772,7 @@ static int dx9AltInit()
 		}
 	}
 
-	// check selected atapter
+	// check selected adapter
 	D3DDISPLAYMODE dm;
 	pD3D->GetAdapterDisplayMode(nD3DAdapter, &dm);
 
@@ -1788,7 +1793,7 @@ static int dx9AltInit()
 		d3dpp.FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;
 		d3dpp.PresentationInterval = bVidVSync ? D3DPRESENT_INTERVAL_DEFAULT : D3DPRESENT_INTERVAL_IMMEDIATE;
 		if (bVidDX9WinFullscreen) {
-			d3dpp.SwapEffect = D3DSWAPEFFECT_COPY;
+			d3dpp.SwapEffect = bVidVSync || bVidDX9LegacyRenderer ? D3DSWAPEFFECT_COPY : D3DSWAPEFFECT_FLIPEX;
 			MoveWindow(hScrnWnd, 0, 0, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, TRUE);
 		}
 	} else {
@@ -1797,7 +1802,7 @@ static int dx9AltInit()
 		d3dpp.BackBufferWidth = rect.right - rect.left;
 		d3dpp.BackBufferHeight = rect.bottom - rect.top;
 		d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
-		d3dpp.SwapEffect = D3DSWAPEFFECT_COPY;
+		d3dpp.SwapEffect = bVidVSync || bVidDX9LegacyRenderer ? D3DSWAPEFFECT_COPY : D3DSWAPEFFECT_FLIPEX;
 		d3dpp.BackBufferCount = 1;
 		d3dpp.hDeviceWindow = hVidWnd;
 		d3dpp.Windowed = TRUE;
@@ -2038,7 +2043,9 @@ static int dx9AltRender()
 				}
 			}
 
-			//FBA_LuaGui(pd, nVidImageWidth, nVidImageHeight, nVidImageBPP, pitch);
+			if (kNetLua) {
+				FBA_LuaGui(pd, nVidImageWidth, nVidImageHeight, nVidImageBPP, pitch);
+			}
 
 			emuTexture->UnlockRect(0);
 		}

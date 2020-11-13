@@ -2857,6 +2857,13 @@ static INT32 DrvFrame()
 			DrvInputs[4] ^= (DrvJoy5[i] & 1) << i;
 		}
 
+		// @FC
+		extern int kNetGame;
+		extern int kNetSpectator;
+		if (kNetGame || kNetSpectator) {
+			DrvDips[0]= 0xe0;
+		}
+
 		DrvInputs[1] = DrvDips[0] | (DrvInputs[1] & 0xff00) | 2;
 		if (nGame == 1) DrvInputs[0] &= 0xff;
 	}
